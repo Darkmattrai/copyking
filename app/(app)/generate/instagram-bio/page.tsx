@@ -7,13 +7,26 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { useBrandStore } from "@/lib/brand/store";
 import { useHistoryStore, type GenerationEntry } from "@/lib/generators/history-store";
+import { getGenerator } from "@/lib/generators/registry";
 import { PillarIcon } from "@/components/brand/pillar-icon";
-import { InstagramPreview } from "@/components/generators/instagram-preview";
+import {
+  InstagramPreview,
+  type PreviewLink,
+  type PreviewHighlight,
+  type PreviewPinnedPost,
+} from "@/components/generators/instagram-preview";
 import { BioVariationCard } from "@/components/generators/bio-variation-card";
 import { MarkdownRenderer } from "@/components/generators/markdown-renderer";
+import { BioInputForm } from "@/components/generators/bio-input-form";
+import {
+  BioSeoAuditCard,
+  type SeoAudit,
+} from "@/components/generators/bio-seo-audit-card";
+import { BioScoreCard, type BioScore } from "@/components/generators/bio-score-card";
+import { BioStrategyCard } from "@/components/generators/bio-strategy-card";
 
 // ────────────────────────────────────────────────────────────────
-// Helpers to parse the structured markdown output from the prompt
+// Types
 // ────────────────────────────────────────────────────────────────
 
 interface ParsedBio {
@@ -21,130 +34,212 @@ interface ParsedBio {
   formula: string;
   text: string;
   explanation: string;
+  bestFor: string;
+}
+
+interface ParsedPinnedPost {
+  label: string; // "Awareness", "Consideration", "Conversion"
+  format: string;
+  topic: string;
+  hook: string;
+  why: string;
 }
 
 interface ParsedOutput {
+  seoAudit: SeoAudit;
   nameOptions: string[];
   bios: ParsedBio[];
-  ctasSection: string;
-  tipsSection: string;
+  multiLinkSection: string;
+  actionButtonsSection: string;
+  pinnedPosts: ParsedPinnedPost[];
+  highlightsSection: string;
+  profilePhotoSection: string;
+  score: BioScore;
+  antiPatternsSection: string;
   raw: string;
 }
 
-function extractSection(md: string, heading: string): string {
-  const pattern = new RegExp(
-    `^##\\s+${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?$`,
-    "mi",
-  );
+// ────────────────────────────────────────────────────────────────
+// Parsing helpers
+// ────────────────────────────────────────────────────────────────
+
+function extractH2Section(md: string, heading: string): string {
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^##\\s+${escaped}\\s*$`, "mi");
   const match = md.match(pattern);
   if (!match) return "";
 
   const startIdx = md.indexOf(match[0]) + match[0].length;
-  const nextH2 = md.indexOf("\n## ", startIdx);
-  const slice = nextH2 === -1 ? md.slice(startIdx) : md.slice(startIdx, nextH2);
-  return slice.trim();
+  const nextH2 = md.slice(startIdx).search(/^##\s+/m);
+  return nextH2 === -1
+    ? md.slice(startIdx).trim()
+    : md.slice(startIdx, startIdx + nextH2).trim();
+}
+
+/** Extract value after `**Label**:` — everything until the next bold label or newline followed by a blank line */
+function extractLabeledValue(section: string, label: string): string {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(
+    `\\*\\*${escaped}\\*\\*\\s*[:\\-]?\\s*([^\\n]+(?:\\n(?!\\*\\*|##|###|\\d+\\.|-)[^\\n]+)*)`,
+    "i",
+  );
+  const match = section.match(pattern);
+  return match ? match[1].trim() : "";
 }
 
 function cleanBioLine(line: string): string {
   let cleaned = line.trim();
-
   cleaned = cleaned
     .replace(/^[-•]\s*/, "")
     .replace(/^>\s*/, "")
     .replace(/\s*\(\d+\s*chars?\)\s*$/i, "")
     .trim();
-
-  // Remove label prefixes if the model includes structural labels in the bio.
   cleaned = cleaned.replace(
     /^\**\s*(what you do|who you help|result they get|result)\s*\**\s*[:\-]?\s*/i,
     "",
   );
-
-  // Remove malformed markdown markers that can leak into final bio text.
   cleaned = cleaned
     .replace(/\*\*/g, "")
     .replace(/^_+|_+$/g, "")
     .replace(/^\*+|\*+$/g, "")
     .trim();
-
   return cleaned;
 }
 
-function parseOutput(raw: string): ParsedOutput {
-  const nameSection = extractSection(raw, "Name Field Options");
-  const nameOptions = nameSection
+function parseSeoAudit(section: string): SeoAudit {
+  if (!section) {
+    return {
+      intro: "",
+      primaryKeyword: "",
+      secondaryKeywords: [],
+      category: "",
+      usernameAudit: "",
+      semanticNotes: "",
+    };
+  }
+
+  // Intro: text before the first **Primary keyword** label
+  const firstBold = section.search(/\*\*[A-Z]/);
+  const intro = firstBold === -1 ? "" : section.slice(0, firstBold).trim();
+
+  const primaryRaw = extractLabeledValue(section, "Primary keyword");
+  // Strip any trailing reason after "—"
+  const primaryKeyword = primaryRaw.split(/\s+[—–-]\s+/)[0].trim();
+
+  const secondaryRaw = extractLabeledValue(section, "Secondary keywords");
+  // The label sometimes has "(5–7, comma-separated)" or similar prefix; strip it
+  const secondaryClean = secondaryRaw
+    .replace(/^\([^)]*\)\s*[:\-]?\s*/, "")
+    .replace(/^\s*[:\-]\s*/, "");
+  const secondaryKeywords = secondaryClean
+    .split(/[,;]/)
+    .map((k) => k.trim().replace(/^[*_`]+|[*_`]+$/g, ""))
+    .filter((k) => k.length > 0 && k.length < 60);
+
+  const category = extractLabeledValue(section, "Recommended Instagram category");
+  const usernameAudit = extractLabeledValue(section, "Username audit");
+  const semanticNotes = extractLabeledValue(section, "Semantic match notes");
+
+  return {
+    intro,
+    primaryKeyword,
+    secondaryKeywords,
+    category,
+    usernameAudit,
+    semanticNotes,
+  };
+}
+
+function parseNameOptions(section: string): string[] {
+  if (!section) return [];
+  return section
     .split("\n")
-    .map((l) => l.replace(/^\d+\.\s*/, "").replace(/\s*\(\d+\s*chars?\)\s*$/, "").trim())
+    .map((line) => line.trim())
+    .filter((line) => /^\d+\.\s+/.test(line))
+    .map((line) => {
+      // Strip numeric prefix and split on " — " to take the bio text only
+      const stripped = line.replace(/^\d+\.\s+/, "");
+      const firstDash = stripped.search(/\s+[—–-]\s+/);
+      const text = firstDash === -1 ? stripped : stripped.slice(0, firstDash);
+      return text
+        .replace(/\(\d+\s*chars?\)/i, "")
+        .replace(/\*\*/g, "")
+        .trim();
+    })
     .filter(Boolean);
+}
 
-  const formulaLabels = [
-    { label: "Value Formula", formula: "What you do + Who you help + Result" },
-    { label: "Proof Formula", formula: "Credibility metric + What you do + CTA" },
-    { label: "Mission Formula", formula: "Change you create + How you do it" },
-    { label: "Personality Formula", formula: "Identity + Personal touch + CTA" },
-  ];
+const FORMULA_LABELS = [
+  { label: "Value Formula", formula: "What you do + Who you help + Result" },
+  { label: "Proof Formula", formula: "Credibility metric + What you do + CTA" },
+  { label: "Mission Formula", formula: "Change you create + How you do it" },
+  { label: "Personality Formula", formula: "Identity + Personal touch + CTA" },
+  { label: "Transformation Arc", formula: "From where they were → To where they are" },
+  { label: "Lowercase Aesthetic", formula: "All lowercase, minimal punctuation, 2026 trend" },
+];
 
+function parseBioVariations(raw: string): ParsedBio[] {
   const bios: ParsedBio[] = [];
-  for (const { label, formula } of formulaLabels) {
-    const pattern = new RegExp(`###\\s+(?:Bio Variation \\d+\\s*[-–—]\\s*)?${label}`, "i");
+
+  for (const { label, formula } of FORMULA_LABELS) {
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp(
+      `###\\s+(?:Bio Variation \\d+\\s*[—–-]\\s*)?${escaped}[^\\n]*`,
+      "i",
+    );
     const match = raw.match(pattern);
     if (!match) continue;
 
     const startIdx = raw.indexOf(match[0]) + match[0].length;
-    const nextH3 = raw.indexOf("\n### ", startIdx);
-    const nextH2 = raw.indexOf("\n## ", startIdx);
-    const ends = [nextH3, nextH2].filter((i) => i !== -1);
-    const endIdx = ends.length > 0 ? Math.min(...ends) : raw.length;
-    const section = raw.slice(startIdx, endIdx).trim();
+    const remaining = raw.slice(startIdx);
+    const nextHeading = remaining.search(/^(?:###|##)\s+/m);
+    const section =
+      nextHeading === -1 ? remaining.trim() : remaining.slice(0, nextHeading).trim();
 
     const lines = section.split("\n").map((l) => l.trim());
     const bioLines: string[] = [];
     let explanation = "";
+    let bestFor = "";
     let pastBio = false;
 
     for (const line of lines) {
       if (!line) continue;
-      if (line.startsWith("**Formula**") || line.startsWith("*Formula*")) continue;
-
-      const charCountMatch = line.match(/\(\d+\s*chars?\)/i);
-      const explanationIndicators = [
-        "why this works",
-        "this version works",
-        "this works because",
-        "why it works",
-      ];
-
-      if (
-        pastBio &&
-        explanationIndicators.some((ind) =>
-          line.toLowerCase().includes(ind),
-        )
-      ) {
-        explanation = line
-          .replace(/^\*\*.*?\*\*:?\s*/, "")
-          .replace(/^>\s*/, "")
-          .trim();
+      if (/^\*?\*?Formula\*?\*?\s*[:\-]/i.test(line)) continue;
+      if (/^\(/.test(line) && /chars?\)/.test(line)) {
+        pastBio = true;
         continue;
       }
 
-      if (charCountMatch && !pastBio) {
-        const cleanedLine = cleanBioLine(line);
-        if (cleanedLine) bioLines.push(cleanedLine);
+      const charCountInline = /\(\d+\s*chars?\)/i.test(line);
+
+      const whyMatch = line.match(
+        /^\*?\*?Why this works\*?\*?\s*[:\-]\s*(.+)/i,
+      );
+      if (whyMatch) {
+        explanation = whyMatch[1].replace(/\*\*/g, "").trim();
+        pastBio = true;
+        continue;
+      }
+
+      const bestForMatch = line.match(
+        /^\*?\*?Best for\*?\*?\s*[:\-]\s*(.+)/i,
+      );
+      if (bestForMatch) {
+        bestFor = bestForMatch[1].replace(/\*\*/g, "").trim();
+        pastBio = true;
+        continue;
+      }
+
+      if (charCountInline) {
+        const cleaned = cleanBioLine(line);
+        if (cleaned) bioLines.push(cleaned);
         pastBio = true;
         continue;
       }
 
       if (!pastBio) {
-        const cleaned = cleanBioLine(
-          line.replace(/^\*\*.*?\*\*:?\s*/, "").trim(),
-        );
+        const cleaned = cleanBioLine(line);
         if (cleaned) bioLines.push(cleaned);
-      } else if (!explanation) {
-        explanation = line
-          .replace(/^\*\*.*?\*\*:?\s*/, "")
-          .replace(/^>\s*/, "")
-          .replace(/^[-*]\s*/, "")
-          .trim();
       }
     }
 
@@ -154,14 +249,210 @@ function parseOutput(raw: string): ParsedOutput {
         formula,
         text: bioLines.join("\n"),
         explanation,
+        bestFor,
       });
     }
   }
 
-  const ctasSection = extractSection(raw, "Link-in-Bio CTAs");
-  const tipsSection = extractSection(raw, "Profile Optimization Tips");
+  return bios;
+}
 
-  return { nameOptions, bios, ctasSection, tipsSection, raw };
+function parsePinnedPosts(raw: string): ParsedPinnedPost[] {
+  const posts: ParsedPinnedPost[] = [];
+  const pattern =
+    /###\s+Pinned Post\s+\d+\s*[—–-]\s*(Awareness|Consideration|Conversion)([^\n]*)\n([\s\S]*?)(?=###\s+Pinned Post|\n##\s+|$)/gim;
+
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(raw)) !== null) {
+    const label = match[1];
+    const body = match[3] || "";
+    const format = extractLabeledValue(body, "Format");
+    const topic = extractLabeledValue(body, "Topic");
+    const hook = extractLabeledValue(body, "Hook");
+    const why = extractLabeledValue(body, "Why pinned");
+    posts.push({ label, format, topic, hook, why });
+  }
+
+  return posts;
+}
+
+function parseNumberOutOf10(text: string): number | null {
+  const match = text.match(/(\d+(?:\.\d+)?)\s*\/\s*10/);
+  if (!match) return null;
+  const num = parseFloat(match[1]);
+  return isNaN(num) ? null : num;
+}
+
+function parsePercent(text: string): number | null {
+  const match = text.match(/(\d+(?:\.\d+)?)\s*%/);
+  if (!match) return null;
+  const num = parseFloat(match[1]);
+  return isNaN(num) ? null : num;
+}
+
+function splitScoreLine(raw: string): { score: number | null; note: string } {
+  const score = parseNumberOutOf10(raw);
+  const noteMatch = raw.match(/—\s*(.+)$/) || raw.match(/-\s+(.+)$/);
+  const note = noteMatch ? noteMatch[1].trim() : "";
+  return { score, note };
+}
+
+function parseScore(section: string): BioScore {
+  if (!section) {
+    return {
+      overall: null,
+      clarity: { score: null, note: "" },
+      searchOpt: { score: null, note: "" },
+      ctaStrength: { score: null, note: "" },
+      charEfficiencyPct: null,
+      threeSecondTest: "",
+      threeSecondNote: "",
+      improvements: [],
+    };
+  }
+
+  const overall = parseNumberOutOf10(extractLabeledValue(section, "Overall Score"));
+  const clarity = splitScoreLine(extractLabeledValue(section, "Clarity"));
+  const searchOpt = splitScoreLine(
+    extractLabeledValue(section, "Search optimization"),
+  );
+  const ctaStrength = splitScoreLine(extractLabeledValue(section, "CTA strength"));
+  const charEfficiencyPct = parsePercent(
+    extractLabeledValue(section, "Character efficiency"),
+  );
+
+  const threeSecondRaw = extractLabeledValue(section, "3-second test");
+  const verdictMatch = threeSecondRaw.match(/^(Pass|Borderline|Fail)/i);
+  const threeSecondTest = verdictMatch ? verdictMatch[1] : "";
+  const noteAfterDash = threeSecondRaw.match(/—\s*(.+)$/);
+  const threeSecondNote = noteAfterDash ? noteAfterDash[1].trim() : "";
+
+  // Find improvements list — numbered items after "Top 3 specific improvements" label
+  const impSectionMatch = section.match(
+    /\*\*Top 3 specific improvements\*\*[:\s]*\n([\s\S]*)/i,
+  );
+  const improvements: string[] = [];
+  if (impSectionMatch) {
+    const lines = impSectionMatch[1].split("\n");
+    for (const line of lines) {
+      const m = line.match(/^\s*\d+\.\s+(.+)/);
+      if (m) {
+        improvements.push(m[1].replace(/\*\*/g, "").trim());
+      } else if (line.trim() === "" && improvements.length > 0) {
+        break;
+      }
+    }
+  }
+
+  return {
+    overall,
+    clarity,
+    searchOpt,
+    ctaStrength,
+    charEfficiencyPct,
+    threeSecondTest,
+    threeSecondNote,
+    improvements,
+  };
+}
+
+function parseOutput(raw: string): ParsedOutput {
+  const seoSection = extractH2Section(raw, "Profile SEO Audit");
+  const nameSection = extractH2Section(raw, "Name Field Options");
+  const multiLinkSection = extractH2Section(raw, "Native Multi-Link Strategy");
+  const actionButtonsSection = extractH2Section(raw, "Action Buttons");
+  const pinnedSection = extractH2Section(raw, "Pinned Posts Strategy");
+  const highlightsSection = extractH2Section(raw, "Highlights Strategy");
+  const profilePhotoSection = extractH2Section(raw, "Profile Photo Direction");
+  const scoreSection = extractH2Section(raw, "Bio Audit & Score");
+  const antiPatternsSection = extractH2Section(raw, "Anti-Patterns Caught");
+
+  return {
+    seoAudit: parseSeoAudit(seoSection),
+    nameOptions: parseNameOptions(nameSection),
+    bios: parseBioVariations(raw),
+    multiLinkSection,
+    actionButtonsSection,
+    pinnedPosts: parsePinnedPosts(pinnedSection),
+    highlightsSection,
+    profilePhotoSection,
+    score: parseScore(scoreSection),
+    antiPatternsSection,
+    raw,
+  };
+}
+
+// ────────────────────────────────────────────────────────────────
+// Preview-data extraction
+// ────────────────────────────────────────────────────────────────
+
+function extractPreviewLinks(section: string): PreviewLink[] {
+  if (!section) return [];
+  return section
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => /^\d+\.\s+/.test(l))
+    .map((line) => {
+      const stripped = line.replace(/^\d+\.\s+/, "").replace(/^`|`$/g, "");
+      const firstDash = stripped.search(/\s+[—–-]\s+/);
+      const title = firstDash === -1 ? stripped : stripped.slice(0, firstDash);
+      return {
+        title: title
+          .replace(/\*\*/g, "")
+          .replace(/^`|`$/g, "")
+          .replace(/\(.{0,40}\)\s*$/, "")
+          .trim(),
+      };
+    })
+    .slice(0, 5);
+}
+
+function extractActionButtonChips(section: string): string[] {
+  if (!section) return [];
+  const labels = ["Book Now", "Reserve", "Order Food", "Email", "Call", "View Shop"];
+  return labels.filter((l) =>
+    new RegExp(`\\b${l.replace(/\s+/g, "\\s+")}\\b`, "i").test(section),
+  );
+}
+
+const HIGHLIGHT_PALETTE = [
+  "#E1306C",
+  "#833AB4",
+  "#F77737",
+  "#0095F6",
+  "#10B981",
+  "#F59E0B",
+  "#6366F1",
+];
+
+function extractPreviewHighlights(section: string): PreviewHighlight[] {
+  if (!section) return [];
+  return section
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => /^\d+\.\s+/.test(l))
+    .map((line, idx) => {
+      const stripped = line.replace(/^\d+\.\s+/, "").replace(/^`|`$/g, "");
+      const firstDash = stripped.search(/\s+[—–-]\s+/);
+      const name = (firstDash === -1 ? stripped : stripped.slice(0, firstDash))
+        .replace(/\*\*/g, "")
+        .replace(/^`|`$/g, "")
+        .trim();
+      const letter = name.replace(/[^a-zA-Z0-9]/g, "").charAt(0).toUpperCase() || "•";
+      return {
+        name,
+        letter,
+        color: HIGHLIGHT_PALETTE[idx % HIGHLIGHT_PALETTE.length],
+      };
+    })
+    .slice(0, 7);
+}
+
+function pinnedToPreview(posts: ParsedPinnedPost[]): PreviewPinnedPost[] {
+  return posts.slice(0, 3).map((p) => ({
+    label: (p.topic || p.label || "").slice(0, 28),
+    role: p.label,
+  }));
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -172,6 +463,7 @@ export default function InstagramBioPage() {
   const router = useRouter();
   const brandDNA = useBrandStore((s) => s.brandDNA);
   const { addEntry, getEntriesForSlug } = useHistoryStore();
+  const generator = getGenerator("instagram-bio");
 
   const [selectedBioIdx, setSelectedBioIdx] = useState(0);
   const [selectedNameIdx, setSelectedNameIdx] = useState(0);
@@ -179,15 +471,30 @@ export default function InstagramBioPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [restoredOutput, setRestoredOutput] = useState<string | null>(null);
 
-  const { completion, isLoading, complete, setCompletion, error } =
-    useCompletion({
-      api: "/api/generate",
-      streamProtocol: "text",
-    });
+  const { completion, isLoading, complete, setCompletion, error } = useCompletion({
+    api: "/api/generate",
+    streamProtocol: "text",
+  });
 
   const activeOutput = restoredOutput ?? completion;
-
   const parsed = useMemo(() => parseOutput(activeOutput), [activeOutput]);
+
+  const previewLinks = useMemo(
+    () => extractPreviewLinks(parsed.multiLinkSection),
+    [parsed.multiLinkSection],
+  );
+  const previewActionButtons = useMemo(
+    () => extractActionButtonChips(parsed.actionButtonsSection),
+    [parsed.actionButtonsSection],
+  );
+  const previewHighlights = useMemo(
+    () => extractPreviewHighlights(parsed.highlightsSection),
+    [parsed.highlightsSection],
+  );
+  const previewPinned = useMemo(
+    () => pinnedToPreview(parsed.pinnedPosts),
+    [parsed.pinnedPosts],
+  );
 
   const prevCompletionRef = useRef(completion);
   useEffect(() => {
@@ -209,16 +516,30 @@ export default function InstagramBioPage() {
     [getEntriesForSlug, activeOutput, showHistory],
   );
 
-  const handleGenerate = useCallback(async () => {
-    setRestoredOutput(null);
-    setSelectedBioIdx(0);
-    setSelectedNameIdx(0);
-    setHasAddedToHistory(false);
-    setCompletion("");
-    await complete("", {
-      body: { slug: "instagram-bio", params: {}, brandDNA },
-    });
-  }, [brandDNA, complete, setCompletion]);
+  const runGenerate = useCallback(
+    async (params: Record<string, string>) => {
+      setRestoredOutput(null);
+      setSelectedBioIdx(0);
+      setSelectedNameIdx(0);
+      setHasAddedToHistory(false);
+      setCompletion("");
+      await complete("", {
+        body: { slug: "instagram-bio", params, brandDNA },
+      });
+    },
+    [brandDNA, complete, setCompletion],
+  );
+
+  const handleQuickGenerate = useCallback(() => {
+    runGenerate({});
+  }, [runGenerate]);
+
+  const handleCustomGenerate = useCallback(
+    (values: Record<string, string>) => {
+      runGenerate(values);
+    },
+    [runGenerate],
+  );
 
   const handleRestore = (entry: GenerationEntry) => {
     setRestoredOutput(entry.output);
@@ -257,18 +578,21 @@ export default function InstagramBioPage() {
             <h1 className="text-2xl font-bold text-text-primary">
               Instagram Bio Generator
             </h1>
-            <p className="text-sm text-text-tertiary mt-1 max-w-lg">
-              Craft a high-converting bio using 4 proven formulas — optimized for
-              discoverability, the 150-character limit, and 2026 best practices.
+            <p className="text-sm text-text-tertiary mt-1 max-w-xl">
+              The full 2026 profile package — SEO audit, 6 bio formulas, 5-link strategy, highlights, pinned posts, profile photo direction, and a bio score.
             </p>
-            <div className="flex items-center gap-4 mt-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
               <span className="inline-flex items-center gap-1.5 text-xs text-text-tertiary">
                 <PillarIcon className="w-3.5 h-3.5" icon="book" />
                 Uses your Brand DNA
               </span>
               <span className="inline-flex items-center gap-1.5 text-xs text-text-tertiary">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
-                4 variations per generation
+                6 bio variations + full strategy
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs text-text-tertiary">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Tuned for the 2026 algorithm
               </span>
             </div>
           </div>
@@ -279,31 +603,40 @@ export default function InstagramBioPage() {
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
         {/* LEFT COLUMN — Generation + Output */}
         <div className="space-y-5">
-          {/* Generate button area */}
+          {/* Pre-generation state: Quick Generate + Customize */}
           {!activeOutput && !isLoading && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="ck-card p-8 text-center"
+              className="space-y-3"
             >
-              <div className="w-16 h-16 rounded-2xl bg-accent-muted flex items-center justify-center text-accent mx-auto mb-4">
-                <PillarIcon className="w-8 h-8" icon="instagram" />
+              <div className="ck-card p-8 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-accent-muted flex items-center justify-center text-accent mx-auto mb-4">
+                  <PillarIcon className="w-8 h-8" icon="instagram" />
+                </div>
+                <p className="text-sm text-text-secondary mb-1">
+                  One click generates your full profile package — SEO audit, 6 bio variations, name fields, links, highlights, pinned posts, and a bio score.
+                </p>
+                <p className="text-xs text-text-tertiary mb-6">
+                  All tailored to your Brand DNA — open Customize below to fine-tune.
+                </p>
+                <button
+                  onClick={handleQuickGenerate}
+                  disabled={isLoading}
+                  className="ck-btn-primary px-8 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 transition-all inline-flex items-center gap-2"
+                >
+                  <PillarIcon className="w-4.5 h-4.5" icon="sparkles" />
+                  Quick Generate
+                </button>
               </div>
-              <p className="text-sm text-text-secondary mb-1">
-                One click generates 4 bio variations, 3 name field options,
-                CTA ideas, and profile tips.
-              </p>
-              <p className="text-xs text-text-tertiary mb-6">
-                All tailored to your Brand DNA.
-              </p>
-              <button
-                onClick={handleGenerate}
-                disabled={isLoading}
-                className="ck-btn-primary px-8 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 transition-all inline-flex items-center gap-2"
-              >
-                <PillarIcon className="w-4.5 h-4.5" icon="sparkles" />
-                Generate My Bio
-              </button>
+
+              {generator?.params && (
+                <BioInputForm
+                  params={generator.params}
+                  onSubmit={handleCustomGenerate}
+                  isLoading={isLoading}
+                />
+              )}
             </motion.div>
           )}
 
@@ -315,7 +648,7 @@ export default function InstagramBioPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" />
                 </svg>
-                <span className="text-sm">Crafting your perfect bio...</span>
+                <span className="text-sm">Crafting your full profile package...</span>
               </div>
             </div>
           )}
@@ -352,9 +685,9 @@ export default function InstagramBioPage() {
               className="space-y-5"
             >
               {/* Regenerate bar */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <button
-                  onClick={handleGenerate}
+                  onClick={handleQuickGenerate}
                   className="ck-btn-primary px-5 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -372,6 +705,13 @@ export default function InstagramBioPage() {
                   History ({history.length})
                 </button>
               </div>
+
+              {/* SEO Audit */}
+              {(parsed.seoAudit.primaryKeyword ||
+                parsed.seoAudit.secondaryKeywords.length > 0 ||
+                parsed.seoAudit.intro) && (
+                <BioSeoAuditCard audit={parsed.seoAudit} />
+              )}
 
               {/* Name field options */}
               {parsed.nameOptions.length > 0 && (
@@ -425,27 +765,111 @@ export default function InstagramBioPage() {
                 </div>
               )}
 
-              {/* CTAs section */}
-              {parsed.ctasSection && (
+              {/* Bio Audit & Score */}
+              {(parsed.score.overall !== null ||
+                parsed.score.improvements.length > 0) && (
+                <BioScoreCard score={parsed.score} />
+              )}
+
+              {/* Native Multi-Link Strategy */}
+              <BioStrategyCard
+                title="Native Multi-Link Strategy"
+                subtitle="Instagram now supports 5 native links — each one a slot in your funnel"
+                iconPath="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.51a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.374"
+                content={parsed.multiLinkSection}
+              />
+
+              {/* Action Buttons */}
+              <BioStrategyCard
+                title="Action Buttons"
+                iconPath="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
+                content={parsed.actionButtonsSection}
+              />
+
+              {/* Pinned Posts Strategy */}
+              {parsed.pinnedPosts.length > 0 && (
                 <div className="ck-card p-5">
-                  <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.51a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.374" /></svg>
-                    Link-in-Bio CTAs
+                  <h3 className="text-sm font-semibold text-text-primary mb-1 flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-accent"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16 12V4l1-1V2H7v1l1 1v5L5 11.5V13h6v8l1 1 1-1v-8h6v-1.5L16 12z"
+                      />
+                    </svg>
+                    Pinned Posts Strategy
                   </h3>
-                  <MarkdownRenderer content={parsed.ctasSection} />
+                  <p className="text-[11px] text-text-tertiary mb-3">
+                    The first 3 posts on your grid — your top-of-profile funnel
+                  </p>
+                  <div className="space-y-3">
+                    {parsed.pinnedPosts.map((post, i) => (
+                      <div
+                        key={i}
+                        className="rounded-lg border border-border bg-surface p-3"
+                      >
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-[10px] uppercase tracking-wide font-bold text-accent">
+                            Pin {i + 1}
+                          </span>
+                          <span className="text-[10px] uppercase tracking-wide font-semibold text-text-tertiary">
+                            {post.label}
+                          </span>
+                          {post.format && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-surface-hover text-text-secondary">
+                              {post.format}
+                            </span>
+                          )}
+                        </div>
+                        {post.topic && (
+                          <p className="text-sm font-semibold text-text-primary mb-1">
+                            {post.topic}
+                          </p>
+                        )}
+                        {post.hook && (
+                          <p className="text-sm text-text-secondary italic mb-1">
+                            &ldquo;{post.hook}&rdquo;
+                          </p>
+                        )}
+                        {post.why && (
+                          <p className="text-[11px] text-text-tertiary leading-snug">
+                            {post.why}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Tips section */}
-              {parsed.tipsSection && (
-                <div className="ck-card p-5">
-                  <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" /></svg>
-                    Profile Optimization Tips
-                  </h3>
-                  <MarkdownRenderer content={parsed.tipsSection} />
-                </div>
-              )}
+              {/* Highlights Strategy */}
+              <BioStrategyCard
+                title="Highlights Strategy"
+                subtitle="Your evergreen content library — order matters (left-to-right priority)"
+                iconPath="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008zM12 5.25v.75"
+                content={parsed.highlightsSection}
+              />
+
+              {/* Profile Photo Direction */}
+              <BioStrategyCard
+                title="Profile Photo Direction"
+                iconPath="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"
+                content={parsed.profilePhotoSection}
+              />
+
+              {/* Anti-Patterns */}
+              <BioStrategyCard
+                title="Anti-Patterns to Avoid"
+                subtitle="Phrases and moves that hurt your search ranking and credibility"
+                iconPath="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                content={parsed.antiPatternsSection}
+              />
 
               {/* Fallback: raw markdown if parsing found nothing */}
               {parsed.bios.length === 0 && activeOutput && (
@@ -467,6 +891,11 @@ export default function InstagramBioPage() {
             <InstagramPreview
               nameField={previewName}
               bioText={previewBio}
+              category={parsed.seoAudit.category}
+              links={previewLinks}
+              actionButtons={previewActionButtons}
+              highlights={previewHighlights}
+              pinnedPosts={previewPinned}
             />
             {previewBio && (
               <p className="text-[11px] text-text-tertiary text-center">

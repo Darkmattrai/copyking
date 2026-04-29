@@ -7,6 +7,12 @@ import type { BrandDNA } from "@/types/brand";
 
 export const maxDuration = 60;
 
+const DEFAULT_MODEL = "gpt-4o-mini";
+
+const MODEL_OVERRIDES: Record<string, string> = {
+  "instagram-bio": "gpt-4o",
+};
+
 function buildBrandContext(brandDNA: BrandDNA): string {
   const sections: string[] = [];
 
@@ -143,7 +149,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: openai("gpt-4o-mini"),
+    model: openai(MODEL_OVERRIDES[slug] ?? DEFAULT_MODEL),
     system: systemPrompt + brandContext,
     prompt: userPrompt,
   });

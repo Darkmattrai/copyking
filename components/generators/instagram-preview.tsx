@@ -1,20 +1,55 @@
 "use client";
 
+export interface PreviewLink {
+  title: string;
+}
+
+export interface PreviewHighlight {
+  name: string;
+  letter: string;
+  color: string;
+}
+
+export interface PreviewPinnedPost {
+  label: string;
+  role: string;
+}
+
 interface InstagramPreviewProps {
   nameField: string;
   bioText: string;
   username?: string;
+  category?: string;
+  links?: PreviewLink[];
+  actionButtons?: string[];
+  highlights?: PreviewHighlight[];
+  pinnedPosts?: PreviewPinnedPost[];
 }
+
+const ROLE_TONES: Record<string, string> = {
+  awareness: "bg-gradient-to-br from-purple-500/30 to-pink-500/30",
+  consideration: "bg-gradient-to-br from-blue-500/30 to-cyan-500/30",
+  conversion: "bg-gradient-to-br from-emerald-500/30 to-teal-500/30",
+};
 
 export function InstagramPreview({
   nameField,
   bioText,
   username = "yourusername",
+  category,
+  links = [],
+  actionButtons = [],
+  highlights = [],
+  pinnedPosts = [],
 }: InstagramPreviewProps) {
   const bioLines = bioText
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean);
+
+  const visibleLinks = links.slice(0, 5);
+  const visibleHighlights = highlights.slice(0, 7);
+  const visiblePinned = pinnedPosts.slice(0, 3);
 
   return (
     <div className="w-full max-w-[320px] mx-auto">
@@ -69,8 +104,15 @@ export function InstagramPreview({
             {nameField || "Your Name | Keyword"}
           </p>
 
+          {/* Category */}
+          {category && (
+            <p className="text-[11px] text-text-tertiary leading-snug mb-1">
+              {category}
+            </p>
+          )}
+
           {/* Bio text */}
-          <div className="text-[13px] text-text-secondary leading-snug mb-3 min-h-[3rem]">
+          <div className="text-[13px] text-text-secondary leading-snug mb-2 min-h-[3rem]">
             {bioLines.length > 0 ? (
               bioLines.map((line, i) => (
                 <span key={i} className="block">
@@ -82,7 +124,52 @@ export function InstagramPreview({
             )}
           </div>
 
+          {/* Native multi-link button */}
+          {visibleLinks.length > 0 && (
+            <div className="mb-3">
+              <button className="w-full text-left px-2.5 py-1.5 rounded-lg border border-border bg-surface flex items-center justify-between">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <svg
+                    className="w-3 h-3 text-text-primary shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.51a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.374"
+                    />
+                  </svg>
+                  <span className="text-[11px] font-medium text-text-primary truncate">
+                    {visibleLinks[0].title}
+                  </span>
+                </div>
+                {visibleLinks.length > 1 && (
+                  <span className="text-[10px] text-text-tertiary shrink-0 ml-1.5">
+                    +{visibleLinks.length - 1}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+
           {/* Action buttons */}
+          {actionButtons.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {actionButtons.slice(0, 3).map((btn, i) => (
+                <span
+                  key={i}
+                  className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/30"
+                >
+                  {btn}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Default action buttons */}
           <div className="flex gap-1.5 mb-3">
             <button className="flex-1 py-1.5 rounded-lg bg-accent text-white text-[11px] font-semibold text-center">
               Follow
@@ -95,15 +182,64 @@ export function InstagramPreview({
             </button>
           </div>
 
-          {/* Grid placeholder */}
+          {/* Highlights row */}
+          {visibleHighlights.length > 0 && (
+            <div className="mb-3 -mx-1">
+              <div className="flex gap-2.5 px-1 overflow-x-auto pb-1 scrollbar-none">
+                {visibleHighlights.map((h, i) => (
+                  <div key={i} className="flex flex-col items-center shrink-0">
+                    <div
+                      className="w-12 h-12 rounded-full p-[2px] border border-border"
+                      style={{ background: `linear-gradient(135deg, ${h.color}, ${h.color}aa)` }}
+                    >
+                      <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
+                        <span
+                          className="text-sm font-bold"
+                          style={{ color: h.color }}
+                        >
+                          {h.letter}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[9px] text-text-secondary mt-1 max-w-[3.25rem] truncate">
+                      {h.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Grid: pinned posts first, then placeholders */}
           <div className="border-t border-border pt-2">
             <div className="grid grid-cols-3 gap-0.5">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {visiblePinned.map((p, i) => (
                 <div
-                  key={i}
-                  className="aspect-square bg-surface-hover rounded-sm"
-                />
+                  key={`pin-${i}`}
+                  className={`relative aspect-square rounded-sm overflow-hidden flex items-center justify-center text-center px-1 ${
+                    ROLE_TONES[p.role.toLowerCase()] ?? "bg-surface-hover"
+                  }`}
+                >
+                  <svg
+                    className="absolute top-0.5 right-0.5 w-2.5 h-2.5 text-white drop-shadow"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M16 9V4l1-1V2H7v1l1 1v5L5 11.5V13h6v8l1 1 1-1v-8h6v-1.5L16 9z" />
+                  </svg>
+                  <span className="text-[9px] font-semibold text-text-primary leading-tight px-0.5">
+                    {p.label}
+                  </span>
+                </div>
               ))}
+              {Array.from({ length: Math.max(0, 6 - visiblePinned.length) }).map(
+                (_, i) => (
+                  <div
+                    key={`ph-${i}`}
+                    className="aspect-square bg-surface-hover rounded-sm"
+                  />
+                ),
+              )}
             </div>
           </div>
         </div>
