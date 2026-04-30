@@ -92,12 +92,19 @@ export async function POST(req: Request) {
     );
 
     if (error) {
+      console.error(
+        `[generations] save failed user=${user.id} slug=${body.slug}`,
+        error,
+      );
       return Response.json(
         { error: "Failed to save generation", details: error.message },
         { status: 500 },
       );
     }
 
+    console.log(
+      `[generations] saved user=${user.id} slug=${body.slug} content=${body.content.length}c`,
+    );
     return Response.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

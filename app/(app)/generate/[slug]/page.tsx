@@ -21,7 +21,6 @@ export default function GeneratorPage() {
   const hasParams = generator?.params && generator.params.length > 0;
   const [submitted, setSubmitted] = useState(false);
   const lastParamsRef = useRef<Record<string, string>>({});
-  const prevIsLoadingRef = useRef(false);
 
   const cachedGeneration = useGenerationsStore(
     (s) => s.generations[slug],
@@ -47,19 +46,6 @@ export default function GeneratorPage() {
     }
   }, [cachedGeneration, submitted, setCompletion]);
 
-  // Persist completion to the store when streaming finishes.
-  useEffect(() => {
-    const finishedStreaming =
-      prevIsLoadingRef.current && !isLoading && completion.length > 100;
-    if (finishedStreaming) {
-      void setGeneration(slug, {
-        content: completion,
-        params: lastParamsRef.current,
-      });
-    }
-    prevIsLoadingRef.current = isLoading;
-  }, [isLoading, completion, slug, setGeneration]);
-
   const handleGenerate = useCallback(
     async (formParams?: Record<string, string>) => {
       const paramValues = formParams ?? lastParamsRef.current;
@@ -67,15 +53,24 @@ export default function GeneratorPage() {
       setSubmitted(true);
       setCompletion("");
 
-      await complete("", {
+      // complete() resolves with the final completion text on success.
+      // Save here directly so persistence does not depend on effect timing.
+      const result = await complete("", {
         body: {
           slug,
           params: paramValues,
           brandDNA,
         },
       });
+
+      if (typeof result === "string" && result.length > 100) {
+        void setGeneration(slug, {
+          content: result,
+          params: paramValues,
+        });
+      }
     },
-    [slug, brandDNA, complete, setCompletion],
+    [slug, brandDNA, complete, setCompletion, setGeneration],
   );
 
   const handleRegenerate = useCallback(() => {

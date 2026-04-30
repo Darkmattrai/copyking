@@ -47,11 +47,40 @@ export const useGenerationsStore = create<GenerationsStore>()(
             throw new Error(data?.error || "Failed to load generations");
           }
 
+          const dbGenerations: Record<string, GenerationEntry> =
+            data.generations || {};
+          const localGenerations = get().generations;
+
+          // DB wins on shared slugs; local-only entries are preserved and
+          // migrated to DB in the background so users transitioning from
+          // localStorage-only persistence don't lose their work.
+          const merged: Record<string, GenerationEntry> = {
+            ...localGenerations,
+            ...dbGenerations,
+          };
+
+          const toMigrate: Array<[string, GenerationEntry]> = [];
+          for (const [slug, entry] of Object.entries(localGenerations)) {
+            if (!dbGenerations[slug] && entry?.content) {
+              toMigrate.push([slug, entry]);
+            }
+          }
+
           set({
-            generations: data.generations || {},
+            generations: merged,
             isLoaded: true,
             isSyncing: false,
           });
+
+          for (const [slug, entry] of toMigrate) {
+            void fetch("/api/generations", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug, ...entry }),
+            }).catch((err) =>
+              console.error("[generations] migrate failed", slug, err),
+            );
+          }
         } catch (err) {
           console.error("[generations] load failed", err);
           set({ isLoaded: true, isSyncing: false });
