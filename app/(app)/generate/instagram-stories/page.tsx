@@ -60,16 +60,18 @@ function extractH2Section(md: string, heading: string): string {
 }
 
 function extractField(block: string, label: string): string {
-  // Match e.g. "**Headline:** ..." up to the next bold label or end of block.
+  // Accept "**Label:** value", "**Label**: value", and "- **Label:** value"
+  // (bullet-prefixed). Terminate at the next field — which may also be bullet-
+  // prefixed inside an overview block — or at end of block.
   const pattern = new RegExp(
-    `\\*\\*${escapeRegex(label)}:?\\*\\*\\s*([\\s\\S]*?)(?=\\n\\s*\\*\\*[A-Z]|$)`,
+    `\\*\\*${escapeRegex(label)}\\s*:?\\s*\\*\\*\\s*:?\\s*([\\s\\S]*?)(?=\\n[\\s\\-*•]*\\*\\*[A-Z]|$)`,
     "i",
   );
   const match = block.match(pattern);
   if (!match) return "";
   return match[1]
     .trim()
-    .replace(/^[-*]\s+/, "")
+    .replace(/^[-*•]\s+/, "")
     .replace(/\n+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -374,33 +376,15 @@ export default function InstagramStoriesPage() {
             </div>
           )}
 
-          {/* Streaming markdown */}
-          {isLoading && activeOutput && (
-            <div className="ck-card p-6">
-              <MarkdownRenderer content={activeOutput} />
-              <div className="mt-4 flex items-center gap-2 text-text-tertiary">
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [animation-delay:300ms]" />
-                </div>
-                <span className="text-xs">Still writing...</span>
-              </div>
-            </div>
-          )}
-
-          {/* Completed output */}
-          {!isLoading && activeOutput && submitted && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-5"
-            >
+          {/* Output (kept mounted during and after streaming so content never blanks) */}
+          {activeOutput && (
+            <div className="space-y-5">
               {/* Action bar */}
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={handleRegenerate}
-                  className="ck-btn-primary px-5 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2"
+                  disabled={isLoading}
+                  className="ck-btn-primary px-5 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 disabled:opacity-50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
@@ -413,7 +397,8 @@ export default function InstagramStoriesPage() {
                     setRestoredOutput(null);
                     setCompletion("");
                   }}
-                  className="ck-btn-secondary px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2"
+                  disabled={isLoading}
+                  className="ck-btn-secondary px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 disabled:opacity-50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
@@ -429,6 +414,16 @@ export default function InstagramStoriesPage() {
                   </svg>
                   History ({history.length})
                 </button>
+                {isLoading && (
+                  <span className="inline-flex items-center gap-2 text-xs text-text-tertiary ml-auto">
+                    <span className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [animation-delay:150ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [animation-delay:300ms]" />
+                    </span>
+                    Still writing...
+                  </span>
+                )}
               </div>
 
               {/* Series overview */}
@@ -530,13 +525,36 @@ export default function InstagramStoriesPage() {
                 </SectionCard>
               )}
 
-              {/* Fallback if parsing found no slides */}
-              {parsed.slides.length === 0 && (
-                <div className="ck-card p-6">
+              {/* Always-on raw markdown — collapsible. Open by default if
+                  parsing returned no slides so the user always sees content. */}
+              <details
+                className="ck-card p-5 group"
+                open={parsed.slides.length === 0}
+              >
+                <summary className="cursor-pointer text-sm font-semibold text-text-primary flex items-center gap-2 select-none">
+                  <svg
+                    className="w-3.5 h-3.5 text-text-tertiary transition-transform group-open:rotate-90"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                    />
+                  </svg>
+                  Full raw markdown
+                  <span className="text-[11px] font-normal text-text-tertiary">
+                    — the entire generated output
+                  </span>
+                </summary>
+                <div className="mt-3 pt-3 border-t border-border">
                   <MarkdownRenderer content={activeOutput} />
                 </div>
-              )}
-            </motion.div>
+              </details>
+            </div>
           )}
         </div>
 
