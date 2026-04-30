@@ -20,13 +20,13 @@ export default function GeneratorPage() {
   const brandDNA = useBrandStore((s) => s.brandDNA);
   const hasParams = generator?.params && generator.params.length > 0;
   const [submitted, setSubmitted] = useState(false);
-  const [hydratedFromCache, setHydratedFromCache] = useState(false);
   const lastParamsRef = useRef<Record<string, string>>({});
   const prevIsLoadingRef = useRef(false);
 
   const cachedGeneration = useGenerationsStore(
     (s) => s.generations[slug],
   );
+  const isStoreLoaded = useGenerationsStore((s) => s.isLoaded);
   const setGeneration = useGenerationsStore((s) => s.setGeneration);
   const clearGeneration = useGenerationsStore((s) => s.clearGeneration);
 
@@ -35,23 +35,24 @@ export default function GeneratorPage() {
     streamProtocol: "text",
   });
 
-  // Hydrate completion + form state from persisted store on first mount.
+  // Hydrate completion from store whenever a cached generation appears,
+  // as long as the user hasn't started a fresh generation. The cache can
+  // arrive on first render (localStorage), or moments later (Supabase sync).
   useEffect(() => {
-    if (hydratedFromCache) return;
-    if (cachedGeneration && cachedGeneration.content) {
+    if (submitted) return;
+    if (cachedGeneration?.content) {
       setCompletion(cachedGeneration.content);
       lastParamsRef.current = cachedGeneration.params || {};
       setSubmitted(true);
     }
-    setHydratedFromCache(true);
-  }, [hydratedFromCache, cachedGeneration, setCompletion]);
+  }, [cachedGeneration, submitted, setCompletion]);
 
   // Persist completion to the store when streaming finishes.
   useEffect(() => {
     const finishedStreaming =
       prevIsLoadingRef.current && !isLoading && completion.length > 100;
     if (finishedStreaming) {
-      setGeneration(slug, {
+      void setGeneration(slug, {
         content: completion,
         params: lastParamsRef.current,
       });
@@ -149,7 +150,17 @@ export default function GeneratorPage() {
         </div>
       </motion.div>
 
-      {hasParams && !submitted && (
+      {!submitted && !isStoreLoaded && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="ck-card p-6 mb-6 text-center"
+        >
+          <p className="text-sm text-text-tertiary">Loading your saved work…</p>
+        </motion.div>
+      )}
+
+      {hasParams && !submitted && isStoreLoaded && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -168,7 +179,7 @@ export default function GeneratorPage() {
         </motion.div>
       )}
 
-      {!hasParams && !submitted && (
+      {!hasParams && !submitted && isStoreLoaded && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

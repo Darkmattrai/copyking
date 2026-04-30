@@ -7,6 +7,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { Toaster } from "sonner";
 
 import { SupabaseSyncBootstrap } from "@/components/brand/supabase-sync-bootstrap";
+import { GenerationsSyncBootstrap } from "@/components/generators/generations-sync-bootstrap";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ export function Providers({ children, themeProps }: ProvidersProps) {
   return (
     <NextThemesProvider {...themeProps}>
       <SupabaseSyncBootstrap />
+      <GenerationsSyncBootstrap />
       {children}
       <Toaster
         position="bottom-right"
