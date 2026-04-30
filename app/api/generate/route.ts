@@ -3,9 +3,10 @@ import { openai } from "@ai-sdk/openai";
 
 import { getGenerator } from "@/lib/generators/registry";
 import { GENERATOR_PROMPTS } from "@/lib/generators/prompts";
+import { streamOrganicContentIdeas } from "@/lib/generators/organic-content-ideas-pipeline";
 import type { BrandDNA } from "@/types/brand";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const DEFAULT_MODEL = "gpt-4o-mini";
 
@@ -166,6 +167,25 @@ export async function POST(req: Request) {
 
   const modelId = MODEL_OVERRIDES[slug] ?? DEFAULT_MODEL;
   console.log(`[generate] slug=${slug} model=${modelId} brandDNA=${!!brandDNA}`);
+
+  if (slug === "organic-content-ideas") {
+    try {
+      return await streamOrganicContentIdeas({
+        systemPrompt: systemPrompt + brandContext,
+        userPrompt,
+      });
+    } catch (err) {
+      const e = err as { name?: string; message?: string; status?: number };
+      console.error(
+        `[generate] pipeline error slug=${slug}`,
+        { name: e?.name, message: e?.message, status: e?.status },
+      );
+      return new Response(
+        JSON.stringify({ error: e?.message ?? "Unknown error" }),
+        { status: 500 },
+      );
+    }
+  }
 
   try {
     const result = streamText({
