@@ -114,18 +114,33 @@ function buildBrandContext(brandDNA: BrandDNA): string {
 }
 
 export async function POST(req: Request) {
-  const {
-    slug,
-    params,
-    brandDNA,
-  }: {
+  if (!process.env.OPENAI_API_KEY) {
+    console.error("[generate] OPENAI_API_KEY is missing in environment");
+    return new Response(
+      JSON.stringify({ error: "Server misconfigured: OPENAI_API_KEY missing" }),
+      { status: 500 },
+    );
+  }
+
+  let body: {
     slug: string;
     params?: Record<string, string>;
     brandDNA: BrandDNA;
-  } = await req.json();
+  };
+  try {
+    body = await req.json();
+  } catch (err) {
+    console.error("[generate] Failed to parse request body", err);
+    return new Response(JSON.stringify({ error: "Invalid request body" }), {
+      status: 400,
+    });
+  }
+
+  const { slug, params, brandDNA } = body;
 
   const generator = getGenerator(slug);
   if (!generator) {
+    console.error("[generate] Unknown generator slug:", slug);
     return new Response(JSON.stringify({ error: "Unknown generator" }), {
       status: 400,
     });
@@ -133,12 +148,13 @@ export async function POST(req: Request) {
 
   const systemPrompt = GENERATOR_PROMPTS[slug];
   if (!systemPrompt) {
+    console.error("[generate] No prompt for slug:", slug);
     return new Response(JSON.stringify({ error: "No prompt for generator" }), {
       status: 400,
     });
   }
 
-  const brandContext = buildBrandContext(brandDNA);
+  const brandContext = brandDNA ? buildBrandContext(brandDNA) : "";
 
   let userPrompt = `Generate the ${generator.name} output for this brand.`;
   if (params && Object.keys(params).length > 0) {
@@ -148,11 +164,38 @@ export async function POST(req: Request) {
     userPrompt += `\n\nAdditional parameters:\n${paramLines}`;
   }
 
-  const result = streamText({
-    model: openai(MODEL_OVERRIDES[slug] ?? DEFAULT_MODEL),
-    system: systemPrompt + brandContext,
-    prompt: userPrompt,
-  });
+  const modelId = MODEL_OVERRIDES[slug] ?? DEFAULT_MODEL;
+  console.log(`[generate] slug=${slug} model=${modelId} brandDNA=${!!brandDNA}`);
 
-  return result.toTextStreamResponse();
+  try {
+    const result = streamText({
+      model: openai(modelId),
+      system: systemPrompt + brandContext,
+      prompt: userPrompt,
+      onError({ error }) {
+        const e = error as { name?: string; message?: string; status?: number; cause?: unknown };
+        console.error(
+          `[generate] streamText error slug=${slug} model=${modelId}`,
+          {
+            name: e?.name,
+            message: e?.message,
+            status: e?.status,
+            cause: e?.cause,
+          },
+        );
+      },
+    });
+
+    return result.toTextStreamResponse();
+  } catch (err) {
+    const e = err as { name?: string; message?: string; status?: number };
+    console.error(
+      `[generate] synchronous error slug=${slug} model=${modelId}`,
+      { name: e?.name, message: e?.message, status: e?.status },
+    );
+    return new Response(
+      JSON.stringify({ error: e?.message ?? "Unknown error" }),
+      { status: 500 },
+    );
+  }
 }
