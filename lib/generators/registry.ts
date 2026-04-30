@@ -171,51 +171,6 @@ export const GENERATORS: GeneratorDef[] = [
     category: "social",
     outputFormat: "markdown",
   },
-  {
-    slug: "organic-content-generator",
-    name: "Organic Content Generator",
-    description: "Full post with caption for any format",
-    icon: "pen",
-    category: "social",
-    params: [
-      {
-        key: "format",
-        label: "Content Format",
-        type: "select",
-        required: true,
-        options: [
-          { value: "carousel", label: "Carousel (8-10 slides)" },
-          { value: "reel", label: "Reel / Short Video" },
-          { value: "thread", label: "Text Post / Thread" },
-        ],
-      },
-      {
-        key: "topic",
-        label: "Topic or angle",
-        type: "text",
-        placeholder: "e.g. 3 mistakes beginners make with meal prep",
-        required: true,
-      },
-    ],
-    outputFormat: "markdown",
-  },
-  {
-    slug: "organic-caption",
-    name: "Organic Content Caption Generator",
-    description: "Hook + body + CTA + hashtags for any post",
-    icon: "pen",
-    category: "social",
-    params: [
-      {
-        key: "description",
-        label: "Describe your post",
-        type: "textarea",
-        placeholder: "What is the post about? What image or video are you sharing?",
-        required: true,
-      },
-    ],
-    outputFormat: "markdown",
-  },
 
   // ── Funnels ─────────────────────────────────────────────────────
   {
