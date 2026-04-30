@@ -1,12 +1,13 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCompletion } from "@ai-sdk/react";
 import { motion } from "framer-motion";
 
 import { getGenerator } from "@/lib/generators/registry";
 import { useBrandStore } from "@/lib/brand/store";
+import { useGenerationsStore } from "@/lib/generators/store";
 import { PillarIcon } from "@/components/brand/pillar-icon";
 import { ParamForm } from "@/components/generators/param-form";
 import { GeneratorOutput } from "@/components/generators/generator-output";
@@ -19,12 +20,44 @@ export default function GeneratorPage() {
   const brandDNA = useBrandStore((s) => s.brandDNA);
   const hasParams = generator?.params && generator.params.length > 0;
   const [submitted, setSubmitted] = useState(false);
+  const [hydratedFromCache, setHydratedFromCache] = useState(false);
   const lastParamsRef = useRef<Record<string, string>>({});
+  const prevIsLoadingRef = useRef(false);
+
+  const cachedGeneration = useGenerationsStore(
+    (s) => s.generations[slug],
+  );
+  const setGeneration = useGenerationsStore((s) => s.setGeneration);
+  const clearGeneration = useGenerationsStore((s) => s.clearGeneration);
 
   const { completion, isLoading, complete, setCompletion, error } = useCompletion({
     api: "/api/generate",
     streamProtocol: "text",
   });
+
+  // Hydrate completion + form state from persisted store on first mount.
+  useEffect(() => {
+    if (hydratedFromCache) return;
+    if (cachedGeneration && cachedGeneration.content) {
+      setCompletion(cachedGeneration.content);
+      lastParamsRef.current = cachedGeneration.params || {};
+      setSubmitted(true);
+    }
+    setHydratedFromCache(true);
+  }, [hydratedFromCache, cachedGeneration, setCompletion]);
+
+  // Persist completion to the store when streaming finishes.
+  useEffect(() => {
+    const finishedStreaming =
+      prevIsLoadingRef.current && !isLoading && completion.length > 100;
+    if (finishedStreaming) {
+      setGeneration(slug, {
+        content: completion,
+        params: lastParamsRef.current,
+      });
+    }
+    prevIsLoadingRef.current = isLoading;
+  }, [isLoading, completion, slug, setGeneration]);
 
   const handleGenerate = useCallback(
     async (formParams?: Record<string, string>) => {
@@ -47,6 +80,12 @@ export default function GeneratorPage() {
   const handleRegenerate = useCallback(() => {
     handleGenerate(lastParamsRef.current);
   }, [handleGenerate]);
+
+  const handleChangeInputs = useCallback(() => {
+    setSubmitted(false);
+    setCompletion("");
+    clearGeneration(slug);
+  }, [setCompletion, clearGeneration, slug]);
 
   if (!generator) {
     return (
@@ -167,10 +206,7 @@ export default function GeneratorPage() {
           {hasParams && (
             <div className="mb-4">
               <button
-                onClick={() => {
-                  setSubmitted(false);
-                  setCompletion("");
-                }}
+                onClick={handleChangeInputs}
                 className="text-xs text-text-tertiary hover:text-text-primary transition-colors flex items-center gap-1"
               >
                 <svg

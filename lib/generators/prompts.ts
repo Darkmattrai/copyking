@@ -418,21 +418,60 @@ A 2-3 sentence strategic summary tying the 30 days back to their offer, ICP, and
 For EVERY day (Day 1-30), output a structured block with these exact fields:
 
 **Day [N] — [Pillar] — [Format]**
+
+PART A — PLANNING FIELDS (every day)
 - **Topic/Angle**: Specific to their niche, written in their voice
 - **Hook (on-screen text or first caption line, ≤10 words)**: Pattern-interrupt, in their hook style. Must work muted.
 - **Caption Hook (first 125 chars)**: What appears before "...more" — must include the primary keyword
-- **Body Direction**: 1-2 sentences on what the body of the post/script delivers
 - **Save Trigger**: The specific element that makes someone save it (framework, list, swipe file, screenshot-worthy line)
 - **Send Trigger**: The specific persona who would DM this to a friend ("the founder who's still…", "the parent who…")
 - **CTA Type**: Save / Send / DM trigger word / Comment / Profile click / Broadcast Channel join
-- **CTA Copy**: The exact CTA line in their voice (no engagement-bait phrasing)
-- **SEO Keyword Target**: 1 primary keyword + 1 secondary, placed in caption first 125 chars + alt text
+- **SEO Keyword Target**: 1 primary keyword + 1 secondary
 - **Hashtags (3-5)**: 1 broad, 2-3 niche, 1 branded — written out
 - **Optimal Post Window**: One of [6-9am, 11am-1pm, 7-9pm] local with reasoning tied to their ICP
 - **Primary Metric Target**: Watch time / Sends / Saves / Profile clicks (pick ONE)
-- **Estimated 3-sec hold rate** (Reels only): Target 60%+
 
-Format each day as a clean block with bold field labels. Group the 30 days into 4 weekly sections (Week 1, Week 2, Week 3, Week 4 + days 29-30) with a 1-line theme for each week.
+PART B — READY-TO-POST SCRIPT (every day, format-specific, NEVER skip)
+
+Write the ACTUAL words ready to publish — no placeholders like "[Your Name]" or "[insert link]". Use the brand's Brand DNA data verbatim. Every script must be copy-paste-publishable.
+
+▸ **If Reel**: Output a scene-by-scene script using this exact structure:
+- **Scene 1 — 0-3s**: On-screen text: "[exact text]" | Voiceover: "[exact words spoken]" | Visual: [exact shot direction]
+- **Scene 2 — 3-8s**: On-screen text: "[…]" | Voiceover: "[…]" | Visual: […]
+- **Scene 3 — 8-15s**: On-screen text: "[…]" | Voiceover: "[…]" | Visual: […]
+- **Scene 4 — 15-22s**: On-screen text: "[…]" | Voiceover: "[…]" | Visual: […]
+- **Scene 5 — 22-30s (CTA scene)**: On-screen text: "[…]" | Voiceover: "[…]" | Visual: […]
+- **Audio direction**: Original audio OR specific trending audio name + reasoning
+- **Caption (full, ≤300 chars, ready to paste)**: "[full caption with hook + 1-2 body lines + CTA + hashtags inline]"
+
+▸ **If Carousel**: Write EVERY slide word-for-word using this structure:
+- **Slide 1 (Cover)**: "[exact text on slide, ≤10 words, the bold promise]"
+- **Slide 2 (Swipe-back hook)**: "[exact text, ≤15 words, functions as a second cover]"
+- **Slide 3**: "[exact text, one idea, 15-25 words]"
+- **Slide 4**: "[exact text, one idea, 15-25 words]"
+- **Slide 5**: "[exact text, one idea, 15-25 words]"
+- **Slide 6**: "[exact text, one idea, 15-25 words]"
+- **Slide 7**: "[exact text, one idea, 15-25 words]"
+- **Slide 8 (CTA stack)**: "[Save line] / [Send line: 'Send this to the [persona] who [behavior]'] / [DM trigger: 'DM "[KEYWORD]" for [resource]']"
+- **Caption (full, 200-500 chars, ready to paste)**: "[full caption with hook + body + CTA + hashtags inline]"
+
+▸ **If Single Image**: Write the FULL caption word-for-word, ready to paste:
+- **Hook line (visible before "...more", first 125 chars)**: "[exact text]"
+- **Body (3-6 short paragraphs, line breaks between)**: "[exact text]\n\n[exact text]\n\n[exact text]"
+- **CTA line**: "[exact text]"
+- **Hashtags inline**: "[3-5 hashtags exactly as on-post]"
+- **Alt text** (≤100 chars): "[exact alt text including primary keyword]"
+
+▸ **If Story Set**: Write every frame word-for-word with sticker config:
+- **Frame 1 (Hook)**: Text: "[exact text]" | Sticker: poll | Options: ["[A]", "[B]"]
+- **Frame 2 (Pain)**: Text: "[…]" | Sticker: question | Prompt: "[…]"
+- **Frame 3 (Value)**: Text: "[…]" | Sticker: quiz | Q: "[…]" | Options: ["[A]", "[B]", "[C]"]
+- **Frame 4 (Proof)**: Text: "[…]" | Sticker: slider | Emoji: [emoji]
+- **Frame 5 (CTA)**: Text: "[…]" | Sticker: link | URL: [their actual link from Brand DNA]
+
+CRITICAL: Part A and Part B are BOTH required for every single day — if you only output Part A or skip Part B, the day is incomplete and unusable.
+
+Format each day as a clean block with bold field labels. Group the 30 days into 4 weekly sections (Week 1, Week 2, Week 3, Week 4) with a 1-line theme for each week. Days 29-30 belong to Week 4.
 
 ### Reel-Specific Playbook
 
