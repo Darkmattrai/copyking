@@ -6,6 +6,7 @@ import { useCompletion } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useBrandStore } from "@/lib/brand/store";
+import { createMockBrandDNA } from "@/lib/brand/utils";
 import { useHistoryStore, type GenerationEntry } from "@/lib/generators/history-store";
 import { getGenerator } from "@/lib/generators/registry";
 import { PillarIcon } from "@/components/brand/pillar-icon";
@@ -462,8 +463,14 @@ function pinnedToPreview(posts: ParsedPinnedPost[]): PreviewPinnedPost[] {
 export default function InstagramBioPage() {
   const router = useRouter();
   const brandDNA = useBrandStore((s) => s.brandDNA);
+  const setBrandDNA = useBrandStore((s) => s.setBrandDNA);
+  const setInterviewCompleted = useBrandStore((s) => s.setInterviewCompleted);
+  const interviewCompleted = useBrandStore((s) => s.interviewCompleted);
   const { addEntry, getEntriesForSlug } = useHistoryStore();
   const generator = getGenerator("instagram-bio");
+
+  const brandIsEmpty =
+    !interviewCompleted || (brandDNA?.completionScore ?? 0) === 0;
 
   const [selectedBioIdx, setSelectedBioIdx] = useState(0);
   const [selectedNameIdx, setSelectedNameIdx] = useState(0);
@@ -610,6 +617,52 @@ export default function InstagramBioPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-3"
             >
+              {brandIsEmpty && (
+                <div className="ck-card p-4 border-amber-500/40 bg-amber-500/5 flex items-start gap-3">
+                  <svg
+                    className="w-4 h-4 text-amber-500 mt-0.5 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                    />
+                  </svg>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-text-primary mb-0.5">
+                      Brand DNA is empty
+                    </p>
+                    <p className="text-xs text-text-tertiary mb-2">
+                      Without it, the generator can&apos;t write copy specific to
+                      your brand. Complete onboarding, or load a demo brand to
+                      test the generator right now.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => {
+                          setBrandDNA(createMockBrandDNA());
+                          setInterviewCompleted(true);
+                        }}
+                        className="ck-btn-primary px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5"
+                      >
+                        <PillarIcon className="w-3.5 h-3.5" icon="sparkles" />
+                        Load Demo Brand DNA
+                      </button>
+                      <button
+                        onClick={() => router.push("/onboarding")}
+                        className="ck-btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium"
+                      >
+                        Start Brand Discovery
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="ck-card p-8 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-accent-muted flex items-center justify-center text-accent mx-auto mb-4">
                   <PillarIcon className="w-8 h-8" icon="instagram" />
@@ -622,7 +675,7 @@ export default function InstagramBioPage() {
                 </p>
                 <button
                   onClick={handleQuickGenerate}
-                  disabled={isLoading}
+                  disabled={isLoading || brandIsEmpty}
                   className="ck-btn-primary px-8 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 transition-all inline-flex items-center gap-2"
                 >
                   <PillarIcon className="w-4.5 h-4.5" icon="sparkles" />

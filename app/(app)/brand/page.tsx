@@ -7,7 +7,7 @@ import { PillarCard } from "@/components/brand/pillar-card";
 import { HydrationGuard } from "@/components/hydration-guard";
 import { useBrandStore } from "@/lib/brand/store";
 import { PILLAR_META } from "@/types/brand";
-import { getPillarCompletion } from "@/lib/brand/utils";
+import { getPillarCompletion, createMockBrandDNA } from "@/lib/brand/utils";
 
 function SummaryField({
   label,
@@ -30,21 +30,34 @@ function SummaryField({
 
 function DashboardContent() {
   const router = useRouter();
-  const { brandDNA, interviewCompleted } = useBrandStore();
+  const { brandDNA, interviewCompleted, setBrandDNA, setInterviewCompleted } =
+    useBrandStore();
 
   if (!interviewCompleted) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
         <h1 className="text-2xl font-bold text-text-primary mb-3">No Brand DNA Yet</h1>
         <p className="text-text-secondary mb-6 max-w-md">
-          Complete the brand discovery interview to build your Brand DNA.
+          Complete the brand discovery interview to build your Brand DNA — or
+          load a demo brand to test the generators immediately.
         </p>
-        <button
-          className="ck-btn-primary !px-8 !py-3 !rounded-xl"
-          onClick={() => router.push("/onboarding")}
-        >
-          Start Discovery
-        </button>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            className="ck-btn-primary !px-8 !py-3 !rounded-xl"
+            onClick={() => router.push("/onboarding")}
+          >
+            Start Discovery
+          </button>
+          <button
+            className="ck-btn-secondary !px-6 !py-3 !rounded-xl"
+            onClick={() => {
+              setBrandDNA(createMockBrandDNA());
+              setInterviewCompleted(true);
+            }}
+          >
+            Load Demo Brand DNA
+          </button>
+        </div>
       </div>
     );
   }
