@@ -19,6 +19,7 @@ interface InstagramPreviewProps {
   nameField: string;
   bioText: string;
   username?: string;
+  onUsernameChange?: (value: string) => void;
   category?: string;
   links?: PreviewLink[];
   actionButtons?: string[];
@@ -27,15 +28,23 @@ interface InstagramPreviewProps {
 }
 
 const ROLE_TONES: Record<string, string> = {
-  awareness: "bg-gradient-to-br from-purple-500/30 to-pink-500/30",
-  consideration: "bg-gradient-to-br from-blue-500/30 to-cyan-500/30",
-  conversion: "bg-gradient-to-br from-emerald-500/30 to-teal-500/30",
+  "my story": "bg-gradient-to-br from-purple-500/30 to-pink-500/30",
+  "how to start with me": "bg-gradient-to-br from-blue-500/30 to-cyan-500/30",
+  "proof": "bg-gradient-to-br from-emerald-500/30 to-teal-500/30",
+  "results": "bg-gradient-to-br from-emerald-500/30 to-teal-500/30",
+  "testimonials": "bg-gradient-to-br from-emerald-500/30 to-teal-500/30",
+  "lead magnet": "bg-gradient-to-br from-amber-500/30 to-orange-500/30",
+  // Legacy keys for backward compatibility with cached generations
+  "awareness": "bg-gradient-to-br from-purple-500/30 to-pink-500/30",
+  "consideration": "bg-gradient-to-br from-blue-500/30 to-cyan-500/30",
+  "conversion": "bg-gradient-to-br from-emerald-500/30 to-teal-500/30",
 };
 
 export function InstagramPreview({
   nameField,
   bioText,
   username = "yourusername",
+  onUsernameChange,
   category,
   links = [],
   actionButtons = [],
@@ -71,7 +80,17 @@ export function InstagramPreview({
         <div className="flex items-center justify-between px-4 py-2 border-b border-border">
           <div className="flex items-center gap-1">
             <svg className="w-3 h-3 text-text-primary" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-            <span className="text-sm font-semibold text-text-primary">{username}</span>
+            {onUsernameChange ? (
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => onUsernameChange(e.target.value)}
+                className="text-sm font-semibold text-text-primary bg-transparent border-none outline-none w-full min-w-0 focus:ring-0 p-0"
+                placeholder="yourusername"
+              />
+            ) : (
+              <span className="text-sm font-semibold text-text-primary">{username}</span>
+            )}
           </div>
           <svg className="w-5 h-5 text-text-primary" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" /></svg>
         </div>
@@ -217,7 +236,9 @@ export function InstagramPreview({
                 <div
                   key={`pin-${i}`}
                   className={`relative aspect-square rounded-sm overflow-hidden flex items-center justify-center text-center px-1 ${
-                    ROLE_TONES[p.role.toLowerCase()] ?? "bg-surface-hover"
+                    ROLE_TONES[p.role.toLowerCase()] ??
+                    Object.entries(ROLE_TONES).find(([k]) => p.role.toLowerCase().includes(k))?.[1] ??
+                    "bg-surface-hover"
                   }`}
                 >
                   <svg

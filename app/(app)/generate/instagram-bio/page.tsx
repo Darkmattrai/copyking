@@ -25,6 +25,7 @@ import {
 } from "@/components/generators/bio-seo-audit-card";
 import { BioScoreCard, type BioScore } from "@/components/generators/bio-score-card";
 import { BioStrategyCard } from "@/components/generators/bio-strategy-card";
+import { BrandDNAHero } from "@/components/generators/brand-dna-hero";
 
 // ────────────────────────────────────────────────────────────────
 // Types
@@ -39,7 +40,7 @@ interface ParsedBio {
 }
 
 interface ParsedPinnedPost {
-  label: string; // "Awareness", "Consideration", "Conversion"
+  label: string;
   format: string;
   topic: string;
   hook: string;
@@ -171,11 +172,11 @@ function parseNameOptions(section: string): string[] {
 }
 
 const FORMULA_LABELS = [
-  { label: "Value Formula", formula: "What you do + Who you help + Result" },
-  { label: "Proof Formula", formula: "Credibility metric + What you do + CTA" },
-  { label: "Mission Formula", formula: "Change you create + How you do it" },
-  { label: "Personality Formula", formula: "Identity + Personal touch + CTA" },
-  { label: "Transformation Arc", formula: "From where they were → To where they are" },
+  { label: "Authority Style", formula: "Identity/Title + Transformation + CTA + Link" },
+  { label: "Proof-Led Style", formula: "Proof/Results + Transformation + CTA + Link" },
+  { label: "Mission-Driven Style", formula: "Purpose + Transformation + CTA + Link" },
+  { label: "Personality Style", formula: "Identity + Personal touch + CTA + Link" },
+  { label: "Transformation Arc Style", formula: "From X → To Y + CTA + Link" },
   { label: "Lowercase Aesthetic", formula: "All lowercase, minimal punctuation, 2026 trend" },
 ];
 
@@ -261,11 +262,11 @@ function parseBioVariations(raw: string): ParsedBio[] {
 function parsePinnedPosts(raw: string): ParsedPinnedPost[] {
   const posts: ParsedPinnedPost[] = [];
   const pattern =
-    /###\s+Pinned Post\s+\d+\s*[—–-]\s*(Awareness|Consideration|Conversion)([^\n]*)\n([\s\S]*?)(?=###\s+Pinned Post|\n##\s+|$)/gim;
+    /###\s+Pinned Post\s+\d+\s*[—–-]\s*(My Story|How To Start With Me|Proof[^"\n]*|Results[^"\n]*|Testimonials[^"\n]*|Lead Magnet[^"\n]*|Awareness|Consideration|Conversion)([^\n]*)\n([\s\S]*?)(?=###\s+Pinned Post|\n##\s+|$)/gim;
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(raw)) !== null) {
-    const label = match[1];
+    const label = match[1].trim().replace(/\s*\/\s*$/, "");
     const body = match[3] || "";
     const format = extractLabeledValue(body, "Format");
     const topic = extractLabeledValue(body, "Topic");
@@ -477,6 +478,7 @@ export default function InstagramBioPage() {
   const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [restoredOutput, setRestoredOutput] = useState<string | null>(null);
+  const [previewUsername, setPreviewUsername] = useState("yourusername");
 
   const { completion, isLoading, complete, setCompletion, error } = useCompletion({
     api: "/api/generate",
@@ -605,6 +607,8 @@ export default function InstagramBioPage() {
           </div>
         </div>
       </motion.div>
+
+      <BrandDNAHero />
 
       {/* Main 2-column layout */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
@@ -944,6 +948,8 @@ export default function InstagramBioPage() {
             <InstagramPreview
               nameField={previewName}
               bioText={previewBio}
+              username={previewUsername}
+              onUsernameChange={setPreviewUsername}
               category={parsed.seoAudit.category}
               links={previewLinks}
               actionButtons={previewActionButtons}

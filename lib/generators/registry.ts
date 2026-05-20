@@ -110,6 +110,7 @@ export const GENERATORS: GeneratorDef[] = [
           { value: "sale", label: "Drive a sale" },
           { value: "profile-follow", label: "Grow follows" },
           { value: "engagement-build", label: "Build engagement / warm audience" },
+          { value: "booked-appointments", label: "Drive booked appointments" },
         ],
       },
       {
@@ -141,7 +142,7 @@ export const GENERATORS: GeneratorDef[] = [
         type: "select",
         required: true,
         options: [
-          { value: "brand", label: "Brand voice (default)" },
+          { value: "brand", label: "Brand Voice (from Brand DNA)" },
           { value: "bold", label: "Bold / provocative" },
           { value: "educational", label: "Educational" },
           { value: "bts", label: "Behind-the-scenes" },

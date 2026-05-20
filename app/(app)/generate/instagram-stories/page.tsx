@@ -19,6 +19,7 @@ import {
   type ParsedStorySlide,
 } from "@/components/generators/story-slide-card";
 import { InstagramStoryPreview } from "@/components/generators/instagram-story-preview";
+import { BrandDNAHero } from "@/components/generators/brand-dna-hero";
 
 // ────────────────────────────────────────────────────────────────
 // Parser — turns the structured markdown into typed sections
@@ -143,6 +144,7 @@ function parseStoryOutput(raw: string): ParsedStories {
     const headline = extractField(block, "Headline");
     const body = extractField(block, "Body text");
     const visualDirection = extractField(block, "Visual direction");
+    const imageRecommendation = extractField(block, "Image recommendation");
     const stickerRaw = extractField(block, "Sticker");
     const retentionTactic = extractField(block, "Retention tactic");
     const expectedSignal = extractField(block, "Expected signal");
@@ -155,6 +157,7 @@ function parseStoryOutput(raw: string): ParsedStories {
       headline,
       body,
       visualDirection,
+      imageRecommendation,
       sticker: parseSticker(stickerRaw),
       retentionTactic: retentionTactic.toLowerCase(),
       expectedSignal: expectedSignal.toLowerCase(),
@@ -192,6 +195,7 @@ export default function InstagramStoriesPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [restoredOutput, setRestoredOutput] = useState<string | null>(null);
   const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
+  const [formMode, setFormMode] = useState<"custom" | "presets">("custom");
   const lastParamsRef = useRef<Record<string, string>>({});
 
   const { completion, isLoading, complete, setCompletion, error } =
@@ -235,9 +239,26 @@ export default function InstagramStoriesPage() {
     [getEntriesForSlug, activeOutput, showHistory],
   );
 
+  const PRESET_DEFAULTS: Record<string, string> = {
+    objective: "engagement-build",
+    seriesLength: "standard",
+    ctaDestination: "dm-keyword",
+  };
+  const PRESET_HIDDEN_KEYS = new Set(Object.keys(PRESET_DEFAULTS));
+
+  const visibleParams = useMemo(() => {
+    if (!generator?.params) return [];
+    if (formMode === "presets") {
+      return generator.params.filter((p) => !PRESET_HIDDEN_KEYS.has(p.key));
+    }
+    return generator.params;
+  }, [generator?.params, formMode]);
+
   const handleGenerate = useCallback(
     async (formParams?: Record<string, string>) => {
-      const paramValues = formParams ?? lastParamsRef.current;
+      const raw = formParams ?? lastParamsRef.current;
+      const paramValues =
+        formMode === "presets" ? { ...PRESET_DEFAULTS, ...raw } : raw;
       lastParamsRef.current = paramValues;
       setSubmitted(true);
       setRestoredOutput(null);
@@ -248,7 +269,7 @@ export default function InstagramStoriesPage() {
         body: { slug: SLUG, params: paramValues, brandDNA },
       });
     },
-    [brandDNA, complete, setCompletion],
+    [brandDNA, complete, setCompletion, formMode],
   );
 
   const handleRegenerate = useCallback(() => {
@@ -330,6 +351,8 @@ export default function InstagramStoriesPage() {
         </div>
       </motion.div>
 
+      <BrandDNAHero />
+
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
         {/* LEFT — params + output */}
         <div className="space-y-5">
@@ -340,13 +363,45 @@ export default function InstagramStoriesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="ck-card p-6"
             >
-              <h2 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
-                <PillarIcon className="w-4 h-4 text-accent" icon="sparkles" />
-                Configure your Stories series
-              </h2>
-              {generator.params && (
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                  <PillarIcon className="w-4 h-4 text-accent" icon="sparkles" />
+                  Configure your Stories series
+                </h2>
+                <div className="flex rounded-lg border border-border overflow-hidden text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setFormMode("presets")}
+                    className={`px-3 py-1.5 transition-colors ${
+                      formMode === "presets"
+                        ? "bg-accent text-white"
+                        : "bg-surface text-text-secondary hover:text-text-primary"
+                    }`}
+                  >
+                    Presets
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormMode("custom")}
+                    className={`px-3 py-1.5 transition-colors ${
+                      formMode === "custom"
+                        ? "bg-accent text-white"
+                        : "bg-surface text-text-secondary hover:text-text-primary"
+                    }`}
+                  >
+                    Custom
+                  </button>
+                </div>
+              </div>
+              {formMode === "presets" && (
+                <p className="text-xs text-text-tertiary mb-3">
+                  Standard 9-slide engagement series with DM keyword CTA. Pick your tone, topic, and trigger keyword.
+                </p>
+              )}
+              {visibleParams.length > 0 && (
                 <ParamForm
-                  params={generator.params}
+                  key={formMode}
+                  params={visibleParams}
                   onSubmit={handleGenerate}
                   isLoading={isLoading}
                 />

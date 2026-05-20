@@ -1,16 +1,21 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCompletion } from "@ai-sdk/react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { getGenerator } from "@/lib/generators/registry";
 import { useBrandStore } from "@/lib/brand/store";
 import { useGenerationsStore } from "@/lib/generators/store";
+import {
+  useHistoryStore,
+  type GenerationEntry,
+} from "@/lib/generators/history-store";
 import { PillarIcon } from "@/components/brand/pillar-icon";
 import { ParamForm } from "@/components/generators/param-form";
 import { GeneratorOutput } from "@/components/generators/generator-output";
+import { BrandDNAHero } from "@/components/generators/brand-dna-hero";
 
 export default function GeneratorPage() {
   const params = useParams();
@@ -18,8 +23,12 @@ export default function GeneratorPage() {
   const slug = params.slug as string;
   const generator = getGenerator(slug);
   const brandDNA = useBrandStore((s) => s.brandDNA);
+  const { addEntry, getEntriesForSlug } = useHistoryStore();
   const hasParams = generator?.params && generator.params.length > 0;
   const [submitted, setSubmitted] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [restoredOutput, setRestoredOutput] = useState<string | null>(null);
+  const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
   const lastParamsRef = useRef<Record<string, string>>({});
 
   const cachedGeneration = useGenerationsStore(
@@ -46,11 +55,41 @@ export default function GeneratorPage() {
     }
   }, [cachedGeneration, submitted, setCompletion]);
 
+  const activeOutput = restoredOutput ?? completion;
+
+  const prevCompletionRef = useRef(completion);
+  useEffect(() => {
+    if (
+      !isLoading &&
+      completion &&
+      completion !== prevCompletionRef.current &&
+      !hasAddedToHistory
+    ) {
+      addEntry({ slug, output: completion });
+      setHasAddedToHistory(true);
+    }
+    prevCompletionRef.current = completion;
+  }, [isLoading, completion, addEntry, hasAddedToHistory, slug]);
+
+  const history = useMemo(
+    () => getEntriesForSlug(slug),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getEntriesForSlug, slug, activeOutput, showHistory],
+  );
+
+  const handleRestore = (entry: GenerationEntry) => {
+    setRestoredOutput(entry.output);
+    setSubmitted(true);
+    setShowHistory(false);
+  };
+
   const handleGenerate = useCallback(
     async (formParams?: Record<string, string>) => {
       const paramValues = formParams ?? lastParamsRef.current;
       lastParamsRef.current = paramValues;
       setSubmitted(true);
+      setRestoredOutput(null);
+      setHasAddedToHistory(false);
       setCompletion("");
 
       // complete() resolves with the final completion text on success.
@@ -145,6 +184,8 @@ export default function GeneratorPage() {
         </div>
       </motion.div>
 
+      <BrandDNAHero />
+
       {!submitted && !isStoreLoaded && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -234,11 +275,85 @@ export default function GeneratorPage() {
           )}
 
           <GeneratorOutput
-            content={completion}
+            content={activeOutput}
             isStreaming={isLoading}
             onRegenerate={handleRegenerate}
           />
         </motion.div>
+      )}
+
+      {/* History panel */}
+      {submitted && (
+        <div className="mt-4">
+          <button
+            onClick={() => setShowHistory((v) => !v)}
+            className="text-xs text-text-tertiary hover:text-text-primary transition-colors flex items-center gap-1.5"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            History ({history.length})
+          </button>
+
+          <AnimatePresence>
+            {showHistory && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden mt-3"
+              >
+                <div className="ck-card p-5">
+                  <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Generation History
+                  </h3>
+
+                  {history.length === 0 ? (
+                    <p className="text-sm text-text-tertiary">
+                      No previous generations yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {history.map((entry, i) => {
+                        const date = new Date(entry.createdAt);
+                        const timeStr = date.toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        });
+                        const preview =
+                          entry.output.slice(0, 80).replace(/\n/g, " ") + "…";
+                        return (
+                          <button
+                            key={entry.createdAt + i}
+                            onClick={() => handleRestore(entry)}
+                            className="w-full text-left px-4 py-3 rounded-lg border border-border hover:border-accent/40 bg-surface hover:bg-surface-hover transition-all group"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium text-text-secondary">
+                                {timeStr}
+                              </span>
+                              <span className="text-[10px] text-accent opacity-0 group-hover:opacity-100 transition-opacity">
+                                Restore
+                              </span>
+                            </div>
+                            <p className="text-xs text-text-tertiary truncate">
+                              {preview}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       )}
     </div>
   );

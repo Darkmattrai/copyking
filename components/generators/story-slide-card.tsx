@@ -8,6 +8,7 @@ export interface ParsedStorySlide {
   headline: string;
   body: string;
   visualDirection: string;
+  imageRecommendation: string;
   sticker: { type: string; copy: string };
   retentionTactic: string;
   expectedSignal: string;
@@ -156,6 +157,15 @@ export function StorySlideCard({
           )}
         </div>
       </div>
+
+      {slide.imageRecommendation && (
+        <div className="flex items-start gap-1.5 mb-3 text-[11px] text-text-secondary bg-surface-hover rounded-lg px-2.5 py-1.5">
+          <svg className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+          </svg>
+          <span>{slide.imageRecommendation}</span>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
         <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">

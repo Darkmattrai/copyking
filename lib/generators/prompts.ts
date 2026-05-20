@@ -89,50 +89,53 @@ Variation C should pair name + keyword + location if location is set, otherwise 
 
 ## Bio Variations
 
-Generate EXACTLY 6 bio variations, in this exact order with these exact \`### Bio Variation N — <Name>\` headings:
+Every bio variation MUST follow this exact 4-line template structure:
 
-### Bio Variation 1 — Value Formula
-**Formula**: What you do + Who you help + Result they get
-<bio text using line breaks, one idea per line>
+**Line 1**: [Identity/Title] [@username]
+**Line 2**: [Specific Transformation] for [specific audience]
+**Line 3**: [Call to Action with trigger word] + [promise of immediate value]
+**Line 4**: [Link with clear description of destination]
+
+Generate EXACTLY 6 bio variations, in this exact order with these exact \`### Bio Variation N — <Name>\` headings. Each MUST follow the 4-line template above — vary the tone, style, and word choices but NEVER change the line structure:
+
+### Bio Variation 1 — Authority Style
+Apply the 4-line template with a confident, expertise-led tone. Line 1 leads with their strongest title/credential.
+<bio text — exactly 4 lines following the template>
 (N chars)
 **Why this works**: <one sentence>
 **Best for**: <one of: dms, calls, newsletter, sales, follows, clicks, local-visits>
 
-### Bio Variation 2 — Proof Formula
-**Formula**: Credibility metric + What you do + CTA
-Lead with a SPECIFIC number from the brand's actual results (pull from Brand DNA). If no numeric proof exists, lead with a concrete credential.
-<bio text>
+### Bio Variation 2 — Proof-Led Style
+Apply the 4-line template leading with a SPECIFIC number or result from the brand's actual data (pull from Brand DNA). Line 1 embeds proof into the identity.
+<bio text — exactly 4 lines following the template>
 (N chars)
 **Why this works**: <one sentence>
 **Best for**: <one of the goal slugs>
 
-### Bio Variation 3 — Mission Formula
-**Formula**: The change you create + How you do it
-Purpose-driven, speaks to shared values. Pull from the brand's Mission and Villain.
-<bio text>
+### Bio Variation 3 — Mission-Driven Style
+Apply the 4-line template with purpose-driven language. Line 2 focuses on the change they create in the world. Pull from the brand's Mission and Villain.
+<bio text — exactly 4 lines following the template>
 (N chars)
 **Why this works**: <one sentence>
 **Best for**: <one of the goal slugs>
 
-### Bio Variation 4 — Personality Formula
-**Formula**: Professional identity + Personal touch + CTA
-Blend expertise with one specific relatable detail (location, hobby, identity marker).
-<bio text>
+### Bio Variation 4 — Personality Style
+Apply the 4-line template blending expertise with one specific relatable detail (location, hobby, identity marker). Line 1 includes a personal touch.
+<bio text — exactly 4 lines following the template>
 (N chars)
 **Why this works**: <one sentence>
 **Best for**: <one of the goal slugs>
 
-### Bio Variation 5 — Transformation Arc
-**Formula**: From [where they/you started] → To [where they/you are now] + how you help others do the same
-<bio text>
+### Bio Variation 5 — Transformation Arc Style
+Apply the 4-line template where Line 2 uses a "from X → to Y" transformation narrative.
+<bio text — exactly 4 lines following the template>
 (N chars)
 **Why this works**: <one sentence>
 **Best for**: <one of the goal slugs>
 
 ### Bio Variation 6 — Lowercase Aesthetic (2026 trend)
-**Formula**: All lowercase, minimal punctuation, 0–2 emoji, clean and modern
-This variation MUST be entirely lowercase, no exclamation marks, no all-caps, no decorative symbols beyond a maximum of 2 simple emojis. Line breaks instead of punctuation.
-<bio text — entirely lowercase>
+Apply the 4-line template entirely in lowercase, minimal punctuation, 0–2 emoji, clean and modern. NEVER use capital letters except where Instagram itself enforces them.
+<bio text — exactly 4 lines following the template, entirely lowercase>
 (N chars)
 **Why this works**: <one sentence>
 **Best for**: <one of the goal slugs>
@@ -153,27 +156,48 @@ If accountType is personal-brand, creator, author, agency: explain in one paragr
 
 ## Pinned Posts Strategy
 
-Recommend exactly 3 pinned posts as a top-of-grid funnel. Each pinned post must be a different funnel role (awareness → consideration → conversion). Format strictly:
+Recommend exactly 3 pinned posts as a top-of-grid funnel. Each pinned post serves a specific role. Format strictly:
 
-### Pinned Post 1 — Awareness
+### Pinned Post 1 — My Story
+Your origin story, personal journey, or the "why" behind your brand. This builds connection and trust.
 **Format**: <Carousel | Reel | Image | Video>
 **Topic**: <specific topic>
 **Hook**: <exact hook line, ≤12 words>
 **Why pinned**: <one sentence>
 
-### Pinned Post 2 — Consideration
-(same structure)
+### Pinned Post 2 — How To Start With Me
+A clear post explaining how someone can begin working with you or engaging with your brand. The on-ramp.
+**Format**: <Carousel | Reel | Image | Video>
+**Topic**: <specific topic>
+**Hook**: <exact hook line, ≤12 words>
+**Why pinned**: <one sentence>
 
-### Pinned Post 3 — Conversion
-(same structure)
+### Pinned Post 3 — Proof / Results / Testimonials OR Lead Magnet
+Either social proof (case studies, transformations, testimonials) or a lead magnet post — whichever is more strategic for this brand's primary goal. State which you chose and why.
+**Format**: <Carousel | Reel | Image | Video>
+**Topic**: <specific topic>
+**Hook**: <exact hook line, ≤12 words>
+**Why pinned**: <one sentence>
 
 ## Highlights Strategy
 
-Recommend 6–7 highlights (the evergreen content library). Format as a numbered list. Each item:
+Recommend exactly 4 highlights in this specific order (left-to-right). These are the 4 essential highlights every profile needs. Use these exact categories but adapt the names to fit the brand:
 
+### Highlight 1 — Start Here / New Here / Welcome
+The first thing a new visitor should see. Introduces who you are and what you do.
 \`<Highlight name ≤15 chars> — Cover style: <color + icon/letter direction> — Content suggestions: <2–3 specific story types>\`
 
-Order them by visitor journey priority (left-to-right): the first highlight is what a brand-new visitor most needs.
+### Highlight 2 — Results / Case Studies / Testimonials
+Social proof and evidence that your method works.
+\`<Highlight name ≤15 chars> — Cover style: <color + icon/letter direction> — Content suggestions: <2–3 specific story types>\`
+
+### Highlight 3 — My Story
+Your origin story, behind-the-scenes, and personal brand narrative.
+\`<Highlight name ≤15 chars> — Cover style: <color + icon/letter direction> — Content suggestions: <2–3 specific story types>\`
+
+### Highlight 4 — Lead Magnet / Free Resource / Freebie
+Your free resource, lead magnet, or entry-point offer.
+\`<Highlight name ≤15 chars> — Cover style: <color + icon/letter direction> — Content suggestions: <2–3 specific story types>\`
 
 ## Profile Photo Direction
 
@@ -272,7 +296,7 @@ Use the **50/30/20 mix**: across the full series, ~50% Value-role slides, ~30% E
 ## YOUR TASK
 
 The user will pass these parameters in the user message:
-- \`objective\` — one of: dm | link-click | sale | profile-follow | engagement-build
+- \`objective\` — one of: dm | link-click | sale | profile-follow | engagement-build | booked-appointments
 - \`seriesLength\` — one of: short (5 slides) | standard (9 slides) | power (13 slides)
 - \`topic\` — optional topic / angle. If empty, pick the highest-leverage angle from the Brand DNA.
 - \`ctaDestination\` — one of: dm-keyword | link-sticker | poll-vote | profile-visit
@@ -297,6 +321,7 @@ The output is parsed by a regex-based parser. Use these exact headings, in this 
 **Headline:** <≤6 words, bold and visual, designed to hold the next 3 seconds>
 **Body text:** <≤20 words supporting the headline; or "—" if the slide is image-only>
 **Visual direction:** <2–3 sentences. Reference the 1080×1610 central safe area. Specify background (color/photo/video), composition, focal point, and where text sits.>
+**Image recommendation:** <Specific image type to use for this slide. Be concrete: e.g. "Selfie — talking head, eye contact, natural light" or "Product flat-lay on clean background" or "Screenshot of DM conversation" or "B-roll of workspace/lifestyle" or "Text-only slide with bold typography on gradient background". Always specify the exact shot type, subject, and mood.>
 **Sticker:** type=<one of poll|quiz|question|slider|countdown|reveal|link|add-yours|none> — copy: "<exact sticker copy or option labels>"
 **Retention tactic:** <one of: pattern-interrupt | open-loop | specificity | proof | tease | escalation>
 **Expected signal:** <one of: dm | save | share | watch-time | profile-click | reply>
@@ -339,7 +364,7 @@ For sustained Story rhythm, three rotatable variants of this same series shape:
 
 ## OUTPUT RULES (do not violate)
 - Slide count must equal exactly the requested seriesLength (5 / 9 / 13).
-- Every slide must include all 6 fields (Headline, Body text, Visual direction, Sticker, Retention tactic, Expected signal). No exceptions.
+- Every slide must include all 7 fields (Headline, Body text, Visual direction, Image recommendation, Sticker, Retention tactic, Expected signal). No exceptions.
 - Sticker line must use the literal format \`type=<value> — copy: "..."\` so the parser works.
 - Headline ≤ 6 words. Body text ≤ 20 words. Trim ruthlessly.
 - Use the **Brand Voice** from the Voice pillar literally — exact words from \`alwaysWords\`, never \`neverWords\`.
