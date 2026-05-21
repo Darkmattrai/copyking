@@ -487,13 +487,19 @@ export default function InstagramBioPage() {
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [editedBios, setEditedBios] = useState<Record<number, string>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const completionRef = useRef<string>("");
 
   const { completion, isLoading, complete, setCompletion, error } = useCompletion({
     api: "/api/generate",
     streamProtocol: "text",
+    onFinish: (_prompt, text) => {
+      completionRef.current = text;
+    },
   });
 
-  const activeOutput = restoredOutput ?? completion;
+  // Fall back to ref if SWR hasn't reflected the final completion yet
+  const activeOutput = restoredOutput ?? (completion || completionRef.current);
   const parsed = useMemo(() => parseOutput(activeOutput), [activeOutput]);
 
   // Apply inline edits to parsed bios
@@ -552,10 +558,15 @@ export default function InstagramBioPage() {
       setActiveTab("bios");
       setShowComparison(false);
       setShowCustomize(false);
+      setSubmitted(true);
+      completionRef.current = "";
       setCompletion("");
-      await complete("", {
+      const result = await complete("", {
         body: { slug: "instagram-bio", params, brandDNA },
       });
+      if (typeof result === "string" && result) {
+        completionRef.current = result;
+      }
     },
     [brandDNA, complete, setCompletion],
   );
@@ -584,6 +595,7 @@ export default function InstagramBioPage() {
     setSelectedNameIdx(0);
     setEditedBios({});
     setShowHistory(false);
+    setSubmitted(true);
   };
 
   const handleBioEdit = useCallback((idx: number, newText: string) => {
@@ -595,7 +607,6 @@ export default function InstagramBioPage() {
   const previewName = parsed.nameOptions[selectedNameIdx] || "";
 
   // Completion flags for checklist
-  const hasOutput = !isLoading && !!activeOutput;
   const hasName = parsed.nameOptions.length > 0;
   const hasBio = displayBios.length > 0;
   const hasLinks = !!parsed.multiLinkSection;
@@ -671,7 +682,7 @@ export default function InstagramBioPage() {
           {/* ═══════════════════════════════════════════════════════ */}
           {/* Pre-generation state                                    */}
           {/* ═══════════════════════════════════════════════════════ */}
-          {!activeOutput && !isLoading && (
+          {!submitted && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -800,7 +811,7 @@ export default function InstagramBioPage() {
           {/* ═══════════════════════════════════════════════════════ */}
           {/* Loading state — phased animation                       */}
           {/* ═══════════════════════════════════════════════════════ */}
-          {isLoading && !activeOutput && <BioLoadingPhases />}
+          {submitted && isLoading && !activeOutput && <BioLoadingPhases />}
 
           {/* Error */}
           {error && (
@@ -826,7 +837,7 @@ export default function InstagramBioPage() {
           {/* ═══════════════════════════════════════════════════════ */}
           {/* Streaming output — live markdown                       */}
           {/* ═══════════════════════════════════════════════════════ */}
-          {isLoading && activeOutput && (
+          {submitted && isLoading && activeOutput && (
             <div className="ck-card p-6">
               <MarkdownRenderer content={activeOutput} />
               <div className="mt-4 flex items-center gap-2 text-text-tertiary">
@@ -843,7 +854,7 @@ export default function InstagramBioPage() {
           {/* ═══════════════════════════════════════════════════════ */}
           {/* Completed output — structured tabs                     */}
           {/* ═══════════════════════════════════════════════════════ */}
-          {hasOutput && (
+          {submitted && !isLoading && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1382,7 +1393,7 @@ export default function InstagramBioPage() {
       {/* Quick copy bar (fixed bottom, shows when output ready)  */}
       {/* ═══════════════════════════════════════════════════════ */}
       <AnimatePresence>
-        {hasOutput && (
+        {submitted && !isLoading && activeOutput && (
           <BioQuickCopyBar
             bioText={previewBio}
             nameText={previewName}
