@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 export interface PreviewLink {
   title: string;
 }
@@ -25,6 +27,7 @@ interface InstagramPreviewProps {
   actionButtons?: string[];
   highlights?: PreviewHighlight[];
   pinnedPosts?: PreviewPinnedPost[];
+  compact?: boolean;
 }
 
 const ROLE_TONES: Record<string, string> = {
@@ -34,7 +37,6 @@ const ROLE_TONES: Record<string, string> = {
   "results": "bg-gradient-to-br from-emerald-500/30 to-teal-500/30",
   "testimonials": "bg-gradient-to-br from-emerald-500/30 to-teal-500/30",
   "lead magnet": "bg-gradient-to-br from-amber-500/30 to-orange-500/30",
-  // Legacy keys for backward compatibility with cached generations
   "awareness": "bg-gradient-to-br from-purple-500/30 to-pink-500/30",
   "consideration": "bg-gradient-to-br from-blue-500/30 to-cyan-500/30",
   "conversion": "bg-gradient-to-br from-emerald-500/30 to-teal-500/30",
@@ -50,7 +52,13 @@ export function InstagramPreview({
   actionButtons = [],
   highlights = [],
   pinnedPosts = [],
+  compact = false,
 }: InstagramPreviewProps) {
+  const [isDark, setIsDark] = useState(false);
+  const [bioExpanded, setBioExpanded] = useState(false);
+  const [stats, setStats] = useState({ posts: "128", followers: "4.2K", following: "892" });
+  const [editingStat, setEditingStat] = useState<string | null>(null);
+
   const bioLines = bioText
     .split("\n")
     .map((l) => l.trim())
@@ -60,39 +68,107 @@ export function InstagramPreview({
   const visibleHighlights = highlights.slice(0, 7);
   const visiblePinned = pinnedPosts.slice(0, 3);
 
+  // Truncation: show max 3 lines, then "...more"
+  const maxVisibleLines = 3;
+  const shouldTruncate = bioLines.length > maxVisibleLines && !bioExpanded;
+  const displayedBioLines = shouldTruncate ? bioLines.slice(0, maxVisibleLines) : bioLines;
+
+  // Dark mode color overrides
+  const bg = isDark ? "bg-black" : "bg-background";
+  const text = isDark ? "text-white" : "text-text-primary";
+  const textSecondary = isDark ? "text-gray-300" : "text-text-secondary";
+  const textTertiary = isDark ? "text-gray-500" : "text-text-tertiary";
+  const border = isDark ? "border-gray-800" : "border-border";
+  const surface = isDark ? "bg-gray-900" : "bg-surface";
+  const surfaceHover = isDark ? "bg-gray-800" : "bg-surface-hover";
+
+  function handleStatClick(key: string) {
+    setEditingStat(key);
+  }
+
+  function handleStatChange(key: string, value: string) {
+    setStats((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function StatCell({ label, statKey }: { label: string; statKey: string }) {
+    const isEditing = editingStat === statKey;
+    return (
+      <div className="text-center cursor-pointer" onClick={() => handleStatClick(statKey)}>
+        {isEditing ? (
+          <input
+            type="text"
+            value={stats[statKey as keyof typeof stats]}
+            onChange={(e) => handleStatChange(statKey, e.target.value)}
+            onBlur={() => setEditingStat(null)}
+            onKeyDown={(e) => e.key === "Enter" && setEditingStat(null)}
+            autoFocus
+            className={`block w-12 mx-auto text-sm font-bold text-center ${text} bg-transparent border-b ${border} outline-none`}
+          />
+        ) : (
+          <span className={`block text-sm font-bold ${text}`}>
+            {stats[statKey as keyof typeof stats]}
+          </span>
+        )}
+        <span className={`block text-[10px] ${textTertiary}`}>{label}</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full max-w-[320px] mx-auto">
+    <div className={`w-full ${compact ? "max-w-[280px]" : "max-w-[320px]"} mx-auto`}>
+      {/* Dark/light toggle */}
+      <div className="flex items-center justify-end gap-1.5 mb-2">
+        <button
+          onClick={() => setIsDark(false)}
+          className={`p-1.5 rounded-lg transition-all ${!isDark ? "bg-accent/10 text-accent" : "text-text-tertiary hover:text-text-secondary"}`}
+          title="Light mode"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+          </svg>
+        </button>
+        <button
+          onClick={() => setIsDark(true)}
+          className={`p-1.5 rounded-lg transition-all ${isDark ? "bg-accent/10 text-accent" : "text-text-tertiary hover:text-text-secondary"}`}
+          title="Dark mode"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+          </svg>
+        </button>
+      </div>
+
       {/* Phone frame */}
-      <div className="rounded-[2rem] border-2 border-border bg-background overflow-hidden shadow-lg">
+      <div className={`rounded-[2rem] border-2 ${border} ${bg} overflow-hidden shadow-lg transition-colors duration-300`}>
         {/* Status bar */}
         <div className="flex items-center justify-between px-6 pt-3 pb-1">
-          <span className="text-[11px] font-semibold text-text-primary">9:41</span>
+          <span className={`text-[11px] font-semibold ${text}`}>9:41</span>
           <div className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5 text-text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M12 18c3.31 0 6-2.69 6-6s-2.69-6-6-6-6 2.69-6 6 2.69 6 6 6zm0-10c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4z" /><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 00-6 0zm-4-4l2 2a7.074 7.074 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z" /></svg>
-            <svg className="w-4 h-4 text-text-primary" fill="currentColor" viewBox="0 0 24 24"><rect x="2" y="6" width="3" height="12" rx="0.5" /><rect x="7" y="4" width="3" height="14" rx="0.5" /><rect x="12" y="2" width="3" height="16" rx="0.5" /><rect x="17" y="0" width="3" height="18" rx="0.5" /></svg>
-            <div className="w-6 h-3 rounded-sm border border-text-primary/50 relative ml-0.5">
-              <div className="absolute inset-0.5 rounded-[1px] bg-text-primary/80" style={{ width: "70%" }} />
+            <svg className={`w-3.5 h-3.5 ${text}`} fill="currentColor" viewBox="0 0 24 24"><path d="M12 18c3.31 0 6-2.69 6-6s-2.69-6-6-6-6 2.69-6 6 2.69 6 6 6zm0-10c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4z" /><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 00-6 0zm-4-4l2 2a7.074 7.074 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z" /></svg>
+            <svg className={`w-4 h-4 ${text}`} fill="currentColor" viewBox="0 0 24 24"><rect x="2" y="6" width="3" height="12" rx="0.5" /><rect x="7" y="4" width="3" height="14" rx="0.5" /><rect x="12" y="2" width="3" height="16" rx="0.5" /><rect x="17" y="0" width="3" height="18" rx="0.5" /></svg>
+            <div className={`w-6 h-3 rounded-sm border ${isDark ? "border-gray-600" : "border-text-primary/50"} relative ml-0.5`}>
+              <div className={`absolute inset-0.5 rounded-[1px] ${isDark ? "bg-white/80" : "bg-text-primary/80"}`} style={{ width: "70%" }} />
             </div>
           </div>
         </div>
 
         {/* Instagram header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+        <div className={`flex items-center justify-between px-4 py-2 border-b ${border}`}>
           <div className="flex items-center gap-1">
-            <svg className="w-3 h-3 text-text-primary" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+            <svg className={`w-3 h-3 ${text}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
             {onUsernameChange ? (
               <input
                 type="text"
                 value={username}
                 onChange={(e) => onUsernameChange(e.target.value)}
-                className="text-sm font-semibold text-text-primary bg-transparent border-none outline-none w-full min-w-0 focus:ring-0 p-0"
+                className={`text-sm font-semibold ${text} bg-transparent border-none outline-none w-full min-w-0 focus:ring-0 p-0`}
                 placeholder="yourusername"
               />
             ) : (
-              <span className="text-sm font-semibold text-text-primary">{username}</span>
+              <span className={`text-sm font-semibold ${text}`}>{username}</span>
             )}
           </div>
-          <svg className="w-5 h-5 text-text-primary" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" /></svg>
+          <svg className={`w-5 h-5 ${text}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" /></svg>
         </div>
 
         {/* Profile section */}
@@ -103,70 +179,73 @@ export function InstagramPreview({
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
             </div>
             <div className="flex-1 flex justify-around text-center">
-              <div>
-                <span className="block text-sm font-bold text-text-primary">128</span>
-                <span className="block text-[10px] text-text-tertiary">Posts</span>
-              </div>
-              <div>
-                <span className="block text-sm font-bold text-text-primary">4.2K</span>
-                <span className="block text-[10px] text-text-tertiary">Followers</span>
-              </div>
-              <div>
-                <span className="block text-sm font-bold text-text-primary">892</span>
-                <span className="block text-[10px] text-text-tertiary">Following</span>
-              </div>
+              <StatCell label="Posts" statKey="posts" />
+              <StatCell label="Followers" statKey="followers" />
+              <StatCell label="Following" statKey="following" />
             </div>
           </div>
 
           {/* Name field */}
-          <p className="text-[13px] font-semibold text-text-primary leading-snug mb-0.5">
+          <p className={`text-[13px] font-semibold ${text} leading-snug mb-0.5`}>
             {nameField || "Your Name | Keyword"}
           </p>
 
           {/* Category */}
           {category && (
-            <p className="text-[11px] text-text-tertiary leading-snug mb-1">
+            <p className={`text-[11px] ${textTertiary} leading-snug mb-1`}>
               {category}
             </p>
           )}
 
-          {/* Bio text */}
-          <div className="text-[13px] text-text-secondary leading-snug mb-2 min-h-[3rem]">
-            {bioLines.length > 0 ? (
-              bioLines.map((line, i) => (
-                <span key={i} className="block">
-                  {line}
-                </span>
-              ))
+          {/* Bio text with truncation */}
+          <div className={`text-[13px] ${textSecondary} leading-snug mb-2 min-h-[3rem]`}>
+            {displayedBioLines.length > 0 ? (
+              <>
+                {displayedBioLines.map((line, i) => (
+                  <span key={i} className="block">
+                    {i === displayedBioLines.length - 1 && shouldTruncate ? (
+                      <>
+                        {line.length > 30 ? `${line.slice(0, 30)}...` : line}
+                        <button
+                          onClick={() => setBioExpanded(true)}
+                          className={`ml-1 ${textTertiary} font-medium`}
+                        >
+                          more
+                        </button>
+                      </>
+                    ) : (
+                      line
+                    )}
+                  </span>
+                ))}
+                {bioExpanded && bioLines.length > maxVisibleLines && (
+                  <button
+                    onClick={() => setBioExpanded(false)}
+                    className={`text-[11px] ${textTertiary} font-medium mt-0.5`}
+                  >
+                    Show less
+                  </button>
+                )}
+              </>
             ) : (
-              <span className="text-text-tertiary italic">Your bio will appear here...</span>
+              <span className={`${textTertiary} italic`}>Your bio will appear here...</span>
             )}
           </div>
 
           {/* Native multi-link button */}
           {visibleLinks.length > 0 && (
             <div className="mb-3">
-              <button className="w-full text-left px-2.5 py-1.5 rounded-lg border border-border bg-surface flex items-center justify-between">
+              <button className={`w-full text-left px-2.5 py-1.5 rounded-lg border ${border} ${surface} flex items-center justify-between`}>
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <svg
-                    className="w-3 h-3 text-text-primary shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.51a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.374"
-                    />
+                  <svg className={`w-3 h-3 ${text} shrink-0`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.51a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.374" />
                   </svg>
-                  <span className="text-[11px] font-medium text-text-primary truncate">
+                  <span className={`text-[11px] font-medium ${text} truncate`}>
                     {visibleLinks[0].title}
                   </span>
                 </div>
                 {visibleLinks.length > 1 && (
-                  <span className="text-[10px] text-text-tertiary shrink-0 ml-1.5">
+                  <span className={`text-[10px] ${textTertiary} shrink-0 ml-1.5`}>
                     +{visibleLinks.length - 1}
                   </span>
                 )}
@@ -193,10 +272,10 @@ export function InstagramPreview({
             <button className="flex-1 py-1.5 rounded-lg bg-accent text-white text-[11px] font-semibold text-center">
               Follow
             </button>
-            <button className="flex-1 py-1.5 rounded-lg bg-surface-hover border border-border text-text-primary text-[11px] font-semibold text-center">
+            <button className={`flex-1 py-1.5 rounded-lg ${surfaceHover} border ${border} ${text} text-[11px] font-semibold text-center`}>
               Message
             </button>
-            <button className="py-1.5 px-2.5 rounded-lg bg-surface-hover border border-border text-text-primary">
+            <button className={`py-1.5 px-2.5 rounded-lg ${surfaceHover} border ${border} ${text}`}>
               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             </button>
           </div>
@@ -208,19 +287,16 @@ export function InstagramPreview({
                 {visibleHighlights.map((h, i) => (
                   <div key={i} className="flex flex-col items-center shrink-0">
                     <div
-                      className="w-12 h-12 rounded-full p-[2px] border border-border"
+                      className={`w-12 h-12 rounded-full p-[2px] border ${border}`}
                       style={{ background: `linear-gradient(135deg, ${h.color}, ${h.color}aa)` }}
                     >
-                      <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                        <span
-                          className="text-sm font-bold"
-                          style={{ color: h.color }}
-                        >
+                      <div className={`w-full h-full rounded-full ${bg} flex items-center justify-center`}>
+                        <span className="text-sm font-bold" style={{ color: h.color }}>
                           {h.letter}
                         </span>
                       </div>
                     </div>
-                    <span className="text-[9px] text-text-secondary mt-1 max-w-[3.25rem] truncate">
+                    <span className={`text-[9px] ${textSecondary} mt-1 max-w-[3.25rem] truncate`}>
                       {h.name}
                     </span>
                   </div>
@@ -230,7 +306,7 @@ export function InstagramPreview({
           )}
 
           {/* Grid: pinned posts first, then placeholders */}
-          <div className="border-t border-border pt-2">
+          <div className={`border-t ${border} pt-2`}>
             <div className="grid grid-cols-3 gap-0.5">
               {visiblePinned.map((p, i) => (
                 <div
@@ -238,27 +314,20 @@ export function InstagramPreview({
                   className={`relative aspect-square rounded-sm overflow-hidden flex items-center justify-center text-center px-1 ${
                     ROLE_TONES[p.role.toLowerCase()] ??
                     Object.entries(ROLE_TONES).find(([k]) => p.role.toLowerCase().includes(k))?.[1] ??
-                    "bg-surface-hover"
+                    surfaceHover
                   }`}
                 >
-                  <svg
-                    className="absolute top-0.5 right-0.5 w-2.5 h-2.5 text-white drop-shadow"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="absolute top-0.5 right-0.5 w-2.5 h-2.5 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M16 9V4l1-1V2H7v1l1 1v5L5 11.5V13h6v8l1 1 1-1v-8h6v-1.5L16 9z" />
                   </svg>
-                  <span className="text-[9px] font-semibold text-text-primary leading-tight px-0.5">
+                  <span className={`text-[9px] font-semibold ${text} leading-tight px-0.5`}>
                     {p.label}
                   </span>
                 </div>
               ))}
               {Array.from({ length: Math.max(0, 6 - visiblePinned.length) }).map(
                 (_, i) => (
-                  <div
-                    key={`ph-${i}`}
-                    className="aspect-square bg-surface-hover rounded-sm"
-                  />
+                  <div key={`ph-${i}`} className={`aspect-square ${surfaceHover} rounded-sm`} />
                 ),
               )}
             </div>
