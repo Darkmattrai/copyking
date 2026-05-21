@@ -20,6 +20,7 @@ import {
 } from "@/components/generators/story-slide-card";
 import { InstagramStoryPreview } from "@/components/generators/instagram-story-preview";
 import { BrandDNAHero } from "@/components/generators/brand-dna-hero";
+import { ToolsPanel } from "@/components/generators/stories/tools-panel";
 
 // ────────────────────────────────────────────────────────────────
 // Parser — turns the structured markdown into typed sections
@@ -196,6 +197,7 @@ export default function InstagramStoriesPage() {
   const [restoredOutput, setRestoredOutput] = useState<string | null>(null);
   const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
   const [formMode, setFormMode] = useState<"custom" | "presets">("custom");
+  const [seriesId, setSeriesId] = useState(() => String(Date.now()));
   const lastParamsRef = useRef<Record<string, string>>({});
 
   const { completion, isLoading, complete, setCompletion, error } =
@@ -264,6 +266,7 @@ export default function InstagramStoriesPage() {
       setRestoredOutput(null);
       setActiveSlide(0);
       setHasAddedToHistory(false);
+      setSeriesId(String(Date.now()));
       setCompletion("");
       await complete("", {
         body: { slug: SLUG, params: paramValues, brandDNA },
@@ -578,6 +581,22 @@ export default function InstagramStoriesPage() {
                 <SectionCard title="3 weekly themes">
                   <MarkdownRenderer content={parsed.themes} />
                 </SectionCard>
+              )}
+
+              {/* Stories Toolkit — 10 post-generation tools */}
+              {parsed.slides.length > 0 && (
+                <ToolsPanel
+                  slides={parsed.slides}
+                  overview={parsed.overview}
+                  stickerStack={parsed.stickerStack}
+                  postingSchedule={parsed.postingSchedule}
+                  nurtureLadder={parsed.nurtureLadder}
+                  metrics={parsed.metrics}
+                  themes={parsed.themes}
+                  brandDNA={brandDNA}
+                  objective={lastParamsRef.current.objective}
+                  seriesId={seriesId}
+                />
               )}
 
               {/* Always-on raw markdown — collapsible. Open by default if
