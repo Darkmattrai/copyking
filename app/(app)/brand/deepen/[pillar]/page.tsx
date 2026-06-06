@@ -1,13 +1,22 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 
 import { PillarChat } from "@/components/brand/pillar-chat";
 import { PILLAR_KEYS, type PillarKey } from "@/types/brand";
 
 export default function AppPillarDeepenPage() {
   const params = useParams();
+  const router = useRouter();
   const pillar = params.pillar as string;
+
+  // The ICP pillar is now built with the dedicated ICP Map Generator.
+  useEffect(() => {
+    if (pillar === "icp") router.replace("/generate/icp-map");
+  }, [pillar, router]);
+
+  if (pillar === "icp") return null;
 
   if (!PILLAR_KEYS.includes(pillar as PillarKey)) {
     return (

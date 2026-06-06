@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import { DeepenerShell } from "../deepener-shell";
+import { AutosaveIndicator } from "../autosave-indicator";
 import { useBrandStore } from "@/lib/brand/store";
+import { useAutosave } from "@/lib/hooks/use-autosave";
 import { PILLAR_META } from "@/types/brand";
 import type { Messaging } from "@/types/brand";
 
@@ -46,13 +48,17 @@ export function MessagingGenerator() {
     }
   };
 
+  const payload = {
+    oneLiner,
+    tagline,
+    keyMessages: keyMessages.split("\n").filter(Boolean),
+    brandScript,
+  };
+
+  const status = useAutosave(payload, (p) => updatePillar("messaging", p));
+
   const handleSave = () => {
-    updatePillar("messaging", {
-      oneLiner,
-      tagline,
-      keyMessages: keyMessages.split("\n").filter(Boolean),
-      brandScript,
-    });
+    updatePillar("messaging", payload);
     toast.success("Messaging saved");
   };
 
@@ -149,20 +155,23 @@ export function MessagingGenerator() {
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <button
-                className="ck-btn-secondary flex-1"
-                disabled={loading}
-                onClick={handleGenerate}
-              >
-                {loading ? "Regenerating..." : "Regenerate"}
-              </button>
-              <button
-                className="ck-btn-primary flex-1"
-                onClick={handleSave}
-              >
-                Save Messaging
-              </button>
+            <div className="space-y-2">
+              <div className="flex gap-3">
+                <button
+                  className="ck-btn-secondary flex-1"
+                  disabled={loading}
+                  onClick={handleGenerate}
+                >
+                  {loading ? "Regenerating..." : "Regenerate"}
+                </button>
+                <button
+                  className="ck-btn-primary flex-1"
+                  onClick={handleSave}
+                >
+                  Save Messaging
+                </button>
+              </div>
+              <AutosaveIndicator status={status} />
             </div>
           </motion.div>
         )}

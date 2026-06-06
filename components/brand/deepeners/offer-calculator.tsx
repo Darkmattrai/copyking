@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import { DeepenerShell } from "../deepener-shell";
+import { AutosaveIndicator } from "../autosave-indicator";
 import { useBrandStore } from "@/lib/brand/store";
+import { useAutosave } from "@/lib/hooks/use-autosave";
 import { PILLAR_META } from "@/types/brand";
 
 const SLIDERS = [
@@ -73,21 +75,19 @@ export function OfferCalculator() {
   const denominator = Math.max((11 - scores.timeScore) * (11 - scores.effortScore), 1);
   const valueScore = Math.round((numerator / denominator) * 10);
 
-  useEffect(() => {
-    if (brandDNA.offer.valueScore > 0) {
-      // rough reverse from stored score
-    }
-  }, [brandDNA.offer.valueScore]);
+  const payload = {
+    dreamOutcome,
+    perceivedLikelihood,
+    timeDelay,
+    effortRequired,
+    grandSlamDescription: grandSlam,
+    valueScore: Math.min(valueScore, 40),
+  };
+
+  const status = useAutosave(payload, (p) => updatePillar("offer", p));
 
   const handleSave = () => {
-    updatePillar("offer", {
-      dreamOutcome,
-      perceivedLikelihood,
-      timeDelay,
-      effortRequired,
-      grandSlamDescription: grandSlam,
-      valueScore: Math.min(valueScore, 40),
-    });
+    updatePillar("offer", payload);
     toast.success("Offer saved");
   };
 
@@ -182,9 +182,12 @@ export function OfferCalculator() {
           </div>
         </div>
 
-        <button className="ck-btn-primary w-full" onClick={handleSave}>
-          Save Offer
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <AutosaveIndicator status={status} />
+          <button className="ck-btn-primary" onClick={handleSave}>
+            Save Offer
+          </button>
+        </div>
       </div>
     </DeepenerShell>
   );

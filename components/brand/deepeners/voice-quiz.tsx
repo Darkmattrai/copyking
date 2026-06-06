@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 import { DeepenerShell } from "../deepener-shell";
+import { AutosaveIndicator } from "../autosave-indicator";
 import { useBrandStore } from "@/lib/brand/store";
+import { useAutosave } from "@/lib/hooks/use-autosave";
 import { PILLAR_META, BRAND_ARCHETYPES } from "@/types/brand";
 
 interface QuizQuestion {
@@ -120,18 +122,24 @@ export function VoiceQuiz() {
     }
   };
 
+  const payload = {
+    primaryArchetype: result?.[0] ?? "",
+    secondaryArchetype: result?.[1] ?? "",
+    communicationStyle: {
+      formalityCasual: formalCasual,
+      technicalSimple: techSimple,
+      provocativeNurturing: provNurture,
+    },
+  };
+
+  // Only autosave once the quiz has produced an archetype result.
+  const status = useAutosave(payload, (p) => updatePillar("voice", p), {
+    enabled: !!result,
+  });
+
   const handleSave = () => {
     if (!result) return;
-
-    updatePillar("voice", {
-      primaryArchetype: result[0],
-      secondaryArchetype: result[1],
-      communicationStyle: {
-        formalityCasual: formalCasual,
-        technicalSimple: techSimple,
-        provocativeNurturing: provNurture,
-      },
-    });
+    updatePillar("voice", payload);
     toast.success("Voice profile saved");
   };
 
@@ -234,9 +242,12 @@ export function VoiceQuiz() {
                 ))}
               </div>
 
-              <button className="ck-btn-primary w-full" onClick={handleSave}>
-                Save Voice Profile
-              </button>
+              <div className="flex items-center justify-between gap-3">
+                <AutosaveIndicator status={status} />
+                <button className="ck-btn-primary" onClick={handleSave}>
+                  Save Voice Profile
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

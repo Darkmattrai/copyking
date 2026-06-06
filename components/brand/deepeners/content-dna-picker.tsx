@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import { DeepenerShell } from "../deepener-shell";
+import { AutosaveIndicator } from "../autosave-indicator";
 import { useBrandStore } from "@/lib/brand/store";
+import { useAutosave } from "@/lib/hooks/use-autosave";
 import { PILLAR_META } from "@/types/brand";
 
 const HOOK_STYLES = [
@@ -71,14 +73,18 @@ export function ContentDNAPicker() {
     setter(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
   };
 
+  const payload = {
+    hookStyles: hooks,
+    storytellingPatterns: patterns,
+    platforms: selectedPlatforms,
+    themes: themes.split(",").map((s) => s.trim()).filter(Boolean),
+    cadence,
+  };
+
+  const status = useAutosave(payload, (p) => updatePillar("contentDNA", p));
+
   const handleSave = () => {
-    updatePillar("contentDNA", {
-      hookStyles: hooks,
-      storytellingPatterns: patterns,
-      platforms: selectedPlatforms,
-      themes: themes.split(",").map((s) => s.trim()).filter(Boolean),
-      cadence,
-    });
+    updatePillar("contentDNA", payload);
     toast.success("Content DNA saved");
   };
 
@@ -164,12 +170,12 @@ export function ContentDNAPicker() {
           </div>
         </div>
 
-        <button
-          className="ck-btn-primary w-full"
-          onClick={handleSave}
-        >
-          Save Content DNA
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <AutosaveIndicator status={status} />
+          <button className="ck-btn-primary" onClick={handleSave}>
+            Save Content DNA
+          </button>
+        </div>
       </div>
     </DeepenerShell>
   );

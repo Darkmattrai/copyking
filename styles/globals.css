@@ -38,6 +38,21 @@
 	--color-text-primary: oklch(1 0 0 / 0.95);
 	--color-text-secondary: oklch(1 0 0 / 0.55);
 	--color-text-tertiary: oklch(1 0 0 / 0.35);
+
+	/* ICP map pillar accents (theme-agnostic, used by intake form) */
+	--color-icp-pain: #e05a4d;
+	--color-icp-goals: #d4a72c;
+	--color-icp-mindset: #a06cd5;
+	--color-icp-emotion: #e0685a;
+	--color-icp-trigger: #2faf6b;
+	--color-icp-objection: #3d8bd4;
+
+	/* Offer value-ladder price-tier colors */
+	--color-tier-free: #1b5c36;
+	--color-tier-low: #2563b0;
+	--color-tier-mid: #c9a227;
+	--color-tier-midhi: #d2791b;
+	--color-tier-high: #c0392b;
 }
 
 :root {

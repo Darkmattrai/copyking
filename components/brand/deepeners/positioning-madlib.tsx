@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import { DeepenerShell } from "../deepener-shell";
+import { AutosaveIndicator } from "../autosave-indicator";
 import { useBrandStore } from "@/lib/brand/store";
+import { useAutosave } from "@/lib/hooks/use-autosave";
 import { PILLAR_META } from "@/types/brand";
 
 export function PositioningMadlib() {
@@ -36,13 +38,17 @@ export function PositioningMadlib() {
   const statement = `I help ${who || "___"} achieve ${outcome || "___"} using ${method || "___"} without ${without || "___"}`;
   const isComplete = who && outcome && method && without;
 
+  const payload = {
+    uniqueMechanism,
+    categoryOwned,
+    positioningStatement: statement,
+    pointOfView,
+  };
+
+  const status = useAutosave(payload, (p) => updatePillar("positioning", p));
+
   const handleSave = () => {
-    updatePillar("positioning", {
-      uniqueMechanism,
-      categoryOwned,
-      positioningStatement: statement,
-      pointOfView,
-    });
+    updatePillar("positioning", payload);
     toast.success("Positioning saved");
   };
 
@@ -122,9 +128,12 @@ export function PositioningMadlib() {
           </div>
         </div>
 
-        <button className="ck-btn-primary w-full" onClick={handleSave}>
-          Save Positioning
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <AutosaveIndicator status={status} />
+          <button className="ck-btn-primary" onClick={handleSave}>
+            Save Positioning
+          </button>
+        </div>
       </div>
     </DeepenerShell>
   );

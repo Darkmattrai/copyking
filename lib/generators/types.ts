@@ -1,4 +1,5 @@
 export type GeneratorCategory =
+  | "foundation"
   | "social"
   | "funnels"
   | "email"
@@ -33,6 +34,7 @@ export interface CategoryMeta {
 }
 
 export const GENERATOR_CATEGORIES: CategoryMeta[] = [
+  { key: "foundation", label: "Foundation", icon: "target" },
   { key: "social", label: "Social Media", icon: "instagram" },
   { key: "funnels", label: "Funnels", icon: "funnel" },
   { key: "email", label: "Email", icon: "email" },

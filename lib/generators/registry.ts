@@ -4,6 +4,17 @@ import { GENERATOR_CATEGORIES } from "./types";
 export { GENERATOR_CATEGORIES };
 
 export const GENERATORS: GeneratorDef[] = [
+  // ── Foundation ──────────────────────────────────────────────────
+  {
+    slug: "icp-map",
+    name: "ICP Map Generator",
+    description:
+      "Visual ideal-customer-profile map: psychology brain, universal block, and up to 6 segments — built via guided interview or manual intake",
+    icon: "target",
+    category: "foundation",
+    outputFormat: "structured",
+  },
+
   // ── Social ──────────────────────────────────────────────────────
   {
     slug: "instagram-bio",
@@ -471,19 +482,11 @@ export const GENERATORS: GeneratorDef[] = [
   {
     slug: "irresistible-offer",
     name: "Irresistible Offer Builder",
-    description: "Full offer stack: core, bonuses, guarantee, pricing, objections",
+    description:
+      "11-step Grand Slam offer builder: bullseye, features/benefits, value ladder pricing, guarantee, scarcity, objections, and naming — with AI field enhancement",
     icon: "offer",
     category: "offers",
-    params: [
-      {
-        key: "pricePoint",
-        label: "Price point",
-        type: "text",
-        placeholder: "e.g. $2,997 one-time or $497/mo",
-        required: true,
-      },
-    ],
-    outputFormat: "markdown",
+    outputFormat: "structured",
   },
 ];
 

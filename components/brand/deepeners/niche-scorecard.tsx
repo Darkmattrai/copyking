@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import { DeepenerShell } from "../deepener-shell";
+import { AutosaveIndicator } from "../autosave-indicator";
 import { useBrandStore } from "@/lib/brand/store";
+import { useAutosave } from "@/lib/hooks/use-autosave";
 import { PILLAR_META } from "@/types/brand";
 
 const FACTORS = [
@@ -51,21 +53,19 @@ export function NicheScorecard() {
   const meta = PILLAR_META[0];
   const { brandDNA, updatePillar } = useBrandStore();
 
-  const [scores, setScores] = useState({
-    growing: 3,
-    targetable: 3,
-    purchasing: 3,
-    pain: 3,
-  });
-
-  useEffect(() => {
-    setScores({
-      growing: brandDNA.niche.isGrowing ? 4 : 3,
-      targetable: brandDNA.niche.easyToTarget ? 4 : 3,
-      purchasing: brandDNA.niche.purchasingPower === "high" ? 5 : brandDNA.niche.purchasingPower === "medium" ? 3 : 1,
-      pain: Math.round(brandDNA.niche.painLevel / 2) || 3,
-    });
-  }, [brandDNA.niche]);
+  // Init sliders once from the saved pillar; afterwards they are user-owned
+  // (autosave writes back, so we must not re-derive from brandDNA on change).
+  const [scores, setScores] = useState(() => ({
+    growing: brandDNA.niche.isGrowing ? 4 : 3,
+    targetable: brandDNA.niche.easyToTarget ? 4 : 3,
+    purchasing:
+      brandDNA.niche.purchasingPower === "high"
+        ? 5
+        : brandDNA.niche.purchasingPower === "medium"
+          ? 3
+          : 1,
+    pain: Math.round(brandDNA.niche.painLevel / 2) || 3,
+  }));
 
   const [marketCategory, setMarketCategory] = useState(brandDNA.niche.marketCategory);
   const [subNiche, setSubNiche] = useState(brandDNA.niche.subNiche);
@@ -74,16 +74,24 @@ export function NicheScorecard() {
   const total = Object.values(scores).reduce((a, b) => a + b, 0);
   const grade = getGrade(total);
 
+  const payload = {
+    marketCategory,
+    subNiche,
+    isGrowing: scores.growing >= 3,
+    easyToTarget: scores.targetable >= 3,
+    purchasingPower: (scores.purchasing >= 4
+      ? "high"
+      : scores.purchasing >= 2
+        ? "medium"
+        : "low") as "high" | "medium" | "low",
+    painLevel: scores.pain * 2,
+    congregationPoints: congregations.split(",").map((s) => s.trim()).filter(Boolean),
+  };
+
+  const status = useAutosave(payload, (p) => updatePillar("niche", p));
+
   const handleSave = () => {
-    updatePillar("niche", {
-      marketCategory,
-      subNiche,
-      isGrowing: scores.growing >= 3,
-      easyToTarget: scores.targetable >= 3,
-      purchasingPower: scores.purchasing >= 4 ? "high" : scores.purchasing >= 2 ? "medium" : "low",
-      painLevel: scores.pain * 2,
-      congregationPoints: congregations.split(",").map((s) => s.trim()).filter(Boolean),
-    });
+    updatePillar("niche", payload);
     toast.success("Niche profile saved");
   };
 
@@ -172,12 +180,12 @@ export function NicheScorecard() {
           />
         </div>
 
-        <button
-          className="ck-btn-primary w-full"
-          onClick={handleSave}
-        >
-          Save Niche Profile
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <AutosaveIndicator status={status} />
+          <button className="ck-btn-primary" onClick={handleSave}>
+            Save Niche Profile
+          </button>
+        </div>
       </div>
     </DeepenerShell>
   );

@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 import { DeepenerShell } from "../deepener-shell";
+import { AutosaveIndicator } from "../autosave-indicator";
 import { useBrandStore } from "@/lib/brand/store";
+import { useAutosave } from "@/lib/hooks/use-autosave";
 import { PILLAR_META } from "@/types/brand";
 
 const PROMPTS = [
@@ -61,18 +63,22 @@ export function StoryPrompter() {
     }
   };
 
+  const payload = {
+    originStory: answers.originStory,
+    transformationMoment: answers.transformationMoment,
+    villain: answers.villain,
+    mission: answers.mission,
+    vision,
+    coreValues: coreValues
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  };
+
+  const status = useAutosave(payload, (p) => updatePillar("story", p));
+
   const handleSave = () => {
-    updatePillar("story", {
-      originStory: answers.originStory,
-      transformationMoment: answers.transformationMoment,
-      villain: answers.villain,
-      mission: answers.mission,
-      vision,
-      coreValues: coreValues
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    });
+    updatePillar("story", payload);
     toast.success("Brand story saved");
   };
 
@@ -167,12 +173,12 @@ export function StoryPrompter() {
                 />
               </div>
 
-              <button
-                className="ck-btn-primary w-full"
-                onClick={handleSave}
-              >
-                Save Brand Story
-              </button>
+              <div className="flex items-center justify-between gap-3">
+                <AutosaveIndicator status={status} />
+                <button className="ck-btn-primary" onClick={handleSave}>
+                  Save Brand Story
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

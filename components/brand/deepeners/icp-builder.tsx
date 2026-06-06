@@ -4,7 +4,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { DeepenerShell } from "../deepener-shell";
+import { AutosaveIndicator } from "../autosave-indicator";
 import { useBrandStore } from "@/lib/brand/store";
+import { useAutosave } from "@/lib/hooks/use-autosave";
 import { PILLAR_META } from "@/types/brand";
 
 function TagInput({
@@ -83,16 +85,20 @@ export function ICPBuilder() {
   const [desires, setDesires] = useState(icp.psychographics.desires);
   const [values, setValues] = useState(icp.psychographics.values);
 
+  const payload = {
+    name,
+    demographics: { ageRange, gender, location, incomeRange, jobTitle },
+    psychographics: { values, beliefs: icp.psychographics.beliefs, fears, desires },
+    painPoints,
+    dreamOutcome,
+    failedSolutions,
+    platforms,
+  };
+
+  const status = useAutosave(payload, (p) => updatePillar("icp", p));
+
   const handleSave = () => {
-    updatePillar("icp", {
-      name,
-      demographics: { ageRange, gender, location, incomeRange, jobTitle },
-      psychographics: { values, beliefs: icp.psychographics.beliefs, fears, desires },
-      painPoints,
-      dreamOutcome,
-      failedSolutions,
-      platforms,
-    });
+    updatePillar("icp", payload);
     toast.success("Avatar saved");
   };
 
@@ -162,9 +168,12 @@ export function ICPBuilder() {
           <TagInput label="Platforms" onChange={setPlatforms} placeholder="Where do they hang out online?" value={platforms} />
         </div>
 
-        <button className="ck-btn-primary w-full" onClick={handleSave}>
-          Save Avatar
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <AutosaveIndicator status={status} />
+          <button className="ck-btn-primary" onClick={handleSave}>
+            Save Avatar
+          </button>
+        </div>
       </div>
     </DeepenerShell>
   );
