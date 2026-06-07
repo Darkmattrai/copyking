@@ -4,6 +4,7 @@ import { openai } from "@ai-sdk/openai";
 import { getGenerator } from "@/lib/generators/registry";
 import { GENERATOR_PROMPTS } from "@/lib/generators/prompts";
 import { streamOrganicContentIdeas } from "@/lib/generators/organic-content-ideas-pipeline";
+import { buildDeepContext } from "@/lib/generators/deep-context";
 import type { BrandDNA } from "@/types/brand";
 
 export const maxDuration = 120;
@@ -155,7 +156,8 @@ export async function POST(req: Request) {
     });
   }
 
-  const brandContext = brandDNA ? buildBrandContext(brandDNA) : "";
+  const brandContext =
+    (brandDNA ? buildBrandContext(brandDNA) : "") + (await buildDeepContext());
 
   let userPrompt = `Generate the ${generator.name} output for this brand.`;
   if (params && Object.keys(params).length > 0) {
