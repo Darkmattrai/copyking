@@ -83,7 +83,9 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
 
         {D.ladders.map((L, li) => {
           const products = sortProducts(L.products).filter(productHasContent);
-          const conts = L.continuities.filter((c) => c.on && (c.name || c.price));
+          const conts = (L.continuities ?? []).filter(
+            (c) => c.on && (c.name || c.price),
+          );
           if (!products.length && !conts.length) return null;
           return (
             <div key={li} className="space-y-2">

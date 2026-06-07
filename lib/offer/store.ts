@@ -184,7 +184,7 @@ export const useOfferDraftStore = create<OfferDraftStore>()(
         set((s) => ({
           offer: mapLadder(s.offer, li, (lad) => ({
             ...lad,
-            continuities: [...lad.continuities, newContinuity()],
+            continuities: [...(lad.continuities ?? []), newContinuity()],
           })),
         })),
 
@@ -192,7 +192,7 @@ export const useOfferDraftStore = create<OfferDraftStore>()(
         set((s) => ({
           offer: mapLadder(s.offer, li, (lad) => ({
             ...lad,
-            continuities: lad.continuities.map((c, i) =>
+            continuities: (lad.continuities ?? []).map((c, i) =>
               i === ci ? { ...c, ...updates } : c,
             ),
           })),
@@ -202,7 +202,7 @@ export const useOfferDraftStore = create<OfferDraftStore>()(
         set((s) => ({
           offer: mapLadder(s.offer, li, (lad) => ({
             ...lad,
-            continuities: lad.continuities.filter((_, i) => i !== ci),
+            continuities: (lad.continuities ?? []).filter((_, i) => i !== ci),
           })),
         })),
 
@@ -230,7 +230,7 @@ export const useOfferDraftStore = create<OfferDraftStore>()(
     }),
     {
       name: "copyking-offer-draft",
-      version: 2,
+      version: 3,
       partialize: (s) => ({ offer: s.offer, enhancements: s.enhancements }),
       migrate: (persisted) => {
         const p = (persisted ?? {}) as {

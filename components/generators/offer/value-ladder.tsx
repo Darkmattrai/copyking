@@ -304,7 +304,7 @@ export function ValueLadder() {
         </div>
 
         {/* Continuity flows run beneath the ladder — one line per active offer */}
-        {L.continuities
+        {(L.continuities ?? [])
           .filter((c) => c.on)
           .map((c, i) => (
             <div
@@ -350,13 +350,13 @@ export function ValueLadder() {
           stay in regardless of which product they bought. Add as many as you run.
         </p>
 
-        {L.continuities.length === 0 && (
+        {(L.continuities ?? []).length === 0 && (
           <p className="text-xs text-text-tertiary italic">
             No continuity offers yet.
           </p>
         )}
 
-        {L.continuities.map((c, ci) => (
+        {(L.continuities ?? []).map((c, ci) => (
           <div
             key={ci}
             className="rounded-lg border border-border p-3 space-y-3"
