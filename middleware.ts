@@ -5,6 +5,7 @@ import {
   clientCanAccess,
   clientCanAccessApi,
   CLIENT_HOME,
+  roleHome,
   type UserRole,
 } from "@/lib/auth/roles";
 
@@ -50,12 +51,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname === "/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/brand";
-    return NextResponse.redirect(url);
-  }
-
   // Role-based gating: clients are limited to the two Foundation tools.
   if (user) {
     const { data } = await supabase
@@ -64,6 +59,12 @@ export async function middleware(request: NextRequest) {
       .eq("id", user.id)
       .single();
     const role: UserRole = (data?.role as UserRole) ?? "client";
+
+    if (pathname === "/login") {
+      const url = request.nextUrl.clone();
+      url.pathname = roleHome(role);
+      return NextResponse.redirect(url);
+    }
 
     if (role === "client") {
       const isApi = pathname.startsWith("/api/");

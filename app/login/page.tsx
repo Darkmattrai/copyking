@@ -4,8 +4,24 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { roleHome, type UserRole } from "@/lib/auth/roles";
 
 type Mode = "signin" | "signup";
+
+async function goToRoleHome(router: ReturnType<typeof useRouter>) {
+  let role: UserRole = "client";
+  try {
+    const res = await fetch("/api/me", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.role === "admin" || data?.role === "client") role = data.role;
+    }
+  } catch {
+    // fall back to client home
+  }
+  router.push(roleHome(role));
+  router.refresh();
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -47,8 +63,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/brand");
-      router.refresh();
+      await goToRoleHome(router);
       return;
     }
 
@@ -63,8 +78,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/brand");
-    router.refresh();
+    await goToRoleHome(router);
   }
 
   async function handleGoogle() {
