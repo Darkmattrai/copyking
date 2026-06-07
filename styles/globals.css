@@ -47,12 +47,18 @@
 	--color-icp-trigger: #2faf6b;
 	--color-icp-objection: #3d8bd4;
 
-	/* Offer value-ladder price-tier colors */
-	--color-tier-free: #1b5c36;
-	--color-tier-low: #2563b0;
-	--color-tier-mid: #c9a227;
-	--color-tier-midhi: #d2791b;
-	--color-tier-high: #c0392b;
+	/* Offer value-ladder price-tier colors (dark-mode defaults: bright
+	   accents on subtle tinted fills; light-mode overrides live in :root) */
+	--color-tier-free: #4ade80;
+	--color-tier-low: #60a5fa;
+	--color-tier-mid: #fbbf24;
+	--color-tier-midhi: #fb923c;
+	--color-tier-high: #f87171;
+	--color-tier-free-bg: rgba(34, 197, 94, 0.13);
+	--color-tier-low-bg: rgba(59, 130, 246, 0.13);
+	--color-tier-mid-bg: rgba(245, 193, 36, 0.13);
+	--color-tier-midhi-bg: rgba(249, 115, 22, 0.13);
+	--color-tier-high-bg: rgba(239, 68, 68, 0.13);
 }
 
 :root {
@@ -65,6 +71,18 @@
 	--color-text-primary: oklch(0.22 0.01 260);
 	--color-text-secondary: oklch(0.38 0.01 260);
 	--color-text-tertiary: oklch(0.52 0.01 260);
+
+	/* Value-ladder tiers — light mode: deep accents on pale tinted fills */
+	--color-tier-free: #1b5c36;
+	--color-tier-low: #2563b0;
+	--color-tier-mid: #b5891f;
+	--color-tier-midhi: #d2791b;
+	--color-tier-high: #c0392b;
+	--color-tier-free-bg: #dcebe1;
+	--color-tier-low-bg: #dde8f6;
+	--color-tier-mid-bg: #f6eecb;
+	--color-tier-midhi-bg: #f7e2cd;
+	--color-tier-high-bg: #f6d8d3;
 }
 
 .dark {
@@ -77,6 +95,18 @@
 	--color-text-primary: oklch(1 0 0 / 0.95);
 	--color-text-secondary: oklch(1 0 0 / 0.55);
 	--color-text-tertiary: oklch(1 0 0 / 0.35);
+
+	/* Value-ladder tiers — dark mode: bright accents on subtle tinted fills */
+	--color-tier-free: #4ade80;
+	--color-tier-low: #60a5fa;
+	--color-tier-mid: #fbbf24;
+	--color-tier-midhi: #fb923c;
+	--color-tier-high: #f87171;
+	--color-tier-free-bg: rgba(34, 197, 94, 0.13);
+	--color-tier-low-bg: rgba(59, 130, 246, 0.13);
+	--color-tier-mid-bg: rgba(245, 193, 36, 0.13);
+	--color-tier-midhi-bg: rgba(249, 115, 22, 0.13);
+	--color-tier-high-bg: rgba(239, 68, 68, 0.13);
 }
 
 /* ── Global resets ────────────────────────────────────────────── */

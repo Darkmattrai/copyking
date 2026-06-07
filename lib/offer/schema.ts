@@ -127,12 +127,14 @@ export interface TierDef {
   bg: string;
 }
 
+// Colors reference theme-aware CSS variables (defined in styles/globals.css)
+// so tiers adapt between light and dark mode.
 export const TIERS: TierDef[] = [
-  { key: "free", rank: 0, label: "Free", color: "#1b5c36", bg: "#dcebe1" },
-  { key: "low", rank: 1, label: "Low Ticket", color: "#2563b0", bg: "#dde8f6" },
-  { key: "mid", rank: 2, label: "Mid Ticket", color: "#c9a227", bg: "#f6eecb" },
-  { key: "midhi", rank: 3, label: "Mid to High", color: "#d2791b", bg: "#f7e2cd" },
-  { key: "high", rank: 4, label: "High Ticket", color: "#c0392b", bg: "#f6d8d3" },
+  { key: "free", rank: 0, label: "Free", color: "var(--color-tier-free)", bg: "var(--color-tier-free-bg)" },
+  { key: "low", rank: 1, label: "Low Ticket", color: "var(--color-tier-low)", bg: "var(--color-tier-low-bg)" },
+  { key: "mid", rank: 2, label: "Mid Ticket", color: "var(--color-tier-mid)", bg: "var(--color-tier-mid-bg)" },
+  { key: "midhi", rank: 3, label: "Mid to High", color: "var(--color-tier-midhi)", bg: "var(--color-tier-midhi-bg)" },
+  { key: "high", rank: 4, label: "High Ticket", color: "var(--color-tier-high)", bg: "var(--color-tier-high-bg)" },
 ];
 
 export function priceNum(p: string | number | null | undefined): number {
