@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 
 import { PillarIcon } from "@/components/brand/pillar-icon";
 
@@ -30,24 +30,7 @@ const PILLARS: Pillar[] = [
   { key: "sales", name: "Sales Machine", icon: "dollar", color: "#34d399", node: { x: 822, y: 550 }, href: "#" },
 ];
 
-// Sample points along a quadratic bezier for a signal to follow.
-function sampleCurve(
-  node: { x: number; y: number },
-  c: { x: number; y: number },
-  steps = 24,
-) {
-  const xs: number[] = [];
-  const ys: number[] = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const mt = 1 - t;
-    xs.push(mt * mt * node.x + 2 * mt * t * c.x + t * t * HUB.x);
-    ys.push(mt * mt * node.y + 2 * mt * t * c.y + t * t * HUB.y);
-  }
-  return { xs, ys };
-}
-
-type Curve = { d: string; xs: number[]; ys: number[] };
+type Curve = { d: string; c: { x: number; y: number } };
 
 // Build one randomly-bowed quadratic-bezier conduit from a node to the hub.
 function makeCurve(node: { x: number; y: number }): Curve {
@@ -60,14 +43,52 @@ function makeCurve(node: { x: number; y: number }): Curve {
   const along = (Math.random() - 0.5) * 0.25; // slide control point along the axis
   const cx = mx + (-dy / len) * mag + dx * along;
   const cy = my + (dx / len) * mag + dy * along;
-  const c = { x: cx, y: cy };
-  return {
-    d: `M ${node.x} ${node.y} Q ${cx} ${cy} ${HUB.x} ${HUB.y}`,
-    ...sampleCurve(node, c),
-  };
+  return { d: `M ${node.x} ${node.y} Q ${cx} ${cy} ${HUB.x} ${HUB.y}`, c: { x: cx, y: cy } };
 }
 
 type Signal = { id: number; pillar: number; ci: number };
+
+// A single glowing pulse that rides the bezier from its pillar to the heart.
+function Signal({
+  node,
+  control,
+  color,
+  onDone,
+}: {
+  node: { x: number; y: number };
+  control: { x: number; y: number };
+  color: string;
+  onDone: () => void;
+}) {
+  const t = useMotionValue(0);
+  const x = useTransform(t, (v) => {
+    const mt = 1 - v;
+    return mt * mt * node.x + 2 * mt * v * control.x + v * v * HUB.x;
+  });
+  const y = useTransform(t, (v) => {
+    const mt = 1 - v;
+    return mt * mt * node.y + 2 * mt * v * control.y + v * v * HUB.y;
+  });
+  const opacity = useTransform(t, [0, 0.12, 0.85, 1], [0, 1, 1, 0]);
+
+  useEffect(() => {
+    const controls = animate(t, 1, {
+      duration: 1.8,
+      ease: "easeInOut",
+      onComplete: onDone,
+    });
+    return () => controls.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <motion.g style={{ x, y, opacity }}>
+      <circle r={9} fill={color} opacity={0.4} filter="url(#signal-blur)" />
+      <circle r={3.5} fill={color} />
+      <circle r={1.5} fill="#ffffff" />
+    </motion.g>
+  );
+}
 
 // ── 3-lego-block icon: bottom two are static, the third drops onto the top ───
 function LegoBlocks({ className }: { className?: string }) {
@@ -209,31 +230,20 @@ export default function OverviewPage() {
           )}
 
           {/* travelling signals */}
-          <AnimatePresence>
-            {signals.map((s) => {
-              const p = PILLARS[s.pillar];
-              const curve = curves[s.pillar]?.[s.ci];
-              if (!curve) return null;
-              return (
-                <motion.g
-                  key={s.id}
-                  initial={{ x: p.node.x, y: p.node.y, opacity: 0 }}
-                  animate={{ x: curve.xs, y: curve.ys, opacity: [0, 1, 1, 0] }}
-                  exit={{ opacity: 0 }}
-                  transition={{
-                    duration: 1.6,
-                    ease: "easeInOut",
-                    opacity: { times: [0, 0.15, 0.85, 1] },
-                  }}
-                  onAnimationComplete={() => removeSignal(s.id)}
-                >
-                  <circle r={9} fill={p.color} opacity={0.4} filter="url(#signal-blur)" />
-                  <circle r={3.5} fill={p.color} />
-                  <circle r={1.5} fill="#ffffff" />
-                </motion.g>
-              );
-            })}
-          </AnimatePresence>
+          {signals.map((s) => {
+            const p = PILLARS[s.pillar];
+            const curve = curves[s.pillar]?.[s.ci];
+            if (!curve) return null;
+            return (
+              <Signal
+                key={s.id}
+                node={p.node}
+                control={curve.c}
+                color={p.color}
+                onDone={() => removeSignal(s.id)}
+              />
+            );
+          })}
         </svg>
 
         {/* ── Heart hub (above the conduits so signals are absorbed into it) ── */}
