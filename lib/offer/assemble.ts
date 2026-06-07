@@ -83,9 +83,10 @@ export function offerMarkdown(D: Offer): string {
       if (!productHasContent(p)) return;
       o += productMarkdown(p) + `\n`;
     });
-    const c = L.continuity;
-    if (c && c.on && (c.name || c.price))
-      o += `**Continuity 🔁:** ${c.name} — ${c.price} (${c.cycle}) — ${c.desc || ""}\n\n`;
+    L.continuities.forEach((c) => {
+      if (c.on && (c.name || c.price))
+        o += `**Continuity 🔁:** ${c.name} — ${c.price} (${c.cycle}) — ${c.desc || ""}\n\n`;
+    });
   });
   return o;
 }

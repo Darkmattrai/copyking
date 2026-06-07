@@ -109,7 +109,7 @@ export interface Continuity {
 export interface Ladder {
   name: string;
   products: Product[];
-  continuity: Continuity;
+  continuities: Continuity[];
 }
 
 export interface Offer {

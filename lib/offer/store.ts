@@ -2,8 +2,8 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Offer, Product, Ladder } from "./schema";
-import { seed, newLadder, newProduct, cloneProduct } from "./seed";
+import type { Offer, Product, Ladder, Continuity } from "./schema";
+import { seed, newLadder, newProduct, cloneProduct, newContinuity } from "./seed";
 import { migrateOffer } from "./migrate";
 
 // When a field is improved with "✨ Enhance with AI", we keep BOTH the text the
@@ -37,6 +37,10 @@ interface OfferDraftStore {
   addProduct: (li: number) => void;
   duplicateProduct: (li: number, pi: number) => void;
   removeProduct: (li: number, pi: number) => void;
+
+  addContinuity: (li: number) => void;
+  updateContinuity: (li: number, ci: number, updates: Partial<Continuity>) => void;
+  removeContinuity: (li: number, ci: number) => void;
 
   recordEnhancement: (key: string, original: string, enhanced: string) => void;
   setEnhancements: (e: EnhancementMap) => void;
@@ -137,14 +141,15 @@ export const useOfferDraftStore = create<OfferDraftStore>()(
           // real, filled-in offer the user then edits up/down.
           const flagship = l.products.find((p) => p.pop) ?? last;
           const next = flagship ? cloneProduct(flagship, { name: "" }) : newProduct();
+          // Stay on the ladder home — the new product just appears as a step;
+          // the user opens it to edit only when they click "Build offer".
           return {
             offer: mapLadder(s.offer, li, (lad) => ({
               ...lad,
               products: [...lad.products, next],
             })),
             curLadder: li,
-            curProduct: l.products.length,
-            current: 0,
+            curProduct: null,
           };
         }),
 
@@ -174,6 +179,32 @@ export const useOfferDraftStore = create<OfferDraftStore>()(
             curProduct: null,
           };
         }),
+
+      addContinuity: (li) =>
+        set((s) => ({
+          offer: mapLadder(s.offer, li, (lad) => ({
+            ...lad,
+            continuities: [...lad.continuities, newContinuity()],
+          })),
+        })),
+
+      updateContinuity: (li, ci, updates) =>
+        set((s) => ({
+          offer: mapLadder(s.offer, li, (lad) => ({
+            ...lad,
+            continuities: lad.continuities.map((c, i) =>
+              i === ci ? { ...c, ...updates } : c,
+            ),
+          })),
+        })),
+
+      removeContinuity: (li, ci) =>
+        set((s) => ({
+          offer: mapLadder(s.offer, li, (lad) => ({
+            ...lad,
+            continuities: lad.continuities.filter((_, i) => i !== ci),
+          })),
+        })),
 
       recordEnhancement: (key, original, enhanced) =>
         set((s) => ({

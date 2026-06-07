@@ -27,7 +27,9 @@ interface OldTier {
 interface OldLadder {
   name?: string;
   tiers?: OldTier[];
+  // Older saves carried a single continuity; newer ones carry an array.
   continuity?: Continuity;
+  continuities?: Continuity[];
 }
 interface OldOffer {
   who?: string;
@@ -73,13 +75,27 @@ function isNewShape(raw: unknown): raw is Offer {
   );
 }
 
-const defaultContinuity = (): Continuity => ({
-  on: false,
-  name: "",
-  price: "",
-  cycle: "Monthly",
-  desc: "",
-});
+function normCont(c: Continuity): Continuity {
+  return {
+    on: c.on ?? true,
+    name: c.name ?? "",
+    price: c.price ?? "",
+    cycle: c.cycle ?? "Monthly",
+    desc: c.desc ?? "",
+  };
+}
+
+// Read a ladder's continuity offers from either the new array (`continuities`)
+// or the legacy single `continuity`, dropping empty/disabled legacy entries.
+function readContinuities(L: {
+  continuities?: Continuity[];
+  continuity?: Continuity;
+}): Continuity[] {
+  if (Array.isArray(L.continuities)) return L.continuities.map(normCont);
+  const c = L.continuity;
+  if (c && (c.on || c.name || c.price)) return [normCont(c)];
+  return [];
+}
 
 // Ensure a (possibly partial) product from storage has every field the current
 // schema expects, without clobbering the user's saved values.
@@ -151,7 +167,7 @@ function migrateFlat(old: OldOffer): Offer {
     return {
       name: L.name ?? "",
       products,
-      continuity: L.continuity ?? defaultContinuity(),
+      continuities: readContinuities(L),
     };
   });
 
@@ -171,7 +187,7 @@ export function migrateOffer(raw: unknown): Offer {
         products: (L.products?.length ? L.products : [newProduct()]).map(
           normalizeProduct,
         ),
-        continuity: L.continuity ?? defaultContinuity(),
+        continuities: readContinuities(L),
       })),
     };
   }

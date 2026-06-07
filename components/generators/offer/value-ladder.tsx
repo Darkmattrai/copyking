@@ -62,6 +62,9 @@ export function ValueLadder() {
     addProduct,
     duplicateProduct,
     removeProduct,
+    addContinuity,
+    updateContinuity,
+    removeContinuity,
     setCurLadder,
     setCurProduct,
   } = useOfferDraftStore();
@@ -300,18 +303,22 @@ export function ValueLadder() {
           PRICE →
         </div>
 
-        {/* Continuity flow runs beneath the ladder */}
-        {L.continuity.on && (
-          <div className="pl-6 mt-2 flex items-center gap-1.5 flex-wrap text-text-tertiary">
-            <span className="text-[10px] font-bold tracking-[0.15em]">
-              CONTINUITY
-            </span>
-            <span className="text-sm font-bold text-accent">
-              → {L.continuity.price || "$"} → {L.continuity.price || "$"} →{" "}
-              {L.continuity.price || "$"} → …
-            </span>
-          </div>
-        )}
+        {/* Continuity flows run beneath the ladder — one line per active offer */}
+        {L.continuities
+          .filter((c) => c.on)
+          .map((c, i) => (
+            <div
+              key={i}
+              className="pl-6 mt-2 flex items-center gap-1.5 flex-wrap text-text-tertiary"
+            >
+              <span className="text-[10px] font-bold tracking-[0.15em]">
+                {(c.name || "CONTINUITY").toUpperCase()}
+              </span>
+              <span className="text-sm font-bold text-accent">
+                → {c.price || "$"} → {c.price || "$"} → {c.price || "$"} → …
+              </span>
+            </div>
+          ))}
       </div>
 
       <button
@@ -328,80 +335,106 @@ export function ValueLadder() {
         </div>
       )}
 
-      {/* Continuity runs underneath the whole ladder */}
-      <div className="ck-card p-4 space-y-3" style={{ borderTop: "2px solid var(--color-accent)" }}>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={L.continuity.on}
-            onChange={(e) =>
-              updateLadder(idx, {
-                continuity: { ...L.continuity, on: e.target.checked },
-              })
-            }
-          />
+      {/* Continuity offers run underneath the whole ladder */}
+      <div
+        className="ck-card p-4 space-y-3"
+        style={{ borderTop: "2px solid var(--color-accent)" }}
+      >
+        <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold text-text-primary">
-            🔁 Continuity program (runs under the whole ladder)
+            🔁 Continuity programs (run under the whole ladder)
           </span>
-        </label>
+        </div>
         <p className="text-xs text-text-tertiary">
-          Recurring revenue beneath the ladder — a membership / subscription they
-          stay in regardless of which product they bought.
+          Recurring revenue beneath the ladder — memberships / subscriptions they
+          stay in regardless of which product they bought. Add as many as you run.
         </p>
-        {L.continuity.on && (
-          <div className="space-y-3">
+
+        {L.continuities.length === 0 && (
+          <p className="text-xs text-text-tertiary italic">
+            No continuity offers yet.
+          </p>
+        )}
+
+        {L.continuities.map((c, ci) => (
+          <div
+            key={ci}
+            className="rounded-lg border border-border p-3 space-y-3"
+            style={c.on ? { borderLeft: "3px solid var(--color-accent)" } : {}}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={c.on}
+                  onChange={(e) =>
+                    updateContinuity(idx, ci, { on: e.target.checked })
+                  }
+                />
+                <span className="text-xs font-medium text-text-secondary">
+                  {c.on ? "Active" : "Disabled"}
+                </span>
+              </label>
+              <button
+                type="button"
+                onClick={() => removeContinuity(idx, ci)}
+                className="text-xs text-text-tertiary hover:text-danger transition-colors"
+              >
+                🗑 Remove
+              </button>
+            </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <input
                 type="text"
-                value={L.continuity.name}
+                value={c.name}
                 onChange={(e) =>
-                  updateLadder(idx, {
-                    continuity: { ...L.continuity, name: e.target.value },
-                  })
+                  updateContinuity(idx, ci, { name: e.target.value })
                 }
                 placeholder="Inner Circle membership"
                 className="ck-input !py-2"
               />
               <input
                 type="text"
-                value={L.continuity.price}
+                value={c.price}
                 onChange={(e) =>
-                  updateLadder(idx, {
-                    continuity: { ...L.continuity, price: e.target.value },
-                  })
+                  updateContinuity(idx, ci, { price: e.target.value })
                 }
                 placeholder="$297/mo"
                 className="ck-input !py-2"
               />
               <select
-                value={L.continuity.cycle}
+                value={c.cycle}
                 onChange={(e) =>
-                  updateLadder(idx, {
-                    continuity: { ...L.continuity, cycle: e.target.value },
-                  })
+                  updateContinuity(idx, ci, { cycle: e.target.value })
                 }
                 className="ck-input !py-2"
               >
-                {CONTINUITY_CYCLES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                {CONTINUITY_CYCLES.map((cyc) => (
+                  <option key={cyc} value={cyc}>
+                    {cyc}
                   </option>
                 ))}
               </select>
             </div>
             <textarea
-              value={L.continuity.desc}
+              value={c.desc}
               onChange={(e) =>
-                updateLadder(idx, {
-                  continuity: { ...L.continuity, desc: e.target.value },
-                })
+                updateContinuity(idx, ci, { desc: e.target.value })
               }
               placeholder="The ongoing value that earns the recurring charge."
               rows={2}
               className="ck-input resize-none !py-2"
             />
           </div>
-        )}
+        ))}
+
+        <button
+          type="button"
+          onClick={() => addContinuity(idx)}
+          className="flex items-center gap-2 self-start px-4 py-2 rounded-lg border border-dashed border-border hover:border-border-hover text-sm font-medium text-text-primary transition-all"
+        >
+          + Add continuity offer
+        </button>
       </div>
     </div>
   );

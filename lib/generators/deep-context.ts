@@ -151,9 +151,10 @@ function formatOffer(offer: Offer): string | null {
     sortProducts(L.products ?? []).forEach((p, i) => {
       ladderLines.push(formatProduct(p, i));
     });
-    if (L.continuity?.on) {
+    for (const c of L.continuities ?? []) {
+      if (!c.on) continue;
       ladderLines.push(
-        `#### Continuity: ${L.continuity.name || ""} — ${L.continuity.price || ""}/${L.continuity.cycle || ""}${L.continuity.desc ? ` — ${L.continuity.desc}` : ""}`,
+        `#### Continuity: ${c.name || ""} — ${c.price || ""}/${c.cycle || ""}${c.desc ? ` — ${c.desc}` : ""}`,
       );
     }
     lines.push(ladderLines.join("\n\n"));

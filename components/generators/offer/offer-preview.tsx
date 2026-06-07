@@ -83,9 +83,8 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
 
         {D.ladders.map((L, li) => {
           const products = sortProducts(L.products).filter(productHasContent);
-          const c = L.continuity;
-          const hasCont = c && c.on && (c.name || c.price);
-          if (!products.length && !hasCont) return null;
+          const conts = L.continuities.filter((c) => c.on && (c.name || c.price));
+          if (!products.length && !conts.length) return null;
           return (
             <div key={li} className="space-y-2">
               {multi && (
@@ -171,12 +170,15 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
                   </div>
                 );
               })}
-              {hasCont && (
-                <div className="flex justify-between text-xs text-text-secondary">
+              {conts.map((c, ci) => (
+                <div
+                  key={ci}
+                  className="flex justify-between text-xs text-text-secondary"
+                >
                   <span>🔁 {c.name}</span>
                   <span>{c.price}</span>
                 </div>
-              )}
+              ))}
             </div>
           );
         })}

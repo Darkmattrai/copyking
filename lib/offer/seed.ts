@@ -1,4 +1,9 @@
-import type { Offer, Product, Ladder } from "./schema";
+import type { Offer, Product, Ladder, Continuity } from "./schema";
+
+// A blank continuity / subscription offer that runs beneath the ladder.
+export function newContinuity(): Continuity {
+  return { on: true, name: "", price: "", cycle: "Monthly", desc: "" };
+}
 
 function uid(): string {
   return typeof crypto !== "undefined" && crypto.randomUUID
@@ -71,7 +76,7 @@ export function newLadder(): Ladder {
   return {
     name: "",
     products: [newProduct()],
-    continuity: { on: false, name: "", price: "", cycle: "Monthly", desc: "" },
+    continuities: [],
   };
 }
 
@@ -126,13 +131,15 @@ export function seed(): Offer {
             desc: "Everything, plus their town locked so rivals can't join.",
           }),
         ],
-        continuity: {
-          on: true,
-          name: "Inner Circle membership",
-          price: "$297/mo",
-          cycle: "Monthly",
-          desc: "Ongoing campaign optimization, fresh ad templates each month, and a live group call — they stay subscribed.",
-        },
+        continuities: [
+          {
+            on: true,
+            name: "Inner Circle membership",
+            price: "$297/mo",
+            cycle: "Monthly",
+            desc: "Ongoing campaign optimization, fresh ad templates each month, and a live group call — they stay subscribed.",
+          },
+        ],
       },
     ],
   };
