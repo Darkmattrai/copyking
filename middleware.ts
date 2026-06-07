@@ -42,7 +42,15 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (!user && !pathname.startsWith("/login") && !pathname.startsWith("/auth")) {
+  // The marketing landing page at "/" is public to logged-out visitors.
+  const isPublic = pathname === "/";
+
+  if (
+    !user &&
+    !isPublic &&
+    !pathname.startsWith("/login") &&
+    !pathname.startsWith("/auth")
+  ) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -60,7 +68,7 @@ export async function middleware(request: NextRequest) {
       .single();
     const role: UserRole = (data?.role as UserRole) ?? "client";
 
-    if (pathname === "/login") {
+    if (pathname === "/login" || pathname === "/") {
       const url = request.nextUrl.clone();
       url.pathname = roleHome(role);
       return NextResponse.redirect(url);

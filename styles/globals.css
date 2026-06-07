@@ -284,3 +284,48 @@ input[type="range"].ck-range::-moz-range-thumb {
 h1, h2, h3 {
 	letter-spacing: -0.025em;
 }
+
+/* ── Landing page (Kong-style) helpers ────────────────────────── */
+
+/* Infinite horizontal marquee. Track holds the content twice; we slide it
+   exactly one copy width (-50%) so the loop is seamless. */
+@keyframes ck-marquee {
+	from { transform: translateX(0); }
+	to { transform: translateX(-50%); }
+}
+.ck-marquee-track {
+	display: flex;
+	width: max-content;
+	animation: ck-marquee 50s linear infinite;
+}
+.ck-marquee-track.reverse {
+	animation-direction: reverse;
+}
+.ck-marquee:hover .ck-marquee-track {
+	animation-play-state: paused;
+}
+
+/* The white "highlighted word" box used inside headlines, with a soft violet
+   glow behind it — Kong's signature headline treatment. */
+.ck-highlight {
+	display: inline-block;
+	background: #fff;
+	color: #0a0a0f;
+	border-radius: 0.75rem;
+	padding: 0 0.6rem;
+	box-shadow: 0 0 60px 0 rgba(139, 92, 246, 0.55);
+}
+
+/* Soft radial violet glow used behind hero / section headings. */
+.ck-glow {
+	position: absolute;
+	border-radius: 9999px;
+	filter: blur(80px);
+	background: radial-gradient(circle, rgba(124, 58, 237, 0.45), transparent 70%);
+	pointer-events: none;
+	z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ck-marquee-track { animation: none; }
+}
