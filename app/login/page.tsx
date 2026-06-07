@@ -103,8 +103,6 @@ export default function LoginPage() {
   }
 
   const isSignup = mode === "signup";
-  const googleEnabled =
-    process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true";
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0a0a0f] px-4">
@@ -134,14 +132,12 @@ export default function LoginPage() {
           className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6"
           onSubmit={handleSubmit}
         >
-          {googleEnabled && (
-            <>
-              <button
-                className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
-                disabled={loading}
-                type="button"
-                onClick={handleGoogle}
-              >
+          <button
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
+            disabled={loading}
+            type="button"
+            onClick={handleGoogle}
+          >
                 <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 48 48">
                   <path
                     d="M44.5 20H24v8.5h11.8C34.7 33.9 30 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.3 0 6.3 1.2 8.6 3.3l6-6C42.9 4.6 38.7 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.4-.2-2.7-.5-4z"
@@ -159,17 +155,15 @@ export default function LoginPage() {
                     d="M44.5 20H24v8.5h11.8c-1 2.9-3 5.3-5.5 6.7l7.1 5.8C42.1 37.9 45 31.7 45 24c0-1.4-.2-2.7-.5-4z"
                     fill="#1976D2"
                   />
-                </svg>
-                Continue with Google
-              </button>
+            </svg>
+            Continue with Google
+          </button>
 
-              <div className="flex items-center gap-3">
-                <span className="h-px flex-1 bg-white/10" />
-                <span className="text-xs text-white/30">or</span>
-                <span className="h-px flex-1 bg-white/10" />
-              </div>
-            </>
-          )}
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-white/10" />
+            <span className="text-xs text-white/30">or</span>
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-white/80" htmlFor="email">
