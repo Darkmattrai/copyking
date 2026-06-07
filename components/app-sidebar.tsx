@@ -47,9 +47,6 @@ function SidebarContent() {
     items: GENERATORS.filter((generator) => generator.category === category.key),
   })).filter((group) => group.items.length > 0);
 
-  const clientTools = GENERATORS.filter((g) =>
-    (CLIENT_GENERATOR_SLUGS as readonly string[]).includes(g.slug),
-  );
   const [openGeneratorGroups, setOpenGeneratorGroups] = useState<Record<string, boolean>>({});
   const [pillarsExpanded, setPillarsExpanded] = useState(false);
 
@@ -84,36 +81,20 @@ function SidebarContent() {
         </AnimatePresence>
       </div>
 
-      {/* Client nav: only the two Foundation tools */}
-      {isClient ? (
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-          {!collapsed && <SectionLabel icon="target" label="Your Tools" />}
-          {collapsed && <div className="pt-2" />}
-          {clientTools.map((generator) => (
-            <NavItem
-              key={generator.slug}
-              collapsed={collapsed}
-              href={`/generate/${generator.slug}`}
-              icon={<PillarIcon className="w-[18px] h-[18px]" icon={generator.icon} />}
-              isActive={pathname === `/generate/${generator.slug}`}
-              label={getGeneratorNavLabel(generator.name)}
-            />
-          ))}
-        </nav>
-      ) : (
-      /* Admin nav: full access */
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-        <NavItem
-          collapsed={collapsed}
-          href="/brand"
-          icon={
-            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-              <path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          }
-          isActive={pathname === "/brand"}
-          label="Overview"
-        />
+        {!isClient && (
+          <NavItem
+            collapsed={collapsed}
+            href="/brand"
+            icon={
+              <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+            isActive={pathname === "/brand"}
+            label="Overview"
+          />
+        )}
 
         {!collapsed && (
           <SectionLabel icon="sparkles" label="Generators" />
@@ -128,7 +109,9 @@ function SidebarContent() {
           label="All Generators"
         />
 
-        {!collapsed && groupedGenerators.map((group) => (
+        {!collapsed && groupedGenerators.map((group) => {
+          const isOpen = openGeneratorGroups[group.key] ?? isClient;
+          return (
           <div key={group.key} className="mt-1">
             <button
               className="w-full flex items-center justify-between gap-2 px-2.5 py-1 text-[11px] text-text-tertiary hover:text-text-secondary transition-colors"
@@ -142,7 +125,7 @@ function SidebarContent() {
               <svg
                 className={clsx(
                   "w-3.5 h-3.5 transition-transform duration-200",
-                  openGeneratorGroups[group.key] && "rotate-90",
+                  isOpen && "rotate-90",
                 )}
                 fill="none"
                 stroke="currentColor"
@@ -154,7 +137,7 @@ function SidebarContent() {
             </button>
 
             <AnimatePresence initial={false}>
-              {openGeneratorGroups[group.key] && (
+              {isOpen && (
                 <motion.div
                   animate={{ height: "auto", opacity: 1 }}
                   className="overflow-hidden"
@@ -162,24 +145,35 @@ function SidebarContent() {
                   initial={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
                 >
-                  {group.items.map((generator) => (
-                    <NavItem
-                      key={generator.slug}
-                      collapsed={collapsed}
-                      href={`/generate/${generator.slug}`}
-                      icon={<PillarIcon className="w-[16px] h-[16px]" icon={generator.icon} />}
-                      isActive={pathname === `/generate/${generator.slug}`}
-                      label={getGeneratorNavLabel(generator.name)}
-                      compact
-                      nested
-                    />
-                  ))}
+                  {group.items.map((generator) => {
+                    const locked =
+                      isClient &&
+                      !(CLIENT_GENERATOR_SLUGS as readonly string[]).includes(
+                        generator.slug,
+                      );
+                    return (
+                      <NavItem
+                        key={generator.slug}
+                        collapsed={collapsed}
+                        href={`/generate/${generator.slug}`}
+                        icon={<PillarIcon className="w-[16px] h-[16px]" icon={generator.icon} />}
+                        isActive={pathname === `/generate/${generator.slug}`}
+                        label={getGeneratorNavLabel(generator.name)}
+                        locked={locked}
+                        compact
+                        nested
+                      />
+                    );
+                  })}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-        ))}
+          );
+        })}
 
+        {!isClient && (
+        <>
         {!collapsed && (
           <SectionLabel icon="book" label="Brand DNA" />
         )}
@@ -277,8 +271,9 @@ function SidebarContent() {
           isActive={pathname.startsWith("/admin")}
           label="Clients"
         />
+        </>
+        )}
       </nav>
-      )}
 
       {/* Bottom actions */}
       <div className="shrink-0 border-t border-border p-2 space-y-1">
@@ -378,6 +373,7 @@ function NavItem({
   trailing,
   compact = false,
   nested = false,
+  locked = false,
 }: {
   href: string;
   icon: React.ReactNode;
@@ -387,7 +383,34 @@ function NavItem({
   trailing?: React.ReactNode;
   compact?: boolean;
   nested?: boolean;
+  locked?: boolean;
 }) {
+  if (locked) {
+    return (
+      <div
+        className={clsx(
+          "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm cursor-not-allowed opacity-50 text-text-tertiary",
+          compact && "text-[12.5px] py-1.5",
+          nested && "ml-3",
+          collapsed && "justify-center",
+        )}
+        title={collapsed ? `${label} — coming soon` : undefined}
+      >
+        <span className="shrink-0">{icon}</span>
+        {!collapsed && (
+          <>
+            <span className="flex-1 overflow-hidden whitespace-nowrap">
+              {label}
+            </span>
+            <span className="shrink-0 ml-auto text-[9px] uppercase tracking-wide font-medium px-1.5 py-0.5 rounded bg-surface-hover text-text-tertiary whitespace-nowrap">
+              Soon
+            </span>
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <NextLink
       className={clsx(

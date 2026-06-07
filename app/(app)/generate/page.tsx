@@ -39,12 +39,7 @@ export default function GenerateHubPage() {
       </motion.div>
 
       {GENERATOR_CATEGORIES.map((category) => {
-        let generators = grouped[category.key];
-        if (isClient) {
-          generators = generators?.filter((g) =>
-            (CLIENT_GENERATOR_SLUGS as readonly string[]).includes(g.slug),
-          );
-        }
+        const generators = grouped[category.key];
         if (!generators?.length) return null;
 
         return (
@@ -64,8 +59,18 @@ export default function GenerateHubPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {generators.map((gen) => {
                 const idx = globalIndex++;
+                const locked =
+                  isClient &&
+                  !(CLIENT_GENERATOR_SLUGS as readonly string[]).includes(
+                    gen.slug,
+                  );
                 return (
-                  <GeneratorCard key={gen.slug} generator={gen} index={idx} />
+                  <GeneratorCard
+                    key={gen.slug}
+                    generator={gen}
+                    index={idx}
+                    locked={locked}
+                  />
                 );
               })}
             </div>
