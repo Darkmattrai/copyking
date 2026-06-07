@@ -11,13 +11,14 @@ export const CLIENT_GENERATOR_SLUGS = ["icp-map", "irresistible-offer"] as const
 // Exact paths a client may visit. Anything under /generate/<slug> is also
 // allowed only if <slug> is in CLIENT_GENERATOR_SLUGS (checked separately).
 const CLIENT_ALLOWED_EXACT = new Set<string>([
+  "/overview",
   "/generate",
   "/login",
   "/auth/callback",
 ]);
 
 // Where each role lands after login / when blocked from a page.
-export const CLIENT_HOME = "/generate/icp-map";
+export const CLIENT_HOME = "/overview";
 export const ADMIN_HOME = "/brand";
 
 export function roleHome(role: UserRole): string {
