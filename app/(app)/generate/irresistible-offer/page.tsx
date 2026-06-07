@@ -31,7 +31,7 @@ export default function IrresistibleOfferPage() {
   const [seeded, setSeeded] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Seed once from Brand DNA into the flagship rung, only when that rung is
+  // Seed once from Brand DNA into the flagship product, only when that product is
   // still untouched (no avatar / dream / price entered yet).
   useEffect(() => {
     if (seeded) return;

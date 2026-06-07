@@ -133,7 +133,7 @@ export const useOfferDraftStore = create<OfferDraftStore>()(
         set((s) => {
           const l = s.offer.ladders[li];
           const last = l.products[l.products.length - 1];
-          // Clone the flagship (or last) rung so a new product starts from a
+          // Clone the flagship (or last) product so a new product starts from a
           // real, filled-in offer the user then edits up/down.
           const flagship = l.products.find((p) => p.pop) ?? last;
           const next = flagship ? cloneProduct(flagship, { name: "" }) : newProduct();

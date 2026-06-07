@@ -63,7 +63,7 @@ function formatIcpMap(save: IcpMapSave): string | null {
 
 function formatProduct(p: Product, idx: number): string {
   const lines: string[] = [];
-  lines.push(`#### Rung ${idx + 1}: ${p.name || "(unnamed rung)"}${p.pop ? " [most popular]" : ""} — ${p.price || "price N/A"}`);
+  lines.push(`#### Product ${idx + 1}: ${p.name || "(unnamed product)"}${p.pop ? " [most popular]" : ""} — ${p.price || "price N/A"}`);
 
   lines.push(`- One-liner: ${p.desc || "N/A"}
 - Who it's for: ${p.who || "N/A"}
@@ -142,7 +142,7 @@ function formatOffer(offer: Offer): string | null {
   const lines: string[] = [];
   lines.push(`## OFFER — ${offer.offerName || "(unnamed offer)"}`);
   lines.push(
-    `The offer is built as a value ladder: an ordered set of standalone rungs (products) that ascend in value/price. Each rung is its own complete offer with its own avatar, value stack, guarantee, scarcity and proof.`,
+    `The offer is built as a value ladder: an ordered set of standalone products that ascend in value/price. Each product is its own complete offer with its own avatar, value stack, guarantee, scarcity and proof.`,
   );
 
   for (const L of offer.ladders) {

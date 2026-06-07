@@ -42,7 +42,7 @@ const STEPS: StepDef[] = [
     grp: "Foundation",
     crumb: "Bullseye / avatar",
     title: "Find the Bullseye",
-    lead: "Who is THIS product for, and the one emotion that drags them out of bed? Each rung can target its own avatar.",
+    lead: "Who is THIS product for, and the one emotion that drags them out of bed? Each product can target its own avatar.",
     quote:
       "“The bullseye that takes your prospect out of bed, grabs their credit card and buys — without hesitation.”",
   },
@@ -75,7 +75,7 @@ const STEPS: StepDef[] = [
     grp: "Build the Product",
     crumb: "Stack & price",
     title: "Value Stack & Price",
-    lead: "What's included on this rung — deliverables and bonuses with $ values — plus the price shown on the ladder.",
+    lead: "What's included on this product — deliverables and bonuses with $ values — plus the price shown on the ladder.",
   },
   {
     id: "rationale",
@@ -104,7 +104,7 @@ const STEPS: StepDef[] = [
     grp: "Make it Irresistible",
     crumb: "Scarcity",
     title: "Scarcity & Urgency",
-    lead: "A legit ticking clock for this rung. Faking it kills legitimacy.",
+    lead: "A legit ticking clock for this product. Faking it kills legitimacy.",
     quote: "“The delay is the death of a sale.”",
   },
   {
@@ -119,7 +119,7 @@ const STEPS: StepDef[] = [
     grp: "Finish",
     crumb: "Name this product",
     title: "Name This Product",
-    lead: "Pick a naming formula and fill the parts — or write your own. This is the name shown on the ladder rung.",
+    lead: "Pick a naming formula and fill the parts — or write your own. This is the name shown on the ladder.",
   },
 ];
 
@@ -282,7 +282,7 @@ export function ProductBuilder() {
             ← Back to ladder
           </button>
           <p className="text-xs text-text-tertiary mb-1">
-            {P.name || "Untitled rung"}
+            {P.name || "Untitled product"}
             {P.price ? ` · ${P.price}` : ""} — step {current + 1} of {STEPS.length}
           </p>
           <h2 className="text-xl font-bold text-text-primary">{step.title}</h2>
@@ -415,9 +415,9 @@ export function ProductBuilder() {
               <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
                 <OfferField
                   {...fieldProps("name")}
-                  label="Product / rung name"
+                  label="Product name"
                   required
-                  hint="What this rung is called on the ladder."
+                  hint="What this product is called on the ladder."
                   eg="Accelerator"
                   value={P.name}
                   onChange={(v) => set("name", v)}
@@ -435,14 +435,14 @@ export function ProductBuilder() {
               </div>
               <OfferField
                 {...fieldProps("desc")}
-                label="One-line summary (shown on the rung)"
-                hint="What they get on this rung, in a sentence."
+                label="One-line summary (shown on the product)"
+                hint="What they get on this product, in a sentence."
                 eg="Done-for-you ads, lead picking, weekly calls — the full machine."
                 value={P.desc}
                 onChange={(v) => set("desc", v)}
               />
               <div>
-                <p className="ck-label">Deliverables on this rung</p>
+                <p className="ck-label">Deliverables on this product</p>
                 <ListTable<Deliverable>
                   rows={P.deliverables}
                   columns={[
@@ -454,7 +454,7 @@ export function ProductBuilder() {
                 />
               </div>
               <div>
-                <p className="ck-label">Bonuses on this rung</p>
+                <p className="ck-label">Bonuses on this product</p>
                 <ListTable<Bonus>
                   rows={P.bonuses}
                   columns={[
@@ -483,7 +483,7 @@ export function ProductBuilder() {
               </label>
               {stack > 0 && (
                 <p className="text-sm text-text-secondary">
-                  Stacked value on this rung:{" "}
+                  Stacked value on this product:{" "}
                   <b className="text-accent">{money(stack)}</b>
                 </p>
               )}
@@ -572,7 +572,7 @@ export function ProductBuilder() {
                 label="The real price you'll charge today ($)"
                 type="number"
                 required
-                hint="Aim ~10% of the stacked value on this rung."
+                hint="Aim ~10% of the stacked value on this product."
                 eg="1500 (vs $14,000 stacked value)"
                 value={P.realPrice}
                 onChange={(v) => set("realPrice", v)}
@@ -580,7 +580,7 @@ export function ProductBuilder() {
 
               {stack > 0 && (
                 <p className="text-sm text-text-secondary">
-                  Stacked value on this rung:{" "}
+                  Stacked value on this product:{" "}
                   <b className="text-accent">{money(stack)}</b>
                 </p>
               )}

@@ -6,7 +6,7 @@ function uid(): string {
     : `p-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// A blank, self-contained product (one rung of the ladder).
+// A blank, self-contained product (one product of the ladder).
 export function newProduct(o?: Partial<Product>): Product {
   return {
     id: uid(),
@@ -57,7 +57,7 @@ export function newProduct(o?: Partial<Product>): Product {
   };
 }
 
-// Clone a product into a fresh, independent rung (new id, not "most popular").
+// Clone a product into a fresh, independent product (new id, not "most popular").
 export function cloneProduct(p: Product, o?: Partial<Product>): Product {
   return {
     ...structuredClone(p),

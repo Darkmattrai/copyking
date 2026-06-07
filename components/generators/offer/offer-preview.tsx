@@ -73,7 +73,7 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
       <div className="border-t border-border pt-3 max-h-[70vh] overflow-y-auto space-y-3 text-sm">
         {!anyContent && (
           <p className="text-text-tertiary">
-            Add rungs and build each one — your offer ladder assembles here.
+            Add products and build each one — your offer ladder assembles here.
           </p>
         )}
 
@@ -104,7 +104,7 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
                   >
                     <div className="flex justify-between gap-2 font-medium text-text-primary">
                       <span>
-                        {p.name || "Rung"}
+                        {p.name || "Product"}
                         {p.pop ? " ⭐" : ""}
                         {t && (
                           <span className="text-text-tertiary font-normal">

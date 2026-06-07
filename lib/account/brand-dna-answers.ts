@@ -228,7 +228,7 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
 
     offer.ladders.forEach((L, li) => {
       L.products.forEach((P, pi) => {
-        const label = P.name || `Rung ${pi + 1}`;
+        const label = P.name || `#${pi + 1}`;
         const prefix = `Product: ${label}`;
         const setP = (key: keyof typeof P, v: string) =>
           updateProduct(li, pi, { [key]: v });
@@ -255,7 +255,7 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
           feature: "Offer",
           category: `${prefix} · The Bullseye`,
           fields: [
-            pText("name", "Product / rung name", "text"),
+            pText("name", "Product name", "text"),
             pText("price", "Ladder price", "text"),
             pText("who", "Who is this product's dream prospect?"),
             pText("where", "Where do you reach them?", "text"),
@@ -272,7 +272,7 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
             pText("magic", "Magic-wand promise — the outrageous version"),
             pText("trim", "Trimmed promise — realistic & deliverable"),
             pText("rationale", "Why is this product so good?"),
-            pText("desc", "One-line summary (shown on the rung)"),
+            pText("desc", "One-line summary (shown on the product)"),
           ],
         });
 

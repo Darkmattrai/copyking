@@ -143,7 +143,7 @@ function migrateFlat(old: OldOffer): Offer {
           ? t.deliverables
           : [{ item: "", val: "" }],
         bonuses: t.bonuses?.length ? t.bonuses : [{ name: "", val: "", why: "" }],
-        // The product's own name defaults to the rung name; first rung also
+        // The product's own name defaults to the product name; first product also
         // inherits the offer-wide name as a fallback.
         ...(i === 0 && !t.name && old.offerName ? { name: old.offerName } : {}),
       }),

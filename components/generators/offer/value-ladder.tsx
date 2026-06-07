@@ -47,8 +47,8 @@ function StarBurst() {
   );
 }
 
-// The ladder "home" — the canvas. Each rung is a self-contained product; click
-// it to open its full offer builder. Rungs render as an ascending staircase
+// The ladder "home" — the canvas. Each product is a self-contained offer; click
+// it to open its full offer builder. Products render as an ascending staircase
 // (entry/free at the bottom, premium anchor at the top).
 export function ValueLadder() {
   const {
@@ -145,12 +145,12 @@ export function ValueLadder() {
       </label>
 
       <p className="text-xs text-text-tertiary">
-        ↑ Each rung is its own complete offer — its own avatar, promise, value
-        stack, guarantee and price. Click a rung to build it out. Set a price and
-        the rung auto-colours into its tier (Free → High).
+        ↑ Each product is its own complete offer — its own avatar, promise, value
+        stack, guarantee and price. Click a product to build it out. Set a price and
+        the product auto-colours into its tier (Free → High).
       </p>
 
-      {/* The value-ladder step chart — VALUE (y) vs PRICE (x), each rung a step
+      {/* The value-ladder step chart — VALUE (y) vs PRICE (x), each product a step
           that climbs up and to the right; the premium anchor caps it with a $ burst. */}
       <div className="ck-card p-5 pt-4">
         <div className="text-center text-xs font-bold tracking-[0.25em] text-text-tertiary mb-3">
@@ -191,7 +191,7 @@ export function ValueLadder() {
                     <button
                       type="button"
                       onClick={() => setCurProduct(ri)}
-                      title={`${p.name || "Untitled rung"} — build this offer`}
+                      title={`${p.name || "Untitled product"} — build this offer`}
                       style={{ height: `${heightPct}%`, background: bg, borderColor: accent }}
                       className="group relative w-full rounded-t-lg border-2 border-b-0 text-left p-2 flex flex-col transition-all hover:-translate-y-0.5 hover:shadow-lg"
                     >
@@ -211,7 +211,7 @@ export function ValueLadder() {
                               toggleStar(p);
                             }
                           }}
-                          title="Mark as the rung most people pick"
+                          title="Mark as the product most people pick"
                           className="text-sm leading-none cursor-pointer"
                           style={{ color: p.pop ? "var(--color-warning)" : accent }}
                         >
@@ -231,7 +231,7 @@ export function ValueLadder() {
                                 duplicateProduct(idx, ri);
                               }
                             }}
-                            title="Duplicate rung"
+                            title="Duplicate product"
                             className="text-[11px] leading-none cursor-pointer"
                             style={{ color: accent }}
                           >
@@ -250,7 +250,7 @@ export function ValueLadder() {
                                 removeProduct(idx, ri);
                               }
                             }}
-                            title="Delete rung"
+                            title="Delete product"
                             className="text-[11px] leading-none cursor-pointer hover:text-danger"
                             style={{ color: accent }}
                           >
@@ -268,7 +268,7 @@ export function ValueLadder() {
                           {p.price || "—"}
                         </div>
                         <div className="text-[11px] font-semibold text-text-primary leading-snug line-clamp-2">
-                          {p.name || "Untitled rung"}
+                          {p.name || "Untitled product"}
                         </div>
                         {tr && (
                           <div
@@ -319,7 +319,7 @@ export function ValueLadder() {
         onClick={() => addProduct(idx)}
         className="flex items-center gap-2 self-start px-4 py-2.5 rounded-lg border border-dashed border-border hover:border-border-hover text-sm font-medium text-text-primary transition-all"
       >
-        + Add a rung (clones your flagship to edit)
+        + Add a product (clones your flagship to edit)
       </button>
 
       {orderWarn && (
@@ -346,7 +346,7 @@ export function ValueLadder() {
         </label>
         <p className="text-xs text-text-tertiary">
           Recurring revenue beneath the ladder — a membership / subscription they
-          stay in regardless of which rung they bought.
+          stay in regardless of which product they bought.
         </p>
         {L.continuity.on && (
           <div className="space-y-3">

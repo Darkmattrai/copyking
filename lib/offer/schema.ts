@@ -43,15 +43,15 @@ export interface NameModel {
   parts: Record<string, string>;
 }
 
-// A single rung on the ladder — a complete, standalone offer.
+// A single product on the ladder — a complete, standalone offer.
 export interface Product {
   id: string;
 
   // identity + ladder display
   name: string;
   price: string; // headline / recurring price shown on the ladder ("$1,500/mo", "FREE")
-  desc: string; // one-line "what they get on this rung"
-  pop: boolean; // ⭐ the rung most people pick
+  desc: string; // one-line "what they get on this product"
+  pop: boolean; // ⭐ the product most people pick
   payment: string;
 
   // bullseye / avatar
@@ -153,7 +153,7 @@ export function tierOf(price: string | number | null | undefined): TierDef | nul
   return TIERS[4];
 }
 
-// stable sort by tier ascending; unknown-price rungs keep order at the end
+// stable sort by tier ascending; unknown-price products keep order at the end
 export function sortProducts(arr: Product[]): Product[] {
   return arr
     .map((t, i) => ({ t, i, r: tierOf(t.price) ? tierOf(t.price)!.rank : 99 }))
@@ -161,7 +161,7 @@ export function sortProducts(arr: Product[]): Product[] {
     .map((x) => x.t);
 }
 
-// flag a higher-tier rung that sits before a lower one (must read Free → High)
+// flag a higher-tier product that sits before a lower one (must read Free → High)
 export function productOrderError(order: Product[]): string | null {
   let maxSeen = -1;
   let maxTier: TierDef | null = null;
@@ -169,7 +169,7 @@ export function productOrderError(order: Product[]): string | null {
     const tr = tierOf(t.price);
     if (!tr) continue;
     if (tr.rank < maxSeen)
-      return `${maxTier!.label} offers can't be at this rung — keep the ladder ordered Free → High ticket.`;
+      return `${maxTier!.label} offers can't be at this product — keep the ladder ordered Free → High ticket.`;
     if (tr.rank > maxSeen) {
       maxSeen = tr.rank;
       maxTier = tr;

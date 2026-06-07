@@ -2,7 +2,7 @@ import type { Offer as BrandOffer } from "@/types/brand";
 import type { Offer as BuilderOffer, Product } from "./schema";
 import { stageValue, money } from "./schema";
 
-// The "flagship" product is the one marked ⭐ most-popular, else the first rung
+// The "flagship" product is the one marked ⭐ most-popular, else the first product
 // of the first ladder. It's what we sync with the Brand DNA `offer` pillar.
 export function flagshipProduct(offer: BuilderOffer): Product | null {
   for (const L of offer.ladders) {
