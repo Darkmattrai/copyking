@@ -103,7 +103,7 @@ function SegmentCard({
           value={seg.name}
           onChange={(e) => onChange({ name: e.target.value })}
           onClick={(e) => e.stopPropagation()}
-          placeholder="Segment name, e.g. The Hungry Beginner"
+          placeholder="Audience segment name, e.g. The Hungry Beginner"
           className="ck-input flex-1 !py-2 font-semibold"
         />
         <svg
@@ -278,7 +278,7 @@ export function IcpIntakeForm({
               : "text-text-tertiary hover:text-text-primary"
           } ${!canProceed ? "opacity-40 cursor-not-allowed" : ""}`}
         >
-          2 · Segments
+          2 · Audience Segments
         </button>
       </div>
 
@@ -433,7 +433,7 @@ export function IcpIntakeForm({
               disabled={!canProceed}
               className="ck-btn-primary"
             >
-              Continue to Segments →
+              Continue to Audience Segments →
             </button>
           </div>
         </div>
@@ -469,7 +469,7 @@ export function IcpIntakeForm({
                   strokeLinecap="round"
                 />
               </svg>
-              Add another segment
+              Add another audience segment
             </button>
           )}
 

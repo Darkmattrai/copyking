@@ -111,7 +111,7 @@ export function generateStandaloneHTML(
       </div>`
       ).join("");
       return `<div class="intensity-card">
-      <div class="intensity-title" style="color:${c.accent}">Segment ${ordinal} · ${esc(seg.name)}</div>
+      <div class="intensity-title" style="color:${c.accent}">Audience Segment ${ordinal} · ${esc(seg.name)}</div>
       ${bars}
     </div>`;
     })
@@ -121,7 +121,7 @@ export function generateStandaloneHTML(
     ["cover", "Overview"],
     ["pillars", "Psychology"],
     ["universal", "Universal"],
-    ["segments", "Segments"],
+    ["segments", "Audience Segments"],
     ["intensity", "Intensity"],
   ]
     .map(
@@ -151,7 +151,7 @@ export function generateStandaloneHTML(
   <span class="nav-brand">Copy King</span>
   ${navLinks}
   <div class="nav-right">
-    <span class="nav-badge">${icp.segments.length} Segment${icp.segments.length !== 1 ? "s" : ""}</span>
+    <span class="nav-badge">${icp.segments.length} Audience Segment${icp.segments.length !== 1 ? "s" : ""}</span>
   </div>
 </nav>
 
@@ -163,7 +163,7 @@ export function generateStandaloneHTML(
     <div class="meta-grid">
       <div><div class="meta-label">Client</div><div class="meta-val">${esc(icp.businessName)}</div></div>
       <div><div class="meta-label">Industry</div><div class="meta-val">${esc(icp.industryLabel)}</div></div>
-      <div><div class="meta-label">Segments</div><div class="meta-val">${icp.segments.length} Audience${icp.segments.length !== 1 ? "s" : ""}</div></div>
+      <div><div class="meta-label">Audience Segments</div><div class="meta-val">${icp.segments.length}</div></div>
       <div><div class="meta-label">Prepared by</div><div class="meta-val">Copy King · ${esc(icp.monthYear)}</div></div>
     </div>
     <div class="meta-foot">
@@ -229,7 +229,7 @@ export function generateStandaloneHTML(
 </div>
 
 <div id="universal" data-section="universal" class="section">
-  <span class="badge-uni">Universal · All Segments</span>
+  <span class="badge-uni">Universal · All Audience Segments</span>
   <div class="sub-label" style="color:#b03a2e">⚡ Shared Pain &amp; Problems</div>
   <div class="grid-3">
     ${card("Biggest challenge", "#b03a2e", u.painChallenge, "#b03a2e")}
@@ -255,11 +255,11 @@ export function generateStandaloneHTML(
 
 <div id="segments" data-section="segments" class="seg-section-hd">
   <div class="eyebrow">Breakdown</div>
-  <div class="seg-section-title">🎯 Segment-by-Segment Breakdown</div>
+  <div class="seg-section-title">🎯 Audience Segment Breakdown</div>
 </div>
 
 <div style="padding:20px 64px 4px;display:flex;gap:10px">
-  <button class="expand-all-btn" id="expandAllBtn" onclick="expandAll()">Expand all segments ▼</button>
+  <button class="expand-all-btn" id="expandAllBtn" onclick="expandAll()">Expand all audience segments ▼</button>
 </div>
 
 <div class="seg-grid">
@@ -270,7 +270,7 @@ ${icp.segments
     return `  <div class="seg-block" id="segment-${i}" data-section="segment-${i}">
     <div class="seg-hd" style="background:${c.bg};color:${c.accent}" onclick="toggleSeg(this)">
       <div>
-        <div class="seg-hd-eyebrow">Segment ${ordinal}</div>
+        <div class="seg-hd-eyebrow">Audience Segment ${ordinal}</div>
         <div class="seg-hd-name">${esc(seg.name)}</div>
         <div class="seg-hd-desc">${esc(seg.oneLine)}</div>
       </div>
@@ -304,7 +304,7 @@ ${icp.segments
 </div>
 
 <div id="intensity" data-section="intensity" class="intensity-section">
-  <div class="eyebrow" style="padding-bottom:14px">Comparative Insight · Pillar intensity by segment</div>
+  <div class="eyebrow" style="padding-bottom:14px">Comparative Insight · Pillar intensity by audience segment</div>
   <div class="intensity-grid">
     ${intensityCards}
   </div>
@@ -333,7 +333,7 @@ function expandAll() {
   const allOpen = [...inners].every(el => el.style.display === 'flex');
   inners.forEach(el => el.style.display = allOpen ? 'none' : 'flex');
   toggles.forEach(el => el.classList.toggle('open', !allOpen));
-  btn.textContent = allOpen ? 'Expand all segments ▼' : 'Collapse all segments ▲';
+  btn.textContent = allOpen ? 'Expand all audience segments ▼' : 'Collapse all audience segments ▲';
 }
 const navBtns = document.querySelectorAll('.nav-link[data-target]');
 const obs = new IntersectionObserver(entries => {

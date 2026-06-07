@@ -12,7 +12,7 @@ export function blankSegment(n: number): IcpSegmentDraft {
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
         : `seg-${n}-${Date.now()}`,
-    name: `Segment ${n}`,
+    name: `Audience Segment ${n}`,
     pain: "",
     goals: "",
     mindset: "",

@@ -145,12 +145,12 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
         setSegments(segments.map((s, i) => (i === idx ? { ...s, [key]: v } : s)));
       groups.push({
         feature: "ICP",
-        category: `Segment: ${seg.name || `Segment ${idx + 1}`}`,
+        category: `Audience Segment: ${seg.name || `Audience Segment ${idx + 1}`}`,
         fields: [
           {
             id: `icp.seg.${idx}.name`,
             feature: "ICP",
-            question: "Segment name",
+            question: "Audience segment name",
             value: seg.name,
             kind: "text",
             onChange: (v) => set("name", v),
