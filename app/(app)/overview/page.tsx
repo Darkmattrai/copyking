@@ -29,6 +29,44 @@ const PILLARS: Pillar[] = [
   { key: "sales", name: "Sales", icon: "sales", color: "#34d399", node: { x: 822, y: 550 }, href: "#" },
 ];
 
+// Quadratic-bezier control point: bow each conduit perpendicular to the
+// node→brain line so all four sweep in the same rotational direction.
+function controlPoint(node: { x: number; y: number }) {
+  const mx = (node.x + BRAIN.x) / 2;
+  const my = (node.y + BRAIN.y) / 2;
+  const dx = BRAIN.x - node.x;
+  const dy = BRAIN.y - node.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const bow = 90;
+  return { x: mx + (-dy / len) * bow, y: my + (dx / len) * bow };
+}
+
+// Sample points along the quadratic bezier for the travelling signal to follow.
+function sampleCurve(
+  node: { x: number; y: number },
+  c: { x: number; y: number },
+  steps = 24,
+) {
+  const xs: number[] = [];
+  const ys: number[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const mt = 1 - t;
+    xs.push(mt * mt * node.x + 2 * mt * t * c.x + t * t * BRAIN.x);
+    ys.push(mt * mt * node.y + 2 * mt * t * c.y + t * t * BRAIN.y);
+  }
+  return { xs, ys };
+}
+
+const CURVES = PILLARS.map((p) => {
+  const c = controlPoint(p.node);
+  return {
+    control: c,
+    d: `M ${p.node.x} ${p.node.y} Q ${c.x} ${c.y} ${BRAIN.x} ${BRAIN.y}`,
+    ...sampleCurve(p.node, c),
+  };
+});
+
 type Signal = { id: number; pillar: number };
 
 export default function OverviewPage() {
@@ -119,13 +157,11 @@ export default function OverviewPage() {
           </defs>
 
           {/* static conduits */}
-          {PILLARS.map((p) => (
-            <line
+          {PILLARS.map((p, i) => (
+            <path
               key={p.key}
-              x1={p.node.x}
-              y1={p.node.y}
-              x2={BRAIN.x}
-              y2={BRAIN.y}
+              d={CURVES[i].d}
+              fill="none"
               stroke={`url(#line-${p.key})`}
               strokeWidth={2}
               strokeLinecap="round"
@@ -136,13 +172,18 @@ export default function OverviewPage() {
           <AnimatePresence>
             {signals.map((s) => {
               const p = PILLARS[s.pillar];
+              const curve = CURVES[s.pillar];
               return (
                 <motion.g
                   key={s.id}
                   initial={{ x: p.node.x, y: p.node.y, opacity: 0 }}
-                  animate={{ x: BRAIN.x, y: BRAIN.y, opacity: [0, 1, 1, 0] }}
+                  animate={{ x: curve.xs, y: curve.ys, opacity: [0, 1, 1, 0] }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 1.6, ease: "easeInOut", times: [0, 0.15, 0.85, 1] }}
+                  transition={{
+                    duration: 1.6,
+                    ease: "easeInOut",
+                    opacity: { times: [0, 0.15, 0.85, 1] },
+                  }}
                   onAnimationComplete={() => removeSignal(s.id)}
                 >
                   <circle r={9} fill={p.color} opacity={0.4} filter="url(#signal-blur)" />

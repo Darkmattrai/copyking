@@ -41,6 +41,7 @@ function SidebarContent() {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const role = useRole();
   const isClient = role === "client";
+  const isAdmin = role === "admin";
   const collapsed = sidebarCollapsed;
   const groupedGenerators = GENERATOR_CATEGORIES.map((category) => ({
     ...category,
@@ -82,7 +83,7 @@ function SidebarContent() {
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-        {!isClient && (
+        {isAdmin && (
           <NavItem
             collapsed={collapsed}
             href="/brand"
@@ -172,7 +173,7 @@ function SidebarContent() {
           );
         })}
 
-        {!isClient && (
+        {isAdmin && (
         <>
         {!collapsed && (
           <SectionLabel icon="book" label="Brand DNA" />
