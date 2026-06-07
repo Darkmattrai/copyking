@@ -29,7 +29,6 @@ export default function IrresistibleOfferPage() {
   const { offer, enhancements, updateProduct, reset } = useOfferDraftStore();
 
   const [seeded, setSeeded] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   // Seed once from Brand DNA into the flagship product, only when that product is
   // still untouched (no avatar / dream / price entered yet).
@@ -54,7 +53,9 @@ export default function IrresistibleOfferPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seeded]);
 
-  // Autosave the offer draft to the account once seeding is done.
+  // Autosave the offer draft straight into Brand DNA + the account as the user
+  // types — no manual "Save" step. Short debounce so it feels instant while
+  // still coalescing rapid keystrokes into one write.
   const autosaveStatus = useAutosave(
     { offer, enhancements },
     async ({ offer: o, enhancements: e }) => {
@@ -64,23 +65,12 @@ export default function IrresistibleOfferPage() {
         params: {},
       });
     },
-    { enabled: seeded, delay: 1500 },
+    { enabled: seeded, delay: 400 },
   );
-
-  const handleSave = async () => {
-    updatePillar("offer", offerToBrand(offer));
-    await setGeneration(SLUG, {
-      content: JSON.stringify({ offer, enhancements }),
-      params: {},
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
 
   const startOver = () => {
     if (confirm("Clear this offer and start over?")) {
       reset();
-      setSaved(false);
     }
   };
 
@@ -135,13 +125,6 @@ export default function IrresistibleOfferPage() {
           </div>
           <div className="flex items-center gap-3">
             <AutosaveIndicator status={autosaveStatus} />
-            <button
-              type="button"
-              onClick={handleSave}
-              className="ck-btn-primary"
-            >
-              {saved ? "Saved ✓" : "Save to Brand DNA"}
-            </button>
             <button
               type="button"
               onClick={startOver}
