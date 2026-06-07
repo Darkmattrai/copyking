@@ -9,7 +9,7 @@ import { PillarIcon } from "@/components/brand/pillar-icon";
 // ── Geometry (SVG viewBox space) ─────────────────────────────────────────────
 const VW = 1000;
 const VH = 700;
-const BRAIN = { x: 500, y: 350 };
+const HUB = { x: 500, y: 350 };
 
 type Pillar = {
   key: string;
@@ -23,25 +23,13 @@ type Pillar = {
 // NOTE: `href` targets are placeholders — they'll point at the real left-nav
 // pillar sections once that structure is provided.
 const PILLARS: Pillar[] = [
-  { key: "foundation", name: "Foundation", icon: "gem", color: "#6366f1", node: { x: 178, y: 150 }, href: "#" },
-  { key: "traffic", name: "Traffic", icon: "megaphone", color: "#22d3ee", node: { x: 822, y: 150 }, href: "#" },
-  { key: "lead-generation", name: "Lead Generation", icon: "funnel", color: "#f59e0b", node: { x: 178, y: 550 }, href: "#" },
-  { key: "sales", name: "Sales", icon: "sales", color: "#34d399", node: { x: 822, y: 550 }, href: "#" },
+  { key: "foundation", name: "Foundation", icon: "lego", color: "#6366f1", node: { x: 178, y: 150 }, href: "#" },
+  { key: "traffic", name: "Traffic System", icon: "megaphone", color: "#22d3ee", node: { x: 822, y: 150 }, href: "#" },
+  { key: "lead-generation", name: "Lead Gen System", icon: "funnel", color: "#f59e0b", node: { x: 178, y: 550 }, href: "#" },
+  { key: "sales", name: "Sales Machine", icon: "dollar", color: "#34d399", node: { x: 822, y: 550 }, href: "#" },
 ];
 
-// Quadratic-bezier control point: bow each conduit perpendicular to the
-// node→brain line so all four sweep in the same rotational direction.
-function controlPoint(node: { x: number; y: number }) {
-  const mx = (node.x + BRAIN.x) / 2;
-  const my = (node.y + BRAIN.y) / 2;
-  const dx = BRAIN.x - node.x;
-  const dy = BRAIN.y - node.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const bow = 90;
-  return { x: mx + (-dy / len) * bow, y: my + (dx / len) * bow };
-}
-
-// Sample points along the quadratic bezier for the travelling signal to follow.
+// Sample points along a quadratic bezier for a signal to follow.
 function sampleCurve(
   node: { x: number; y: number },
   c: { x: number; y: number },
@@ -52,25 +40,68 @@ function sampleCurve(
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
     const mt = 1 - t;
-    xs.push(mt * mt * node.x + 2 * mt * t * c.x + t * t * BRAIN.x);
-    ys.push(mt * mt * node.y + 2 * mt * t * c.y + t * t * BRAIN.y);
+    xs.push(mt * mt * node.x + 2 * mt * t * c.x + t * t * HUB.x);
+    ys.push(mt * mt * node.y + 2 * mt * t * c.y + t * t * HUB.y);
   }
   return { xs, ys };
 }
 
-const CURVES = PILLARS.map((p) => {
-  const c = controlPoint(p.node);
-  return {
-    control: c,
-    d: `M ${p.node.x} ${p.node.y} Q ${c.x} ${c.y} ${BRAIN.x} ${BRAIN.y}`,
-    ...sampleCurve(p.node, c),
-  };
-});
+type Curve = { d: string; xs: number[]; ys: number[] };
 
-type Signal = { id: number; pillar: number };
+// Build one randomly-bowed quadratic-bezier conduit from a node to the hub.
+function makeCurve(node: { x: number; y: number }): Curve {
+  const mx = (node.x + HUB.x) / 2;
+  const my = (node.y + HUB.y) / 2;
+  const dx = HUB.x - node.x;
+  const dy = HUB.y - node.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const mag = (50 + Math.random() * 110) * (Math.random() < 0.5 ? -1 : 1);
+  const along = (Math.random() - 0.5) * 0.25; // slide control point along the axis
+  const cx = mx + (-dy / len) * mag + dx * along;
+  const cy = my + (dx / len) * mag + dy * along;
+  const c = { x: cx, y: cy };
+  return {
+    d: `M ${node.x} ${node.y} Q ${cx} ${cy} ${HUB.x} ${HUB.y}`,
+    ...sampleCurve(node, c),
+  };
+}
+
+type Signal = { id: number; pillar: number; ci: number };
+
+// ── 3-lego-block icon: bottom two are static, the third drops onto the top ───
+function LegoBlocks({ className }: { className?: string }) {
+  const brick = (x: number, y: number) => (
+    <>
+      <rect x={x + 1.4} y={y - 1.6} width={2.4} height={1.8} rx={0.5} fill="currentColor" />
+      <rect x={x + 5.2} y={y - 1.6} width={2.4} height={1.8} rx={0.5} fill="currentColor" />
+      <rect x={x} y={y} width={9} height={6} rx={1.2} fill="currentColor" fillOpacity={0.22} stroke="currentColor" strokeWidth={1.3} />
+    </>
+  );
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      {brick(2.5, 13)}
+      {brick(12.5, 13)}
+      <motion.g
+        initial={{ y: -11, opacity: 0 }}
+        animate={{ y: [-11, 0, 0], opacity: [0, 1, 1] }}
+        transition={{ duration: 1.1, repeat: Infinity, repeatDelay: 1.9, ease: "easeOut", times: [0, 0.55, 1] }}
+      >
+        {brick(7.5, 5)}
+      </motion.g>
+    </svg>
+  );
+}
+
+function NodeIcon({ pillar }: { pillar: Pillar }) {
+  if (pillar.icon === "lego") return <LegoBlocks className="h-8 w-8" />;
+  if (pillar.icon === "dollar")
+    return <span className="text-[26px] font-bold leading-none">$</span>;
+  return <PillarIcon className="h-7 w-7" icon={pillar.icon} />;
+}
 
 export default function OverviewPage() {
   const router = useRouter();
+  const [curves, setCurves] = useState<Curve[][]>([]);
   const [signals, setSignals] = useState<Signal[]>([]);
   const nextId = useRef(0);
 
@@ -78,18 +109,24 @@ export default function OverviewPage() {
     setSignals((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  // Each pillar fires a signal toward the brain at a slow, random cadence
-  // (~1 every 4s on average).
+  // Build randomized conduits (1–2 per pillar) and schedule signal pulses.
+  // Done on the client to avoid SSR/CSR hydration mismatch from Math.random.
   useEffect(() => {
+    const built = PILLARS.map((p) => {
+      const count = Math.random() < 0.5 ? 1 : 2;
+      return Array.from({ length: count }, () => makeCurve(p.node));
+    });
+    setCurves(built);
+
     let active = true;
     const timers: ReturnType<typeof setTimeout>[] = [];
-
     PILLARS.forEach((_, pillar) => {
       const schedule = () => {
         const delay = 2500 + Math.random() * 3000; // 2.5–5.5s, avg ~4s
         const t = setTimeout(() => {
           if (!active) return;
-          setSignals((prev) => [...prev, { id: nextId.current++, pillar }]);
+          const ci = Math.floor(Math.random() * built[pillar].length);
+          setSignals((prev) => [...prev, { id: nextId.current++, pillar, ci }]);
           schedule();
         }, delay);
         timers.push(t);
@@ -116,12 +153,12 @@ export default function OverviewPage() {
       >
         <h1 className="text-2xl font-bold text-text-primary">Your Growth Engine</h1>
         <p className="text-sm text-text-tertiary">
-          Every pillar feeds the brain. Pick a pillar to start building.
+          Every pillar feeds the heart. Pick a pillar to start building.
         </p>
       </motion.div>
 
       <div className="relative mx-auto w-full max-w-5xl aspect-[10/7]">
-        {/* ambient glow behind the brain */}
+        {/* ambient glow behind the hub */}
         <div
           className="pointer-events-none absolute left-1/2 top-1/2 h-1/2 w-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
           style={{
@@ -130,7 +167,7 @@ export default function OverviewPage() {
           }}
         />
 
-        {/* ── SVG layer: connecting lines + travelling signals (behind brain) ── */}
+        {/* ── SVG layer: conduits + travelling signals (behind the hub) ── */}
         <svg
           className="absolute inset-0 h-full w-full"
           viewBox={`0 0 ${VW} ${VH}`}
@@ -147,8 +184,8 @@ export default function OverviewPage() {
                 gradientUnits="userSpaceOnUse"
                 x1={p.node.x}
                 y1={p.node.y}
-                x2={BRAIN.x}
-                y2={BRAIN.y}
+                x2={HUB.x}
+                y2={HUB.y}
               >
                 <stop offset="0%" stopColor={p.color} stopOpacity="0.45" />
                 <stop offset="100%" stopColor={p.color} stopOpacity="0" />
@@ -157,22 +194,25 @@ export default function OverviewPage() {
           </defs>
 
           {/* static conduits */}
-          {PILLARS.map((p, i) => (
-            <path
-              key={p.key}
-              d={CURVES[i].d}
-              fill="none"
-              stroke={`url(#line-${p.key})`}
-              strokeWidth={2}
-              strokeLinecap="round"
-            />
-          ))}
+          {curves.map((arr, pi) =>
+            arr.map((c, ci) => (
+              <path
+                key={`${PILLARS[pi].key}-${ci}`}
+                d={c.d}
+                fill="none"
+                stroke={`url(#line-${PILLARS[pi].key})`}
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
+            )),
+          )}
 
           {/* travelling signals */}
           <AnimatePresence>
             {signals.map((s) => {
               const p = PILLARS[s.pillar];
-              const curve = CURVES[s.pillar];
+              const curve = curves[s.pillar]?.[s.ci];
+              if (!curve) return null;
               return (
                 <motion.g
                   key={s.id}
@@ -195,15 +235,20 @@ export default function OverviewPage() {
           </AnimatePresence>
         </svg>
 
-        {/* ── Brain (sits above the conduits so signals are absorbed into it) ── */}
+        {/* ── Heart hub (above the conduits so signals are absorbed into it) ── */}
         <motion.img
-          src="/brain.png"
-          alt="Brain"
+          src="/heart.png"
+          alt="Heart"
           draggable={false}
-          className="pointer-events-none absolute left-1/2 top-1/2 z-10 w-[34%] max-w-[340px] -translate-x-1/2 -translate-y-1/2 select-none"
+          className="pointer-events-none absolute left-1/2 top-1/2 z-10 w-[26%] max-w-[280px] -translate-x-1/2 -translate-y-1/2 select-none"
           style={{ filter: "drop-shadow(0 0 24px rgba(99,102,241,0.35))" }}
-          animate={{ scale: [1, 1.03, 1] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ scale: [1, 1.06, 1, 1.04, 1] }}
+          transition={{
+            duration: 1.4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            times: [0, 0.12, 0.24, 0.36, 1],
+          }}
         />
 
         {/* ── Pillar nodes (clickable, top layer) ── */}
@@ -240,7 +285,7 @@ export default function OverviewPage() {
                   color: p.color,
                 }}
               >
-                <PillarIcon className="h-7 w-7" icon={p.icon} />
+                <NodeIcon pillar={p} />
               </span>
             </span>
             <span className="text-sm font-semibold text-text-primary transition-colors group-hover:text-accent">
