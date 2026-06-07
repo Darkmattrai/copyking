@@ -485,7 +485,7 @@ export const GENERATORS: GeneratorDef[] = [
     description:
       "11-step Grand Slam offer builder: bullseye, features/benefits, value ladder pricing, guarantee, scarcity, objections, and naming — with AI field enhancement",
     icon: "offer",
-    category: "offers",
+    category: "foundation",
     outputFormat: "structured",
   },
 ];

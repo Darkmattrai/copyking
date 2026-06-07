@@ -5,8 +5,7 @@ export type GeneratorCategory =
   | "email"
   | "sales"
   | "ads"
-  | "video"
-  | "offers";
+  | "video";
 
 export interface ParamDef {
   key: string;
@@ -41,5 +40,4 @@ export const GENERATOR_CATEGORIES: CategoryMeta[] = [
   { key: "sales", label: "Sales", icon: "sales" },
   { key: "ads", label: "Ads", icon: "ad" },
   { key: "video", label: "Video", icon: "video" },
-  { key: "offers", label: "Offers", icon: "offer" },
 ];
