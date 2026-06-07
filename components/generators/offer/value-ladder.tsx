@@ -11,6 +11,42 @@ import {
   type Product,
 } from "@/lib/offer/schema";
 
+// A spiky "$" starburst that anchors the top of the ladder (the big payday).
+function burstPoints(cx: number, cy: number, spikes: number, outer: number, inner: number) {
+  const pts: string[] = [];
+  for (let i = 0; i < spikes * 2; i++) {
+    const r = i % 2 === 0 ? outer : inner;
+    const a = (Math.PI / spikes) * i - Math.PI / 2;
+    pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`);
+  }
+  return pts.join(" ");
+}
+
+function StarBurst() {
+  return (
+    <svg viewBox="0 0 100 100" className="w-16 h-16 drop-shadow-md">
+      <polygon
+        points={burstPoints(50, 50, 12, 48, 30)}
+        fill="var(--color-warning)"
+        stroke="var(--color-text-primary)"
+        strokeWidth={2.5}
+        strokeLinejoin="round"
+      />
+      <text
+        x="50"
+        y="52"
+        dominantBaseline="central"
+        textAnchor="middle"
+        fontSize="36"
+        fontWeight={900}
+        fill="#1a1a1a"
+      >
+        $
+      </text>
+    </svg>
+  );
+}
+
 // The ladder "home" — the canvas. Each rung is a self-contained product; click
 // it to open its full offer builder. Rungs render as an ascending staircase
 // (entry/free at the bottom, premium anchor at the top).
@@ -34,9 +70,9 @@ export function ValueLadder() {
   const idx = curLadder >= ladders.length ? 0 : curLadder;
   const L = ladders[idx];
 
-  // Display order: ascending by price, premium on top → staircase climbs up.
+  // Ascending by price: lowest/free at the left, premium anchor at the right —
+  // each step climbs up and to the right, like the classic value-ladder chart.
   const ascending = sortProducts(L.products);
-  const display = [...ascending].reverse();
   const n = ascending.length;
   const realIndex = (p: Product) => L.products.findIndex((x) => x.id === p.id);
 
@@ -114,131 +150,168 @@ export function ValueLadder() {
         the rung auto-colours into its tier (Free → High).
       </p>
 
-      {/* The staircase */}
-      <div className="space-y-2">
-        {display.map((p) => {
-          const ascPos = ascending.findIndex((x) => x.id === p.id); // 0 = lowest
-          const ri = realIndex(p);
-          const tr = tierOf(p.price);
-          const accent = tr ? tr.color : "var(--color-border)";
-          const sv = stageValue(p);
-          // Indent grows with rank so higher rungs step up to the right.
-          const indent = n > 1 ? Math.min(ascPos * 28, 140) : 0;
+      {/* The value-ladder step chart — VALUE (y) vs PRICE (x), each rung a step
+          that climbs up and to the right; the premium anchor caps it with a $ burst. */}
+      <div className="ck-card p-5 pt-4">
+        <div className="text-center text-xs font-bold tracking-[0.25em] text-text-tertiary mb-3">
+          THE VALUE LADDER
+        </div>
 
-          return (
-            <div
-              key={p.id}
-              style={{ marginLeft: indent }}
-              className="transition-all"
-            >
-              <button
-                type="button"
-                onClick={() => setCurProduct(ri)}
-                className="group w-full text-left ck-card overflow-hidden hover:border-border-hover transition-colors"
-                style={{ borderLeft: `4px solid ${accent}` }}
-              >
-                <div className="p-4 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs text-text-tertiary">
-                        Rung {ascPos + 1}
-                      </span>
-                      {tr && (
-                        <span
-                          className="ck-badge !text-[10px]"
-                          style={{ background: tr.bg, color: tr.color }}
-                        >
-                          {tr.label}
-                        </span>
-                      )}
-                      {sv > 0 && (
-                        <span className="text-xs text-success">
-                          {money(sv)} stacked value
-                        </span>
-                      )}
-                    </div>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStar(p);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleStar(p);
-                        }
-                      }}
-                      title="Mark as the rung most people pick"
-                      className="text-base leading-none cursor-pointer"
-                      style={{ color: p.pop ? "var(--color-warning)" : undefined }}
-                    >
-                      {p.pop ? "★" : "☆"}
-                    </span>
-                  </div>
+        <div className="flex">
+          {/* Y axis label */}
+          <div className="flex items-center justify-center w-6 shrink-0">
+            <span className="-rotate-90 origin-center whitespace-nowrap text-[10px] font-bold tracking-[0.2em] text-text-tertiary">
+              VALUE ↑
+            </span>
+          </div>
 
-                  <div className="flex items-end justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-base font-semibold text-text-primary truncate">
-                        {p.name || "Untitled rung"}
+          {/* Plot area with L-shaped axis */}
+          <div className="flex-1 min-w-0 border-l-2 border-b-2 border-text-tertiary/40 pt-12 pl-2 pb-0">
+            <div className="flex items-end gap-1.5 sm:gap-2 h-[300px]">
+              {ascending.map((p, i) => {
+                const ri = realIndex(p);
+                const tr = tierOf(p.price);
+                const accent = tr ? tr.color : "var(--color-text-tertiary)";
+                const bg = tr ? tr.bg : "var(--color-surface)";
+                const sv = stageValue(p);
+                const isTop = i === n - 1;
+                const heightPct = Math.max(32, Math.round(((i + 1) / n) * 100));
+
+                return (
+                  <div
+                    key={p.id}
+                    className="relative flex-1 min-w-0 h-full flex flex-col justify-end"
+                  >
+                    {isTop && (
+                      <div className="absolute left-1/2 -translate-x-1/2 -top-1 z-10 pointer-events-none">
+                        <StarBurst />
                       </div>
-                      {p.desc && (
-                        <p className="text-xs text-text-tertiary line-clamp-2">
-                          {p.desc}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-lg font-bold text-text-primary shrink-0">
-                      {p.price || "—"}
-                    </div>
-                  </div>
+                    )}
 
-                  <div className="flex items-center gap-3 pt-1">
-                    <span className="text-sm font-medium text-accent group-hover:text-accent-hover">
-                      Build this offer →
-                    </span>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        duplicateProduct(idx, ri);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.stopPropagation();
-                          duplicateProduct(idx, ri);
-                        }
-                      }}
-                      className="text-xs text-text-tertiary hover:text-text-primary cursor-pointer"
+                    <button
+                      type="button"
+                      onClick={() => setCurProduct(ri)}
+                      title={`${p.name || "Untitled rung"} — build this offer`}
+                      style={{ height: `${heightPct}%`, background: bg, borderColor: accent }}
+                      className="group relative w-full rounded-t-lg border-2 border-b-0 text-left p-2 flex flex-col transition-all hover:-translate-y-0.5 hover:shadow-lg"
                     >
-                      Duplicate
-                    </span>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeProduct(idx, ri);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.stopPropagation();
-                          removeProduct(idx, ri);
-                        }
-                      }}
-                      className="text-xs text-text-tertiary hover:text-danger cursor-pointer"
-                    >
-                      Delete
-                    </span>
+                      {/* top row: star + hover actions */}
+                      <div className="flex items-center justify-between gap-1">
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleStar(p);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleStar(p);
+                            }
+                          }}
+                          title="Mark as the rung most people pick"
+                          className="text-sm leading-none cursor-pointer"
+                          style={{ color: p.pop ? "var(--color-warning)" : accent }}
+                        >
+                          {p.pop ? "★" : "☆"}
+                        </span>
+                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              duplicateProduct(idx, ri);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.stopPropagation();
+                                duplicateProduct(idx, ri);
+                              }
+                            }}
+                            title="Duplicate rung"
+                            className="text-[11px] leading-none cursor-pointer"
+                            style={{ color: accent }}
+                          >
+                            ⧉
+                          </span>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeProduct(idx, ri);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.stopPropagation();
+                                removeProduct(idx, ri);
+                              }
+                            }}
+                            title="Delete rung"
+                            className="text-[11px] leading-none cursor-pointer hover:text-danger"
+                            style={{ color: accent }}
+                          >
+                            🗑
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* tread label sits at the bottom of the step */}
+                      <div className="mt-auto min-w-0">
+                        <div
+                          className="text-sm font-extrabold leading-tight truncate"
+                          style={{ color: accent }}
+                        >
+                          {p.price || "—"}
+                        </div>
+                        <div className="text-[11px] font-semibold text-text-primary leading-snug line-clamp-2">
+                          {p.name || "Untitled rung"}
+                        </div>
+                        {tr && (
+                          <div
+                            className="text-[9px] font-bold uppercase tracking-wide mt-0.5"
+                            style={{ color: accent }}
+                          >
+                            {tr.label}
+                          </div>
+                        )}
+                        {sv > 0 && (
+                          <div className="text-[9px] text-text-tertiary mt-0.5">
+                            {money(sv)} value
+                          </div>
+                        )}
+                        <div className="text-[10px] font-medium mt-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: accent }}>
+                          Build →
+                        </div>
+                      </div>
+                    </button>
                   </div>
-                </div>
-              </button>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        </div>
+
+        {/* X axis label */}
+        <div className="pl-6 text-center text-[10px] font-bold tracking-[0.2em] text-text-tertiary mt-1.5">
+          PRICE →
+        </div>
+
+        {/* Continuity flow runs beneath the ladder */}
+        {L.continuity.on && (
+          <div className="pl-6 mt-2 flex items-center gap-1.5 flex-wrap text-text-tertiary">
+            <span className="text-[10px] font-bold tracking-[0.15em]">
+              CONTINUITY
+            </span>
+            <span className="text-sm font-bold text-accent">
+              → {L.continuity.price || "$"} → {L.continuity.price || "$"} →{" "}
+              {L.continuity.price || "$"} → …
+            </span>
+          </div>
+        )}
       </div>
 
       <button
