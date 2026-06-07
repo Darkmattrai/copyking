@@ -60,7 +60,7 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
 
   const offer = useOfferDraftStore((s) => s.offer);
   const enhancements = useOfferDraftStore((s) => s.enhancements);
-  const setOfferField = useOfferDraftStore((s) => s.setField);
+  const updateProduct = useOfferDraftStore((s) => s.updateProduct);
 
   const formData = useIcpDraftStore((s) => s.formData);
   const segments = useIcpDraftStore((s) => s.segments);
@@ -208,121 +208,151 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
     });
 
     // ── Offer (from the Offer Builder) ────────────────────────────────────
-    // Each scalar field can carry an AI-enhanced version we recorded when the
-    // user clicked "✨ Enhance with AI".
-    const offerText = (
-      key: keyof typeof offer & string,
-      question: string,
-      kind: FieldKind = "textarea",
-    ): AnswerField => {
-      const enh = enhancements[key];
-      return {
-        id: `offer.${key}`,
-        feature: "Offer",
-        question,
-        value: String(offer[key] ?? ""),
-        original: enh?.original,
-        enhanced: enh?.enhanced,
-        kind,
-        onChange: (v) => setOfferField(key, v as never),
-      };
-    };
-
-    groups.push({
-      feature: "Offer",
-      category: "The Bullseye",
-      fields: [
-        offerText("who", "Who is your dream prospect?"),
-        offerText("where", "Where do you reach them?", "text"),
-        offerText("dream", "Dream outcome — what do they crave?"),
-        offerText("emotion", "The core emotion / pain (the bullseye)"),
-        offerText("bait", "The bait / hook that pulls them in", "text"),
-      ],
-    });
-
-    groups.push({
-      feature: "Offer",
-      category: "Magic Wand & Trim",
-      fields: [
-        offerText("magic", "Magic-wand offer — the outrageous promise"),
-        offerText("trim", "Trimmed version — realistic & deliverable"),
-        offerText("rationale", "Why is this offer so good? (the credible reason)"),
-      ],
-    });
-
-    groups.push({
-      feature: "Offer",
-      category: "Value & Proof",
-      fields: [
-        offerText("priceProof", "Proof people paid full price"),
-        offerText("anchorCompare", "Make the real price sound trivial"),
-        offerText("realPrice", "The real price you'll charge ($)", "text"),
-      ],
-    });
-
-    groups.push({
-      feature: "Offer",
-      category: "Guarantee",
-      fields: [
-        { id: "offer.guaranteeType", feature: "Offer", question: "Guarantee type", value: offer.guaranteeType ?? "", kind: "readonly" },
-        offerText("guaranteeResult", "The specific result you guarantee"),
-        offerText("guaranteeWindow", "Timeframe / window", "text"),
-        offerText("guaranteeProofReq", "What the client must prove"),
-        offerText("pgCompetitors", "Competitor scan + your strength"),
-        offerText("pgPayback", "Your payback / plan B"),
-        offerText("pgWhere", "Where you'll put the guarantee"),
-      ],
-    });
-
-    groups.push({
-      feature: "Offer",
-      category: "Scarcity & Urgency",
-      fields: [
-        { id: "offer.scarcityType", feature: "Offer", question: "Scarcity type", value: offer.scarcityType ?? "", kind: "readonly" },
-        { id: "offer.urgencyType", feature: "Offer", question: "Urgency type", value: offer.urgencyType ?? "", kind: "readonly" },
-        offerText("scarcityDetail", "The legit constraint (be honest)"),
-      ],
-    });
-
-    groups.push({
-      feature: "Offer",
-      category: "Objections & Name",
-      fields: [
-        offerText("leadAdd", "Lead the offer — what can you ADD?"),
-        offerText("offerName", "Final offer name", "text"),
-      ],
-    });
-
-    // Offer lists & ladders are shown read-only (edited in the builder itself).
-    const fbLines = (offer.features ?? [])
-      .filter((r) => r.f || r.b)
-      .map((r) => `${r.f} → ${r.b}`);
-    if (fbLines.length)
+    // The offer is a value ladder of self-contained products. Each product's
+    // scalar fields can carry an AI-enhanced version (keyed `${productId}.field`)
+    // recorded when the user clicked "✨ Enhance with AI".
+    if (offer.offerName)
       groups.push({
         feature: "Offer",
-        category: "Features → Benefits",
-        fields: [{ id: "offer.features", feature: "Offer", question: "Feature → benefit", value: fbLines.join("\n"), kind: "readonly" }],
+        category: "Offer — Overview",
+        fields: [
+          {
+            id: "offer.offerName",
+            feature: "Offer",
+            question: "Offer name (the whole ladder)",
+            value: offer.offerName,
+            kind: "text",
+          },
+        ],
       });
 
-    const psLines = (offer.problems ?? [])
-      .filter((r) => r.p || r.s)
-      .map((r) => `${r.p} → ${r.s}`);
-    if (psLines.length)
-      groups.push({
-        feature: "Offer",
-        category: "Problems → Solutions",
-        fields: [{ id: "offer.problems", feature: "Offer", question: "Problem → solution", value: psLines.join("\n"), kind: "readonly" }],
-      });
+    offer.ladders.forEach((L, li) => {
+      L.products.forEach((P, pi) => {
+        const label = P.name || `Rung ${pi + 1}`;
+        const prefix = `Product: ${label}`;
+        const setP = (key: keyof typeof P, v: string) =>
+          updateProduct(li, pi, { [key]: v });
 
-    const objLines = (offer.objections ?? [])
-      .filter((r) => r.o || r.r)
-      .map((r) => `${r.o} → ${r.r}`);
-    if (objLines.length)
-      groups.push({
-        feature: "Offer",
-        category: "Objections (debunked)",
-        fields: [{ id: "offer.objections", feature: "Offer", question: "Objection → rebuttal", value: objLines.join("\n"), kind: "readonly" }],
+        const pText = (
+          key: keyof typeof P & string,
+          question: string,
+          kind: FieldKind = "textarea",
+        ): AnswerField => {
+          const enh = enhancements[`${P.id}.${key}`];
+          return {
+            id: `offer.${P.id}.${key}`,
+            feature: "Offer",
+            question,
+            value: String(P[key] ?? ""),
+            original: enh?.original,
+            enhanced: enh?.enhanced,
+            kind,
+            onChange: (v) => setP(key, v),
+          };
+        };
+
+        groups.push({
+          feature: "Offer",
+          category: `${prefix} · The Bullseye`,
+          fields: [
+            pText("name", "Product / rung name", "text"),
+            pText("price", "Ladder price", "text"),
+            pText("who", "Who is this product's dream prospect?"),
+            pText("where", "Where do you reach them?", "text"),
+            pText("dream", "Dream outcome — what do they crave?"),
+            pText("emotion", "The core emotion / pain (the bullseye)"),
+            pText("bait", "The bait / hook that pulls them in", "text"),
+          ],
+        });
+
+        groups.push({
+          feature: "Offer",
+          category: `${prefix} · Promise & Rationale`,
+          fields: [
+            pText("magic", "Magic-wand promise — the outrageous version"),
+            pText("trim", "Trimmed promise — realistic & deliverable"),
+            pText("rationale", "Why is this product so good?"),
+            pText("desc", "One-line summary (shown on the rung)"),
+          ],
+        });
+
+        groups.push({
+          feature: "Offer",
+          category: `${prefix} · Value & Proof`,
+          fields: [
+            pText("priceProof", "Proof people paid full price"),
+            pText("anchorCompare", "Make the real price sound trivial"),
+            pText("realPrice", "The real price you'll charge ($)", "text"),
+            pText("payment", "Payment note", "text"),
+          ],
+        });
+
+        groups.push({
+          feature: "Offer",
+          category: `${prefix} · Guarantee`,
+          fields: [
+            { id: `offer.${P.id}.guaranteeType`, feature: "Offer", question: "Guarantee type", value: P.guaranteeType ?? "", kind: "readonly" },
+            pText("guaranteeResult", "The specific result you guarantee"),
+            pText("guaranteeWindow", "Timeframe / window", "text"),
+            pText("guaranteeProofReq", "What the client must prove"),
+            pText("pgCompetitors", "Competitor scan + your strength"),
+            pText("pgPayback", "Your payback / plan B"),
+            pText("pgWhere", "Where you'll put the guarantee"),
+          ],
+        });
+
+        groups.push({
+          feature: "Offer",
+          category: `${prefix} · Scarcity & Urgency`,
+          fields: [
+            { id: `offer.${P.id}.scarcityType`, feature: "Offer", question: "Scarcity type", value: P.scarcityType ?? "", kind: "readonly" },
+            { id: `offer.${P.id}.urgencyType`, feature: "Offer", question: "Urgency type", value: P.urgencyType ?? "", kind: "readonly" },
+            pText("scarcityDetail", "The legit constraint (be honest)"),
+          ],
+        });
+
+        groups.push({
+          feature: "Offer",
+          category: `${prefix} · Objections & Lead`,
+          fields: [pText("leadAdd", "Lead the offer — what can you ADD?")],
+        });
+
+        // Lists are shown read-only (edited in the builder itself).
+        const fbLines = (P.features ?? [])
+          .filter((r) => r.f || r.b)
+          .map((r) => `${r.f} → ${r.b}`);
+        const psLines = (P.problems ?? [])
+          .filter((r) => r.p || r.s)
+          .map((r) => `${r.p} → ${r.s}`);
+        const delivLines = (P.deliverables ?? [])
+          .filter((r) => r.item)
+          .map((r) => `${r.item}${r.val ? ` ($${r.val})` : ""}`);
+        const bonusLines = (P.bonuses ?? [])
+          .filter((r) => r.name)
+          .map((r) => `${r.name}${r.val ? ` ($${r.val})` : ""}`);
+        const objLines = (P.objections ?? [])
+          .filter((r) => r.o || r.r)
+          .map((r) => `${r.o} → ${r.r}`);
+
+        const listFields: AnswerField[] = [];
+        if (fbLines.length)
+          listFields.push({ id: `offer.${P.id}.features`, feature: "Offer", question: "Features → benefits", value: fbLines.join("\n"), kind: "readonly" });
+        if (psLines.length)
+          listFields.push({ id: `offer.${P.id}.problems`, feature: "Offer", question: "Problems → solutions", value: psLines.join("\n"), kind: "readonly" });
+        if (delivLines.length)
+          listFields.push({ id: `offer.${P.id}.deliverables`, feature: "Offer", question: "Deliverables", value: delivLines.join("\n"), kind: "readonly" });
+        if (bonusLines.length)
+          listFields.push({ id: `offer.${P.id}.bonuses`, feature: "Offer", question: "Bonuses", value: bonusLines.join("\n"), kind: "readonly" });
+        if (objLines.length)
+          listFields.push({ id: `offer.${P.id}.objections`, feature: "Offer", question: "Objections → rebuttals", value: objLines.join("\n"), kind: "readonly" });
+        if (listFields.length)
+          groups.push({
+            feature: "Offer",
+            category: `${prefix} · Stack & Lists`,
+            fields: listFields,
+          });
       });
+    });
 
     // ── Brand DNA pillars (the deeper discovery; ICP & Offer have their own
     // tools above, so we surface the remaining six pillars here) ───────────
@@ -408,7 +438,7 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
     updatePillar,
     offer,
     enhancements,
-    setOfferField,
+    updateProduct,
     formData,
     segments,
     setFormData,

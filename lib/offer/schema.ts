@@ -1,5 +1,9 @@
-// Typed model for the Titanium Offer Builder, ported from the original
-// single-file app's `D` object and authoritative field-map.
+// Typed model for the Offer Builder.
+//
+// A "value ladder" is the SPINE of the offer: an ordered list of Products that
+// ascend in value/price. Each Product is a self-contained Grand-Slam Offer —
+// its own avatar, features, problems, value stack, guarantee, scarcity, proof
+// and name. The top-level Offer is a thin wrapper around the ladder(s).
 
 export type Deliverable = {
   item: string;
@@ -12,14 +16,86 @@ export type Bonus = {
   why: string;
 };
 
-export interface Tier {
+export type FeatureBenefit = {
+  f: string;
+  b: string;
+};
+
+export type ProblemSolution = {
+  p: string;
+  s: string;
+};
+
+export type Objection = {
+  o: string;
+  r: string;
+};
+
+export interface Veq {
+  dream: number;
+  likely: number;
+  time: number;
+  effort: number;
+}
+
+export interface NameModel {
+  formula: string;
+  parts: Record<string, string>;
+}
+
+// A single rung on the ladder — a complete, standalone offer.
+export interface Product {
+  id: string;
+
+  // identity + ladder display
   name: string;
-  price: string;
-  desc: string;
-  pop: boolean;
+  price: string; // headline / recurring price shown on the ladder ("$1,500/mo", "FREE")
+  desc: string; // one-line "what they get on this rung"
+  pop: boolean; // ⭐ the rung most people pick
+  payment: string;
+
+  // bullseye / avatar
+  who: string;
+  where: string;
+  dream: string;
+  emotion: string;
+  bait: string;
+
+  // value engine
+  features: FeatureBenefit[];
+  problems: ProblemSolution[];
   deliverables: Deliverable[];
   bonuses: Bonus[];
-  payment: string;
+  magic: string;
+  trim: string;
+  rationale: string;
+
+  // value equation + pricing framing
+  veq: Veq;
+  realPrice: string; // today's price for the value-stack math
+  priceProof: string;
+  anchorCompare: string;
+  proofShots: string[];
+
+  // risk reversal
+  guaranteeType: string;
+  guaranteeResult: string;
+  guaranteeWindow: string;
+  guaranteeProofReq: string;
+  pgCompetitors: string;
+  pgStrength: string;
+  pgPayback: string;
+  pgWhere: string;
+
+  // urgency
+  scarcityType: string;
+  urgencyType: string;
+  scarcityDetail: string;
+
+  // objections + name
+  objections: Objection[];
+  leadAdd: string;
+  nm: NameModel;
 }
 
 export interface Continuity {
@@ -32,69 +108,13 @@ export interface Continuity {
 
 export interface Ladder {
   name: string;
-  tiers: Tier[];
+  products: Product[];
   continuity: Continuity;
 }
 
-export type FeatureBenefit = {
-  f: string;
-  b: string;
-};
-
-export type ProblemSolution = {
-  p: string;
-  s: string;
-};
-
-export interface Veq {
-  dream: number;
-  likely: number;
-  time: number;
-  effort: number;
-}
-
-export type Objection = {
-  o: string;
-  r: string;
-};
-
-export interface NameModel {
-  formula: string;
-  parts: Record<string, string>;
-}
-
 export interface Offer {
-  who: string;
-  where: string;
-  dream: string;
-  emotion: string;
-  bait: string;
-  features: FeatureBenefit[];
-  problems: ProblemSolution[];
-  magic: string;
-  trim: string;
-  rationale: string;
-  realPrice: string;
-  priceProof: string;
-  anchorCompare: string;
-  proofShots: string[];
-  veq: Veq;
-  ladders: Ladder[];
-  guaranteeType: string;
-  guaranteeResult: string;
-  guaranteeWindow: string;
-  guaranteeProofReq: string;
-  scarcityType: string;
-  urgencyType: string;
-  scarcityDetail: string;
-  objections: Objection[];
-  leadAdd: string;
-  pgCompetitors: string;
-  pgStrength: string;
-  pgPayback: string;
-  pgWhere: string;
-  nm: NameModel;
   offerName: string;
+  ladders: Ladder[];
 }
 
 // ─── Price tiers (auto colour + position) ──────────────────────────────────────
@@ -133,23 +153,23 @@ export function tierOf(price: string | number | null | undefined): TierDef | nul
   return TIERS[4];
 }
 
-// stable sort by tier ascending; unknown-price stages keep order at the end
-export function sortTiers(arr: Tier[]): Tier[] {
+// stable sort by tier ascending; unknown-price rungs keep order at the end
+export function sortProducts(arr: Product[]): Product[] {
   return arr
     .map((t, i) => ({ t, i, r: tierOf(t.price) ? tierOf(t.price)!.rank : 99 }))
     .sort((a, b) => a.r - b.r || a.i - b.i)
     .map((x) => x.t);
 }
 
-// flag a higher-tier stage that sits before a lower one (must read Free → High)
-export function tierOrderError(order: Tier[]): string | null {
+// flag a higher-tier rung that sits before a lower one (must read Free → High)
+export function productOrderError(order: Product[]): string | null {
   let maxSeen = -1;
   let maxTier: TierDef | null = null;
   for (const t of order) {
     const tr = tierOf(t.price);
     if (!tr) continue;
     if (tr.rank < maxSeen)
-      return `${maxTier!.label} offers can't be at this stage — keep the ladder ordered Free → High ticket.`;
+      return `${maxTier!.label} offers can't be at this rung — keep the ladder ordered Free → High ticket.`;
     if (tr.rank > maxSeen) {
       maxSeen = tr.rank;
       maxTier = tr;
@@ -176,41 +196,41 @@ export function scoreNote(s: string | number): string {
   return "weak — raise dream/likelihood or cut time/effort";
 }
 
-export function stageValue(t: Tier): number {
+// stacked $ value of one product (its deliverables + bonuses)
+export function stageValue(p: Product): number {
   return (
-    (t.deliverables || []).reduce((a, x) => a + (+x.val || 0), 0) +
-    (t.bonuses || []).reduce((a, x) => a + (+x.val || 0), 0)
+    (p.deliverables || []).reduce((a, x) => a + (+x.val || 0), 0) +
+    (p.bonuses || []).reduce((a, x) => a + (+x.val || 0), 0)
   );
 }
 
-// total stacked value across every ladder's deliverables + bonuses
+// total stacked value across every product in every ladder
 export function offerValueTotal(offer: Offer): number {
   let t = 0;
-  offer.ladders.forEach((L) =>
-    L.tiers.forEach((s) => {
-      (s.deliverables || []).forEach((d) => (t += +d.val || 0));
-      (s.bonuses || []).forEach((b) => (t += +b.val || 0));
-    })
+  (offer.ladders || []).forEach((L) =>
+    (L.products || []).forEach((p) => {
+      t += stageValue(p);
+    }),
   );
   return t;
 }
 
-// suggest 1–10 value-equation inputs from data already entered
-export function suggestVeq(offer: Offer): Veq {
+// suggest 1–10 value-equation inputs for a single product from its own data
+export function suggestVeq(p: Product): Veq {
   const len = (s: string) => String(s || "").trim().length;
   const clamp = (n: number) => Math.max(1, Math.min(10, Math.round(n * 2) / 2));
   const dream = clamp(
-    3 + Math.min(4, len(offer.dream) / 40) + Math.min(3, len(offer.emotion) / 40)
+    3 + Math.min(4, len(p.dream) / 40) + Math.min(3, len(p.emotion) / 40),
   );
   let lk = 3;
-  if (offer.guaranteeResult) lk += 2;
-  if (/free|refund|until|pay you/i.test(offer.guaranteeResult || "")) lk += 1.5;
-  if (len(offer.priceProof) > 20) lk += 1.5;
-  if (offer.proofShots.length) lk += 1;
+  if (p.guaranteeResult) lk += 2;
+  if (/free|refund|until|pay you/i.test(p.guaranteeResult || "")) lk += 1.5;
+  if (len(p.priceProof) > 20) lk += 1.5;
+  if (p.proofShots.length) lk += 1;
   const likely = clamp(lk);
   let tm = 7;
   const win =
-    (offer.guaranteeWindow || "") + " " + (offer.trim || "") + " " + (offer.offerName || "");
+    (p.guaranteeWindow || "") + " " + (p.trim || "") + " " + (p.name || "");
   const dm = win.match(/(\d+)\s*day/i);
   const wm = win.match(/(\d+)\s*week/i);
   const mm = win.match(/(\d+)\s*month/i);
@@ -218,9 +238,7 @@ export function suggestVeq(offer: Offer): Veq {
   else if (wm) tm = +wm[1] <= 6 ? 3 : 5;
   else if (mm) tm = +mm[1] <= 2 ? 4 : 6;
   const time = clamp(tm);
-  const allDeliv = offer.ladders
-    .flatMap((L) => L.tiers.flatMap((s) => (s.deliverables || []).map((d) => d.item)))
-    .join(" ");
+  const allDeliv = (p.deliverables || []).map((d) => d.item).join(" ");
   let ef = 6;
   if (/done[- ]for[- ]you|dfy|we (build|set up|run|handle|do)|managed|hands[- ]off/i.test(allDeliv))
     ef -= 3;

@@ -1,60 +1,91 @@
-import type { Offer, Tier } from "./schema";
+import type { Offer, Product } from "./schema";
 import {
-  sortTiers,
+  sortProducts,
   tierOf,
   money,
   valueScore,
-  offerValueTotal,
+  stageValue,
 } from "./schema";
 
-function stageHasContent(x: Tier): boolean {
+// A product is "worth printing" once it has a name, price, or any stack content.
+export function productHasContent(p: Product): boolean {
   return Boolean(
-    x.name ||
-      x.price ||
-      (x.deliverables || []).some((d) => d.item) ||
-      (x.bonuses || []).some((b) => b.name),
+    p.name ||
+      p.price ||
+      (p.deliverables || []).some((d) => d.item) ||
+      (p.bonuses || []).some((b) => b.name) ||
+      p.trim ||
+      p.dream,
   );
 }
 
-export function offerMarkdown(D: Offer): string {
-  const valTotal = offerValueTotal(D);
-  let o = `# ${D.offerName || "Titanium Offer"}\n\n`;
-  o += `**For:** ${D.who || "—"}  |  **Reach:** ${D.where || "—"}\n\n`;
-  o += `**Dream outcome:** ${D.dream || "—"}\n**Bullseye emotion:** ${D.emotion || "—"}\n\n`;
-  o += `## The Promise\n${D.trim || "—"}\n\n## Why it's this good (rationale)\n${D.rationale || "—"}\n\n`;
-  const multi = D.ladders.length > 1;
-  o += `## The Value Ladder\n`;
-  D.ladders.forEach((L, i) => {
-    if (multi) o += `### ${L.name || "Value Ladder " + (i + 1)}\n`;
-    sortTiers(L.tiers).forEach((x) => {
-      if (!stageHasContent(x)) return;
-      const t = tierOf(x.price);
-      o += `\n**${x.name || "Stage"}${x.pop ? " ⭐" : ""}** — ${x.price || "—"}${t ? ` _(${t.label})_` : ""}\n`;
-      if (x.desc) o += `${x.desc}\n`;
-      (x.deliverables || []).forEach((d) => {
-        if (d.item) o += `- ${d.item} — ${money(d.val)}\n`;
-      });
-      (x.bonuses || []).forEach((b) => {
-        if (b.name) o += `- 🎁 ${b.name} — ${money(b.val)} (${b.why || ""})\n`;
-      });
-      if (x.payment) o += `- 💳 ${x.payment}\n`;
-    });
-    const c = L.continuity;
-    if (c && c.on && (c.name || c.price))
-      o += `\n**Continuity 🔁:** ${c.name} — ${c.price} (${c.cycle}) — ${c.desc || ""}\n`;
+function productMarkdown(p: Product): string {
+  let o = `### ${p.name || "Product"}${p.pop ? " ⭐" : ""} — ${p.price || "—"}`;
+  const t = tierOf(p.price);
+  if (t) o += ` _(${t.label})_`;
+  o += `\n`;
+  if (p.desc) o += `${p.desc}\n`;
+  if (p.who) o += `\n**For:** ${p.who}\n`;
+  if (p.dream) o += `**Dream outcome:** ${p.dream}\n`;
+  if (p.trim) o += `**The promise:** ${p.trim}\n`;
+
+  const feats = (p.features || []).filter((f) => f.f || f.b);
+  if (feats.length) {
+    o += `\n**Features → benefits**\n`;
+    feats.forEach((f) => (o += `- ${f.f || "?"} → ${f.b || "?"}\n`));
+  }
+
+  const probs = (p.problems || []).filter((x) => x.p || x.s);
+  if (probs.length) {
+    o += `\n**Problems → solutions**\n`;
+    probs.forEach((x) => (o += `- ${x.p || "?"} → ${x.s || "?"}\n`));
+  }
+
+  const deliv = (p.deliverables || []).filter((d) => d.item);
+  const bonus = (p.bonuses || []).filter((b) => b.name);
+  if (deliv.length || bonus.length) {
+    o += `\n**What's included**\n`;
+    deliv.forEach((d) => (o += `- ${d.item} — ${money(d.val)}\n`));
+    bonus.forEach((b) => (o += `- 🎁 ${b.name} — ${money(b.val)}${b.why ? ` (${b.why})` : ""}\n`));
+  }
+  if (p.payment) o += `- 💳 ${p.payment}\n`;
+
+  const sv = stageValue(p);
+  if (sv > 0 || p.realPrice) {
+    o += `\n**Stacked value:** ${money(sv)}`;
+    if (p.realPrice) o += ` — **price today: ${money(p.realPrice)}**`;
     o += `\n`;
-  });
-  o += `**Total stacked value: ${money(valTotal)}**\n\n`;
-  o += `## Price\nToday: **${money(D.realPrice)}** vs ${money(valTotal)} value.\n${D.anchorCompare || ""}\n\n`;
-  o += `## Guarantee (${D.guaranteeType})\n${D.guaranteeResult || "—"} ${D.guaranteeWindow ? "(" + D.guaranteeWindow + ")" : ""}\nClient must prove: ${D.guaranteeProofReq || "—"}\nEdge: ${D.pgCompetitors || "—"}\nPayback: ${D.pgPayback || "—"}\nPlaced: ${D.pgWhere || "—"}\n\n`;
-  o += `## Scarcity (${D.scarcityType}) / Urgency (${D.urgencyType})\n${D.scarcityDetail || "—"}\n\n`;
-  o += `## Objections handled\n`;
-  D.objections.forEach((x) => {
-    if (x.o) o += `- **${x.o}** → ${x.r || ""}\n`;
-  });
-  o += `\n**Lead the offer — added:** ${D.leadAdd || "—"}\n\n`;
-  o += `---\n_Value Equation score: ${valueScore(D.veq)} (dream ${D.veq.dream}, likelihood ${D.veq.likely}, time ${D.veq.time}, effort ${D.veq.effort})_\n`;
+    if (p.anchorCompare) o += `${p.anchorCompare}\n`;
+  }
+
+  if (p.guaranteeResult)
+    o += `\n**Guarantee (${p.guaranteeType}):** ${p.guaranteeResult}${p.guaranteeWindow ? ` (${p.guaranteeWindow})` : ""}\n`;
+  if (p.scarcityDetail)
+    o += `**Scarcity (${p.scarcityType}):** ${p.scarcityDetail}\n`;
+
+  const objs = (p.objections || []).filter((x) => x.o);
+  if (objs.length) {
+    o += `\n**Objections handled**\n`;
+    objs.forEach((x) => (o += `- ${x.o} → ${x.r || ""}\n`));
+  }
+
+  o += `\n_Value Equation score: ${valueScore(p.veq)} (dream ${p.veq.dream}, likelihood ${p.veq.likely}, time ${p.veq.time}, effort ${p.veq.effort})_\n`;
   return o;
 }
 
-export { stageHasContent };
+export function offerMarkdown(D: Offer): string {
+  let o = `# ${D.offerName || "Value Ladder"}\n\n`;
+  const multi = D.ladders.length > 1;
+  D.ladders.forEach((L, i) => {
+    if (multi) o += `## ${L.name || "Value Ladder " + (i + 1)}\n\n`;
+    else o += `## The Value Ladder\n\n`;
+    sortProducts(L.products).forEach((p) => {
+      if (!productHasContent(p)) return;
+      o += productMarkdown(p) + `\n`;
+    });
+    const c = L.continuity;
+    if (c && c.on && (c.name || c.price))
+      o += `**Continuity 🔁:** ${c.name} — ${c.price} (${c.cycle}) — ${c.desc || ""}\n\n`;
+  });
+  return o;
+}

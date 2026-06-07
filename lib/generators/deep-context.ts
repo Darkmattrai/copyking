@@ -4,8 +4,15 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { GeneratedICP } from "@/lib/icp/schema";
-import type { Offer } from "@/lib/offer/schema";
-import { offerValueTotal, valueScore, money } from "@/lib/offer/schema";
+import type { Offer, Product } from "@/lib/offer/schema";
+import {
+  stageValue,
+  valueScore,
+  money,
+  offerValueTotal,
+  sortProducts,
+} from "@/lib/offer/schema";
+import { migrateOffer } from "@/lib/offer/migrate";
 
 interface IcpMapSave {
   formData?: {
@@ -54,88 +61,107 @@ function formatIcpMap(save: IcpMapSave): string | null {
   return lines.join("\n\n");
 }
 
-function formatOffer(offer: Offer): string | null {
-  if (!offer || (!offer.dream && !offer.offerName && !(offer.ladders?.length))) {
-    return null;
+function formatProduct(p: Product, idx: number): string {
+  const lines: string[] = [];
+  lines.push(`#### Rung ${idx + 1}: ${p.name || "(unnamed rung)"}${p.pop ? " [most popular]" : ""} — ${p.price || "price N/A"}`);
+
+  lines.push(`- One-liner: ${p.desc || "N/A"}
+- Who it's for: ${p.who || "N/A"}
+- Where they are: ${p.where || "N/A"}
+- Dream outcome: ${p.dream || "N/A"}
+- Emotional driver: ${p.emotion || "N/A"}
+- Lead magnet / bait: ${p.bait || "N/A"}
+- The "magic wand" promise: ${p.magic || "N/A"}
+- One-line promise: ${p.trim || "N/A"}
+- Rationale / reason to act: ${p.rationale || "N/A"}`);
+
+  if (p.features?.length) {
+    lines.push(`Features → benefits:
+${p.features.map((f) => `  - ${f.f || "?"} → ${f.b || "?"}`).join("\n")}`);
   }
+
+  if (p.problems?.length) {
+    lines.push(`Problems → solutions:
+${p.problems.map((x) => `  - ${x.p || "?"} → ${x.s || "?"}`).join("\n")}`);
+  }
+
+  const deliv = (p.deliverables ?? [])
+    .filter((d) => d.item)
+    .map((d) => `  - ${d.item}${d.val ? ` (${money(d.val)})` : ""}`)
+    .join("\n");
+  if (deliv) lines.push(`Deliverables:\n${deliv}`);
+
+  const bonus = (p.bonuses ?? [])
+    .filter((b) => b.name)
+    .map((b) => `  - ${b.name}${b.val ? ` (${money(b.val)})` : ""}${b.why ? ` — ${b.why}` : ""}`)
+    .join("\n");
+  if (bonus) lines.push(`Bonuses:\n${bonus}`);
+
+  const sv = stageValue(p);
+  if (sv > 0 || p.realPrice) {
+    lines.push(`Value & proof:
+- Stacked value: ${sv ? money(sv) : "N/A"}
+- Real price: ${p.realPrice || "N/A"}
+- Price justification: ${p.priceProof || "N/A"}
+- Anchor comparison: ${p.anchorCompare || "N/A"}
+- Proof points: ${p.proofShots?.filter(Boolean).join("; ") || "N/A"}
+- Value-equation score: ${p.veq ? valueScore(p.veq) : "N/A"} (dream ${p.veq?.dream ?? "?"}, likelihood ${p.veq?.likely ?? "?"}, time ${p.veq?.time ?? "?"}, effort ${p.veq?.effort ?? "?"})`);
+  }
+
+  if (p.guaranteeType || p.guaranteeResult) {
+    lines.push(`Guarantee:
+- Type: ${p.guaranteeType || "N/A"}
+- Promise: ${p.guaranteeResult || "N/A"}
+- Window: ${p.guaranteeWindow || "N/A"}
+- Proof required: ${p.guaranteeProofReq || "N/A"}`);
+  }
+
+  if (p.scarcityType || p.urgencyType || p.scarcityDetail) {
+    lines.push(`Scarcity & urgency:
+- Scarcity: ${p.scarcityType || "N/A"}
+- Urgency: ${p.urgencyType || "N/A"}
+- Detail: ${p.scarcityDetail || "N/A"}`);
+  }
+
+  if (p.objections?.length) {
+    lines.push(`Objections → responses:
+${p.objections.map((o) => `  - ${o.o || "?"} → ${o.r || "?"}`).join("\n")}`);
+  }
+
+  if (p.payment) lines.push(`Payment: ${p.payment}`);
+
+  return lines.join("\n");
+}
+
+function formatOffer(offer: Offer): string | null {
+  if (!offer || !offer.ladders?.length) return null;
+
+  const products = offer.ladders.flatMap((L) => L.products ?? []);
+  if (!offer.offerName && !products.length) return null;
 
   const lines: string[] = [];
   lines.push(`## OFFER — ${offer.offerName || "(unnamed offer)"}`);
+  lines.push(
+    `The offer is built as a value ladder: an ordered set of standalone rungs (products) that ascend in value/price. Each rung is its own complete offer with its own avatar, value stack, guarantee, scarcity and proof.`,
+  );
 
-  lines.push(`### Core
-- Who it's for: ${offer.who || "N/A"}
-- Where they are: ${offer.where || "N/A"}
-- Dream outcome: ${offer.dream || "N/A"}
-- Emotional driver: ${offer.emotion || "N/A"}
-- Lead magnet / bait: ${offer.bait || "N/A"}
-- The "magic wand" promise: ${offer.magic || "N/A"}
-- One-line offer: ${offer.trim || "N/A"}
-- Rationale / reason to act: ${offer.rationale || "N/A"}`);
-
-  if (offer.features?.length) {
-    lines.push(`### Features → benefits
-${offer.features.map((f) => `- ${f.f || "?"} → ${f.b || "?"}`).join("\n")}`);
-  }
-
-  if (offer.problems?.length) {
-    lines.push(`### Problems → solutions
-${offer.problems.map((p) => `- ${p.p || "?"} → ${p.s || "?"}`).join("\n")}`);
-  }
-
-  if (offer.ladders?.length) {
-    const ladderText = offer.ladders
-      .map((L) => {
-        const tiers = (L.tiers ?? [])
-          .map((t) => {
-            const deliv = (t.deliverables ?? [])
-              .map((d) => `${d.item}${d.val ? ` (${money(d.val)})` : ""}`)
-              .filter(Boolean)
-              .join(", ");
-            const bonus = (t.bonuses ?? [])
-              .map((b) => `${b.name}${b.val ? ` (${money(b.val)})` : ""}`)
-              .filter(Boolean)
-              .join(", ");
-            return `  - ${t.name || "Tier"} — ${t.price || "?"}${t.pop ? " [most popular]" : ""}: ${t.desc || ""}${deliv ? `\n    Deliverables: ${deliv}` : ""}${bonus ? `\n    Bonuses: ${bonus}` : ""}${t.payment ? `\n    Payment: ${t.payment}` : ""}`;
-          })
-          .join("\n");
-        const cont = L.continuity?.on
-          ? `\n  - Continuity: ${L.continuity.name || ""} ${L.continuity.price || ""}/${L.continuity.cycle || ""} — ${L.continuity.desc || ""}`
-          : "";
-        return `Ladder: ${L.name || "Value Ladder"}\n${tiers}${cont}`;
-      })
-      .join("\n\n");
-    lines.push(`### Value ladder & pricing\n${ladderText}`);
+  for (const L of offer.ladders) {
+    const ladderLines: string[] = [];
+    ladderLines.push(`### Value ladder: ${L.name || "Value Ladder"}`);
+    sortProducts(L.products ?? []).forEach((p, i) => {
+      ladderLines.push(formatProduct(p, i));
+    });
+    if (L.continuity?.on) {
+      ladderLines.push(
+        `#### Continuity: ${L.continuity.name || ""} — ${L.continuity.price || ""}/${L.continuity.cycle || ""}${L.continuity.desc ? ` — ${L.continuity.desc}` : ""}`,
+      );
+    }
+    lines.push(ladderLines.join("\n\n"));
   }
 
   const valTotal = offerValueTotal(offer);
-  if (valTotal > 0 || offer.realPrice) {
-    lines.push(`### Value & proof
-- Total stacked value: ${valTotal ? money(valTotal) : "N/A"}
-- Real price: ${offer.realPrice || "N/A"}
-- Price justification: ${offer.priceProof || "N/A"}
-- Anchor comparison: ${offer.anchorCompare || "N/A"}
-- Proof points: ${offer.proofShots?.filter(Boolean).join("; ") || "N/A"}
-- Value-equation score: ${offer.veq ? valueScore(offer.veq) : "N/A"} (dream ${offer.veq?.dream ?? "?"}, likelihood ${offer.veq?.likely ?? "?"}, time ${offer.veq?.time ?? "?"}, effort ${offer.veq?.effort ?? "?"})`);
-  }
-
-  if (offer.guaranteeType || offer.guaranteeResult) {
-    lines.push(`### Guarantee
-- Type: ${offer.guaranteeType || "N/A"}
-- Promise: ${offer.guaranteeResult || "N/A"}
-- Window: ${offer.guaranteeWindow || "N/A"}
-- Proof required: ${offer.guaranteeProofReq || "N/A"}`);
-  }
-
-  if (offer.scarcityType || offer.urgencyType || offer.scarcityDetail) {
-    lines.push(`### Scarcity & urgency
-- Scarcity: ${offer.scarcityType || "N/A"}
-- Urgency: ${offer.urgencyType || "N/A"}
-- Detail: ${offer.scarcityDetail || "N/A"}`);
-  }
-
-  if (offer.objections?.length) {
-    lines.push(`### Objections → responses
-${offer.objections.map((o) => `- ${o.o || "?"} → ${o.r || "?"}`).join("\n")}`);
+  if (valTotal > 0) {
+    lines.push(`### Total stacked value across the ladder: ${money(valTotal)}`);
   }
 
   return lines.join("\n\n");
@@ -179,9 +205,10 @@ export async function buildDeepContext(): Promise<string> {
       if (block) blocks.push(block);
     } else if (row.slug === "irresistible-offer") {
       // Newer saves wrap the offer as { offer, enhancements }; older saves are
-      // the bare Offer object.
-      const offer = (parsed as { offer?: Offer }).offer ?? (parsed as Offer);
-      const block = formatOffer(offer);
+      // the bare (possibly pre-ladder) Offer object. migrateOffer normalizes
+      // both into the current ladder-of-products shape.
+      const raw = (parsed as { offer?: unknown }).offer ?? parsed;
+      const block = formatOffer(migrateOffer(raw));
       if (block) blocks.push(block);
     }
   }

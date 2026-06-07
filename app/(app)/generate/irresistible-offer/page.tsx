@@ -12,8 +12,7 @@ import { AutosaveIndicator } from "@/components/brand/autosave-indicator";
 import { PillarIcon } from "@/components/brand/pillar-icon";
 import { BrandDNAHero } from "@/components/generators/brand-dna-hero";
 import { useOfferDraftStore } from "@/lib/offer/store";
-import { seed } from "@/lib/offer/seed";
-import { brandToOffer, offerToBrand } from "@/lib/offer/brand-bridge";
+import { brandToProduct, offerToBrand, flagshipProduct } from "@/lib/offer/brand-bridge";
 import { OfferBuilderShell } from "@/components/generators/offer/offer-builder-shell";
 import { OfferPreview } from "@/components/generators/offer/offer-preview";
 
@@ -27,23 +26,29 @@ export default function IrresistibleOfferPage() {
   const updatePillar = useBrandStore((s) => s.updatePillar);
   const setGeneration = useGenerationsStore((s) => s.setGeneration);
 
-  const { offer, enhancements, patch, reset } = useOfferDraftStore();
+  const { offer, enhancements, updateProduct, reset } = useOfferDraftStore();
 
   const [seeded, setSeeded] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Seed once from Brand DNA, only when the draft is still at seed defaults.
+  // Seed once from Brand DNA into the flagship rung, only when that rung is
+  // still untouched (no avatar / dream / price entered yet).
   useEffect(() => {
     if (seeded) return;
-    const base = seed();
-    const untouched =
-      !offer.who &&
-      !offer.dream &&
-      offer.trim === base.trim &&
-      offer.realPrice === base.realPrice;
+    const flag = flagshipProduct(offer);
+    const untouched = flag && !flag.who && !flag.dream && !flag.realPrice;
     if (untouched) {
-      const seedFromBrand = brandToOffer(brandDNA.offer);
-      if (Object.keys(seedFromBrand).length) patch(seedFromBrand);
+      const seedFromBrand = brandToProduct(brandDNA.offer);
+      if (Object.keys(seedFromBrand).length) {
+        // Locate the flagship's [ladder, product] indices to patch it in place.
+        for (let li = 0; li < offer.ladders.length; li++) {
+          const pi = offer.ladders[li].products.findIndex((p) => p.id === flag.id);
+          if (pi !== -1) {
+            updateProduct(li, pi, seedFromBrand);
+            break;
+          }
+        }
+      }
     }
     setSeeded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,77 +1,69 @@
 "use client";
 
 import { useOfferDraftStore } from "@/lib/offer/store";
-import { newTier, newLadder } from "@/lib/offer/seed";
 import {
   tierOf,
-  sortTiers,
-  tierOrderError,
+  sortProducts,
+  productOrderError,
   stageValue,
   money,
   CONTINUITY_CYCLES,
-  type Tier,
-  type Deliverable,
-  type Bonus,
+  type Product,
 } from "@/lib/offer/schema";
-import { ListTable } from "./list-table";
 
+// The ladder "home" — the canvas. Each rung is a self-contained product; click
+// it to open its full offer builder. Rungs render as an ascending staircase
+// (entry/free at the bottom, premium anchor at the top).
 export function ValueLadder() {
-  const { offer, curLadder, openTier, patch, setCurLadder, setOpenTier } =
-    useOfferDraftStore();
+  const {
+    offer,
+    curLadder,
+    setOfferName,
+    updateLadder,
+    addLadder,
+    removeLadder,
+    updateProduct,
+    addProduct,
+    duplicateProduct,
+    removeProduct,
+    setCurLadder,
+    setCurProduct,
+  } = useOfferDraftStore();
 
   const ladders = offer.ladders;
   const idx = curLadder >= ladders.length ? 0 : curLadder;
   const L = ladders[idx];
 
-  const updateLadder = (updates: Partial<typeof L>) => {
-    patch({
-      ladders: ladders.map((l, i) => (i === idx ? { ...l, ...updates } : l)),
+  // Display order: ascending by price, premium on top → staircase climbs up.
+  const ascending = sortProducts(L.products);
+  const display = [...ascending].reverse();
+  const n = ascending.length;
+  const realIndex = (p: Product) => L.products.findIndex((x) => x.id === p.id);
+
+  const toggleStar = (p: Product) => {
+    const ri = realIndex(p);
+    updateLadder(idx, {
+      products: L.products.map((x, i) => ({ ...x, pop: i === ri ? !x.pop : false })),
     });
   };
 
-  const updateTier = (ti: number, updates: Partial<Tier>) => {
-    updateLadder({
-      tiers: L.tiers.map((t, i) => (i === ti ? { ...t, ...updates } : t)),
-    });
-  };
-
-  const commitPriceSort = () => {
-    updateLadder({ tiers: sortTiers(L.tiers) });
-    setOpenTier(null);
-  };
-
-  const toggleStar = (ti: number) => {
-    updateLadder({
-      tiers: L.tiers.map((t, i) => ({ ...t, pop: i === ti ? !t.pop : false })),
-    });
-  };
-
-  const removeTier = (ti: number) => {
-    let next = L.tiers.filter((_, i) => i !== ti);
-    if (next.length === 0) next = [newTier()];
-    updateLadder({ tiers: next });
-    setOpenTier(null);
-  };
-
-  const addTier = () => updateLadder({ tiers: [...L.tiers, newTier()] });
-
-  const addLadder = () => {
-    patch({ ladders: [...ladders, newLadder()] });
-    setCurLadder(ladders.length);
-  };
-
-  const deleteLadder = () => {
-    if (ladders.length <= 1) return;
-    const next = ladders.filter((_, i) => i !== idx);
-    patch({ ladders: next });
-    setCurLadder(Math.min(idx, next.length - 1));
-  };
-
-  const orderWarn = tierOrderError(L.tiers);
+  const orderWarn = productOrderError(L.products);
 
   return (
-    <div className="space-y-4">
-      {/* Ladder tabs */}
+    <div className="space-y-5">
+      {/* Umbrella offer name */}
+      <label className="flex flex-col gap-1.5">
+        <span className="ck-label !mb-0">Offer name (the whole ladder)</span>
+        <input
+          type="text"
+          value={offer.offerName}
+          onChange={(e) => setOfferName(e.target.value)}
+          placeholder="e.g. The Booked-Out Roofer Suite"
+          className="ck-input"
+        />
+      </label>
+
+      {/* Ladder tabs (most users have one) */}
       <div className="flex flex-wrap items-center gap-2">
         {ladders.map((l, i) => (
           <button
@@ -97,195 +89,153 @@ export function ValueLadder() {
         {ladders.length > 1 && (
           <button
             type="button"
-            onClick={deleteLadder}
+            onClick={() => removeLadder(idx)}
             className="px-3 py-1.5 rounded-lg text-sm font-medium text-text-tertiary hover:text-danger transition-all"
           >
-            🗑 Delete
+            🗑 Delete ladder
           </button>
         )}
       </div>
 
-      {/* Ladder name */}
       <label className="flex flex-col gap-1.5">
         <span className="ck-label !mb-0">Value ladder name</span>
         <input
           type="text"
           value={L.name}
-          onChange={(e) => updateLadder({ name: e.target.value })}
+          onChange={(e) => updateLadder(idx, { name: e.target.value })}
           placeholder="e.g. Get-More-Jobs Ladder"
           className="ck-input"
         />
       </label>
 
       <p className="text-xs text-text-tertiary">
-        ↑ More value · more results · higher price. Set a price and the stage
-        auto-colours into its tier (Free → High).
+        ↑ Each rung is its own complete offer — its own avatar, promise, value
+        stack, guarantee and price. Click a rung to build it out. Set a price and
+        the rung auto-colours into its tier (Free → High).
       </p>
 
-      {/* Stages */}
-      <div className="space-y-3">
-        {L.tiers.map((t, i) => {
-          const tr = tierOf(t.price);
+      {/* The staircase */}
+      <div className="space-y-2">
+        {display.map((p) => {
+          const ascPos = ascending.findIndex((x) => x.id === p.id); // 0 = lowest
+          const ri = realIndex(p);
+          const tr = tierOf(p.price);
           const accent = tr ? tr.color : "var(--color-border)";
-          const open = openTier === i;
-          const sv = stageValue(t);
+          const sv = stageValue(p);
+          // Indent grows with rank so higher rungs step up to the right.
+          const indent = n > 1 ? Math.min(ascPos * 28, 140) : 0;
+
           return (
             <div
-              key={i}
-              className="ck-card overflow-hidden"
-              style={{ borderLeft: `3px solid ${accent}` }}
+              key={p.id}
+              style={{ marginLeft: indent }}
+              className="transition-all"
             >
-              <div className="p-4 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-text-tertiary">
-                      Stage {i + 1}
+              <button
+                type="button"
+                onClick={() => setCurProduct(ri)}
+                className="group w-full text-left ck-card overflow-hidden hover:border-border-hover transition-colors"
+                style={{ borderLeft: `4px solid ${accent}` }}
+              >
+                <div className="p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-text-tertiary">
+                        Rung {ascPos + 1}
+                      </span>
+                      {tr && (
+                        <span
+                          className="ck-badge !text-[10px]"
+                          style={{ background: tr.bg, color: tr.color }}
+                        >
+                          {tr.label}
+                        </span>
+                      )}
+                      {sv > 0 && (
+                        <span className="text-xs text-success">
+                          {money(sv)} stacked value
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleStar(p);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleStar(p);
+                        }
+                      }}
+                      title="Mark as the rung most people pick"
+                      className="text-base leading-none cursor-pointer"
+                      style={{ color: p.pop ? "var(--color-warning)" : undefined }}
+                    >
+                      {p.pop ? "★" : "☆"}
                     </span>
-                    {tr && (
-                      <span
-                        className="ck-badge !text-[10px]"
-                        style={{ background: tr.bg, color: tr.color }}
-                      >
-                        {tr.label}
-                      </span>
-                    )}
-                    {sv > 0 && (
-                      <span className="text-xs text-success">
-                        {money(sv)} value
-                      </span>
-                    )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => toggleStar(i)}
-                      title="Mark as the plan most people pick"
-                      className="text-base leading-none"
-                      style={{ color: t.pop ? "var(--color-warning)" : undefined }}
+
+                  <div className="flex items-end justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-base font-semibold text-text-primary truncate">
+                        {p.name || "Untitled rung"}
+                      </div>
+                      {p.desc && (
+                        <p className="text-xs text-text-tertiary line-clamp-2">
+                          {p.desc}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-lg font-bold text-text-primary shrink-0">
+                      {p.price || "—"}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-1">
+                    <span className="text-sm font-medium text-accent group-hover:text-accent-hover">
+                      Build this offer →
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        duplicateProduct(idx, ri);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.stopPropagation();
+                          duplicateProduct(idx, ri);
+                        }
+                      }}
+                      className="text-xs text-text-tertiary hover:text-text-primary cursor-pointer"
                     >
-                      {t.pop ? "★" : "☆"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeTier(i)}
-                      className="text-text-tertiary hover:text-danger transition-colors"
-                      aria-label="Remove stage"
+                      Duplicate
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeProduct(idx, ri);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.stopPropagation();
+                          removeProduct(idx, ri);
+                        }
+                      }}
+                      className="text-xs text-text-tertiary hover:text-danger cursor-pointer"
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                        <path
-                          d="M4 4l8 8M12 4l-8 8"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </button>
+                      Delete
+                    </span>
                   </div>
                 </div>
-
-                <div className="grid gap-2 sm:grid-cols-[1fr_140px]">
-                  <input
-                    type="text"
-                    value={t.name}
-                    onChange={(e) => updateTier(i, { name: e.target.value })}
-                    placeholder="Stage name"
-                    className="ck-input !py-2"
-                  />
-                  <input
-                    type="text"
-                    value={t.price}
-                    onChange={(e) => updateTier(i, { price: e.target.value })}
-                    onBlur={commitPriceSort}
-                    placeholder="$ price / FREE"
-                    className="ck-input !py-2"
-                  />
-                </div>
-                <textarea
-                  value={t.desc}
-                  onChange={(e) => updateTier(i, { desc: e.target.value })}
-                  placeholder="What they get on this stage"
-                  rows={2}
-                  className="ck-input resize-none !py-2"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setOpenTier(open ? null : i)}
-                  className="text-sm font-medium text-accent hover:text-accent-hover transition-colors"
-                >
-                  {open ? "▾ Close details" : "▸ Edit details"}
-                </button>
-
-                {open && (
-                  <div className="pt-2 space-y-4 border-t border-border">
-                    <div>
-                      <p className="ck-label">Deliverables on this stage</p>
-                      <ListTable<Deliverable>
-                        rows={t.deliverables}
-                        columns={[
-                          {
-                            key: "item",
-                            label: "Deliverable",
-                            placeholder: "Done-for-you ad campaigns",
-                          },
-                          {
-                            key: "val",
-                            label: "Value ($)",
-                            type: "number",
-                            placeholder: "4000",
-                          },
-                        ]}
-                        onChange={(deliverables) =>
-                          updateTier(i, { deliverables })
-                        }
-                        addLabel="Add deliverable"
-                      />
-                    </div>
-                    <div>
-                      <p className="ck-label">Bonuses on this stage</p>
-                      <ListTable<Bonus>
-                        rows={t.bonuses}
-                        columns={[
-                          {
-                            key: "name",
-                            label: "Bonus",
-                            placeholder: "Outreach script pack",
-                          },
-                          {
-                            key: "val",
-                            label: "Value ($)",
-                            type: "number",
-                            placeholder: "500",
-                          },
-                          {
-                            key: "why",
-                            label: "Why it removes a problem",
-                            type: "textarea",
-                            placeholder:
-                              "Removes the 'what do I say to leads' fear so they win in week one",
-                          },
-                        ]}
-                        onChange={(bonuses) => updateTier(i, { bonuses })}
-                        addLabel="Add bonus"
-                      />
-                    </div>
-                    <label className="flex flex-col gap-1.5">
-                      <span className="ck-label !mb-0">
-                        Payment note (optional)
-                      </span>
-                      <input
-                        type="text"
-                        value={t.payment}
-                        onChange={(e) =>
-                          updateTier(i, { payment: e.target.value })
-                        }
-                        placeholder="$1,500/mo, or pay quarterly ($4,000) and save a month."
-                        className="ck-input !py-2"
-                      />
-                    </label>
-                  </div>
-                )}
-              </div>
+              </button>
             </div>
           );
         })}
@@ -293,10 +243,10 @@ export function ValueLadder() {
 
       <button
         type="button"
-        onClick={addTier}
+        onClick={() => addProduct(idx)}
         className="flex items-center gap-2 self-start px-4 py-2.5 rounded-lg border border-dashed border-border hover:border-border-hover text-sm font-medium text-text-primary transition-all"
       >
-        + Add a stage
+        + Add a rung (clones your flagship to edit)
       </button>
 
       {orderWarn && (
@@ -305,25 +255,25 @@ export function ValueLadder() {
         </div>
       )}
 
-      {/* Continuity */}
-      <div className="ck-card p-4 space-y-3">
+      {/* Continuity runs underneath the whole ladder */}
+      <div className="ck-card p-4 space-y-3" style={{ borderTop: "2px solid var(--color-accent)" }}>
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={L.continuity.on}
             onChange={(e) =>
-              updateLadder({
+              updateLadder(idx, {
                 continuity: { ...L.continuity, on: e.target.checked },
               })
             }
           />
           <span className="text-sm font-semibold text-text-primary">
-            🔁 Add a continuity program
+            🔁 Continuity program (runs under the whole ladder)
           </span>
         </label>
         <p className="text-xs text-text-tertiary">
-          Recurring revenue that runs underneath this ladder — a membership /
-          subscription they stay in.
+          Recurring revenue beneath the ladder — a membership / subscription they
+          stay in regardless of which rung they bought.
         </p>
         {L.continuity.on && (
           <div className="space-y-3">
@@ -332,7 +282,7 @@ export function ValueLadder() {
                 type="text"
                 value={L.continuity.name}
                 onChange={(e) =>
-                  updateLadder({
+                  updateLadder(idx, {
                     continuity: { ...L.continuity, name: e.target.value },
                   })
                 }
@@ -343,7 +293,7 @@ export function ValueLadder() {
                 type="text"
                 value={L.continuity.price}
                 onChange={(e) =>
-                  updateLadder({
+                  updateLadder(idx, {
                     continuity: { ...L.continuity, price: e.target.value },
                   })
                 }
@@ -353,7 +303,7 @@ export function ValueLadder() {
               <select
                 value={L.continuity.cycle}
                 onChange={(e) =>
-                  updateLadder({
+                  updateLadder(idx, {
                     continuity: { ...L.continuity, cycle: e.target.value },
                   })
                 }
@@ -369,7 +319,7 @@ export function ValueLadder() {
             <textarea
               value={L.continuity.desc}
               onChange={(e) =>
-                updateLadder({
+                updateLadder(idx, {
                   continuity: { ...L.continuity, desc: e.target.value },
                 })
               }

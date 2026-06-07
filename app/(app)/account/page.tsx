@@ -10,7 +10,8 @@ import { useGenerationsStore } from "@/lib/generators/store";
 import { useOfferDraftStore } from "@/lib/offer/store";
 import { useIcpDraftStore } from "@/lib/icp/store";
 import { seed } from "@/lib/offer/seed";
-import { offerToBrand } from "@/lib/offer/brand-bridge";
+import { migrateOffer } from "@/lib/offer/migrate";
+import { offerToBrand, flagshipProduct } from "@/lib/offer/brand-bridge";
 import { useAutosave } from "@/lib/hooks/use-autosave";
 import { AutosaveIndicator } from "@/components/brand/autosave-indicator";
 import { PillarIcon } from "@/components/brand/pillar-icon";
@@ -102,17 +103,19 @@ function AccountPageInner() {
 
     const offerRow = generations["irresistible-offer"];
     if (offerRow?.content) {
-      const base = seed();
+      const baseFlag = flagshipProduct(seed());
+      const curFlag = flagshipProduct(offer);
       const offerUntouched =
-        !offer.who &&
-        !offer.dream &&
-        offer.trim === base.trim &&
-        offer.realPrice === base.realPrice;
+        !curFlag ||
+        (!curFlag.who &&
+          !curFlag.dream &&
+          curFlag.trim === baseFlag?.trim &&
+          curFlag.realPrice === baseFlag?.realPrice);
       if (offerUntouched) {
         try {
           const parsed = JSON.parse(offerRow.content);
           const o = parsed.offer ?? parsed;
-          if (o && typeof o === "object") setOffer(o);
+          if (o && typeof o === "object") setOffer(migrateOffer(o));
           if (parsed.enhancements) setEnhancements(parsed.enhancements);
         } catch {
           /* ignore malformed row */
