@@ -18,6 +18,7 @@ type Pillar = {
   color: string;
   node: { x: number; y: number };
   href: string;
+  lines?: number; // fixed conduit count; omit for random 1–2
 };
 
 // NOTE: `href` targets are placeholders — they'll point at the real left-nav
@@ -25,7 +26,7 @@ type Pillar = {
 const PILLARS: Pillar[] = [
   { key: "foundation", name: "Foundation", icon: "lego", color: "#6366f1", node: { x: 178, y: 150 }, href: "#" },
   { key: "traffic", name: "Traffic System", icon: "megaphone", color: "#22d3ee", node: { x: 822, y: 150 }, href: "#" },
-  { key: "lead-generation", name: "Lead Gen System", icon: "funnel", color: "#f59e0b", node: { x: 178, y: 550 }, href: "#" },
+  { key: "lead-generation", name: "Lead Gen System", icon: "funnel", color: "#f59e0b", node: { x: 178, y: 550 }, href: "#", lines: 1 },
   { key: "sales", name: "Sales Machine", icon: "dollar", color: "#34d399", node: { x: 822, y: 550 }, href: "#" },
 ];
 
@@ -113,7 +114,7 @@ export default function OverviewPage() {
   // Done on the client to avoid SSR/CSR hydration mismatch from Math.random.
   useEffect(() => {
     const built = PILLARS.map((p) => {
-      const count = Math.random() < 0.5 ? 1 : 2;
+      const count = p.lines ?? (Math.random() < 0.5 ? 1 : 2);
       return Array.from({ length: count }, () => makeCurve(p.node));
     });
     setCurves(built);
