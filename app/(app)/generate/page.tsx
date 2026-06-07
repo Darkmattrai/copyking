@@ -8,8 +8,12 @@ import {
   getGeneratorsByCategory,
   GENERATOR_CATEGORIES,
 } from "@/lib/generators/registry";
+import { useRole } from "@/lib/auth/use-role";
+import { CLIENT_GENERATOR_SLUGS } from "@/lib/auth/roles";
 
 export default function GenerateHubPage() {
+  const role = useRole();
+  const isClient = role === "client";
   const grouped = getGeneratorsByCategory();
   let globalIndex = 0;
 
@@ -35,7 +39,12 @@ export default function GenerateHubPage() {
       </motion.div>
 
       {GENERATOR_CATEGORIES.map((category) => {
-        const generators = grouped[category.key];
+        let generators = grouped[category.key];
+        if (isClient) {
+          generators = generators?.filter((g) =>
+            (CLIENT_GENERATOR_SLUGS as readonly string[]).includes(g.slug),
+          );
+        }
         if (!generators?.length) return null;
 
         return (

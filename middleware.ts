@@ -1,6 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import {
+  clientCanAccess,
+  clientCanAccessApi,
+  CLIENT_HOME,
+  type UserRole,
+} from "@/lib/auth/roles";
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -47,6 +54,32 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/brand";
     return NextResponse.redirect(url);
+  }
+
+  // Role-based gating: clients are limited to the two Foundation tools.
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    const role: UserRole = (data?.role as UserRole) ?? "client";
+
+    if (role === "client") {
+      const isApi = pathname.startsWith("/api/");
+      const allowed = isApi
+        ? clientCanAccessApi(pathname)
+        : clientCanAccess(pathname);
+
+      if (!allowed) {
+        if (isApi) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        const url = request.nextUrl.clone();
+        url.pathname = CLIENT_HOME;
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
   return supabaseResponse;

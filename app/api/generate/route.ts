@@ -5,6 +5,7 @@ import { getGenerator } from "@/lib/generators/registry";
 import { GENERATOR_PROMPTS } from "@/lib/generators/prompts";
 import { streamOrganicContentIdeas } from "@/lib/generators/organic-content-ideas-pipeline";
 import { buildDeepContext } from "@/lib/generators/deep-context";
+import { getUserRole } from "@/lib/auth/get-role";
 import type { BrandDNA } from "@/types/brand";
 
 export const maxDuration = 120;
@@ -122,6 +123,14 @@ export async function POST(req: Request) {
       JSON.stringify({ error: "Server misconfigured: OPENAI_API_KEY missing" }),
       { status: 500 },
     );
+  }
+
+  // Generic generators are admin-only; clients are limited to ICP Map + Offer.
+  const role = await getUserRole();
+  if (role !== "admin") {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+    });
   }
 
   let body: {

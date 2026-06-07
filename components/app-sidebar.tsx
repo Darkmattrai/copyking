@@ -13,6 +13,8 @@ import { getPillarCompletion } from "@/lib/brand/utils";
 import { PILLAR_META } from "@/types/brand";
 import { GENERATORS, GENERATOR_CATEGORIES } from "@/lib/generators/registry";
 import { createClient } from "@/lib/supabase/client";
+import { useRole } from "@/lib/auth/use-role";
+import { CLIENT_GENERATOR_SLUGS } from "@/lib/auth/roles";
 
 function getGeneratorNavLabel(name: string) {
   return name
@@ -37,11 +39,17 @@ function SidebarContent() {
   const pathname = usePathname();
   const { brandDNA } = useBrandStore();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const role = useRole();
+  const isClient = role === "client";
   const collapsed = sidebarCollapsed;
   const groupedGenerators = GENERATOR_CATEGORIES.map((category) => ({
     ...category,
     items: GENERATORS.filter((generator) => generator.category === category.key),
   })).filter((group) => group.items.length > 0);
+
+  const clientTools = GENERATORS.filter((g) =>
+    (CLIENT_GENERATOR_SLUGS as readonly string[]).includes(g.slug),
+  );
   const [openGeneratorGroups, setOpenGeneratorGroups] = useState<Record<string, boolean>>({});
   const [pillarsExpanded, setPillarsExpanded] = useState(false);
 
@@ -76,7 +84,24 @@ function SidebarContent() {
         </AnimatePresence>
       </div>
 
-      {/* Nav */}
+      {/* Client nav: only the two Foundation tools */}
+      {isClient ? (
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
+          {!collapsed && <SectionLabel icon="target" label="Your Tools" />}
+          {collapsed && <div className="pt-2" />}
+          {clientTools.map((generator) => (
+            <NavItem
+              key={generator.slug}
+              collapsed={collapsed}
+              href={`/generate/${generator.slug}`}
+              icon={<PillarIcon className="w-[18px] h-[18px]" icon={generator.icon} />}
+              isActive={pathname === `/generate/${generator.slug}`}
+              label={getGeneratorNavLabel(generator.name)}
+            />
+          ))}
+        </nav>
+      ) : (
+      /* Admin nav: full access */
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
         <NavItem
           collapsed={collapsed}
@@ -237,7 +262,23 @@ function SidebarContent() {
           isActive={pathname.startsWith("/onboarding")}
           label="Discover"
         />
+
+        {!collapsed && <SectionLabel icon="target" label="Admin" />}
+        {collapsed && <div className="pt-2" />}
+
+        <NavItem
+          collapsed={collapsed}
+          href="/admin"
+          icon={
+            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          }
+          isActive={pathname.startsWith("/admin")}
+          label="Clients"
+        />
       </nav>
+      )}
 
       {/* Bottom actions */}
       <div className="shrink-0 border-t border-border p-2 space-y-1">
