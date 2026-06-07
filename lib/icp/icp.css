@@ -477,7 +477,7 @@ body {
 .seg-block[open] .seg-hd-toggle,
 .seg-hd-toggle.open { transform: rotate(180deg); }
 .seg-inner {
-  padding: 0 18px 18px;
+  padding: 16px 18px 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
