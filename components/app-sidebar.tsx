@@ -4,7 +4,7 @@ import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import { PillarIcon } from "@/components/brand/pillar-icon";
 import { useUIStore } from "@/lib/ui/store";
@@ -60,27 +60,8 @@ function SidebarContent() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 h-14 shrink-0 border-b border-border">
-        <span className="h-7 w-7 shrink-0 rounded-lg bg-accent flex items-center justify-center">
-          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.span
-              animate={{ opacity: 1, width: "auto" }}
-              className="text-sm font-semibold text-text-primary tracking-tight overflow-hidden whitespace-nowrap"
-              exit={{ opacity: 0, width: 0 }}
-              initial={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              CopyKing
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* Logo / account menu */}
+      <LogoMenu collapsed={collapsed} />
 
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
         <NavItem
@@ -288,6 +269,17 @@ function SidebarContent() {
 
       {/* Bottom actions */}
       <div className="shrink-0 border-t border-border p-2 space-y-1">
+        <NavItem
+          collapsed={collapsed}
+          href="/account"
+          icon={
+            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          }
+          isActive={pathname === "/account"}
+          label="Account"
+        />
         <LogoutButton collapsed={collapsed} />
         <button
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -321,6 +313,129 @@ function SidebarContent() {
           </AnimatePresence>
         </button>
       </div>
+    </div>
+  );
+}
+
+function LogoMenu({ collapsed }: { collapsed: boolean }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
+  function go(href: string) {
+    setOpen(false);
+    router.push(href);
+  }
+
+  const items: { label: string; icon: string; href: string }[] = [
+    { label: "Account settings", icon: "target", href: "/account?tab=account" },
+    { label: "Brand DNA", icon: "book", href: "/account?tab=brand-dna" },
+    { label: "Billing", icon: "sparkles", href: "/account?tab=billing" },
+  ];
+
+  return (
+    <div ref={ref} className="relative shrink-0 border-b border-border">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={clsx(
+          "w-full flex items-center gap-2.5 px-4 h-14 hover:bg-surface-hover transition-colors",
+          collapsed && "justify-center px-0",
+        )}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <span className="h-7 w-7 shrink-0 rounded-lg bg-accent flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.span
+              animate={{ opacity: 1, width: "auto" }}
+              className="text-sm font-semibold text-text-primary tracking-tight overflow-hidden whitespace-nowrap flex-1 text-left"
+              exit={{ opacity: 0, width: 0 }}
+              initial={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              CopyKing
+            </motion.span>
+          )}
+        </AnimatePresence>
+        {!collapsed && (
+          <svg
+            className={clsx("w-3.5 h-3.5 text-text-tertiary transition-transform", open && "rotate-180")}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path d="M19.5 8.25l-7.5 7.5-7.5-7.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            role="menu"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.12 }}
+            className="absolute left-2 right-2 top-[calc(100%+4px)] z-50 rounded-xl border border-border bg-background shadow-lg p-1.5"
+          >
+            {items.map((item) => (
+              <button
+                key={item.href}
+                type="button"
+                role="menuitem"
+                onClick={() => go(item.href)}
+                className="w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+              >
+                <PillarIcon className="w-[16px] h-[16px]" icon={item.icon} />
+                <span>{item.label}</span>
+              </button>
+            ))}
+            <div className="my-1 h-px bg-border" />
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-text-secondary hover:text-danger hover:bg-surface-hover transition-colors"
+            >
+              <svg className="w-[16px] h-[16px]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Sign out</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

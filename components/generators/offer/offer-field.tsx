@@ -45,6 +45,7 @@ interface OfferFieldProps {
   options?: string[];
   // enhance
   onEnhance?: (key: string, label: string, value: string) => Promise<string | null>;
+  onEnhanced?: (key: string, original: string, enhanced: string) => void;
   enhancing?: boolean;
 }
 
@@ -59,6 +60,7 @@ export function OfferField({
   required,
   options,
   onEnhance,
+  onEnhanced,
   enhancing,
 }: OfferFieldProps) {
   const canEnhance =
@@ -110,8 +112,12 @@ export function OfferField({
           type="button"
           disabled={enhancing || !value.trim()}
           onClick={async () => {
+            const original = value;
             const out = await onEnhance!(fieldKey, label, value);
-            if (out) onChange(out);
+            if (out) {
+              onEnhanced?.(fieldKey, original, out);
+              onChange(out);
+            }
           }}
           className="self-start text-xs font-medium text-accent hover:text-accent-hover disabled:opacity-40 transition-colors mt-0.5"
         >

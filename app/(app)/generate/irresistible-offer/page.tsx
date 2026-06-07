@@ -27,7 +27,7 @@ export default function IrresistibleOfferPage() {
   const updatePillar = useBrandStore((s) => s.updatePillar);
   const setGeneration = useGenerationsStore((s) => s.setGeneration);
 
-  const { offer, patch, reset } = useOfferDraftStore();
+  const { offer, enhancements, patch, reset } = useOfferDraftStore();
 
   const [seeded, setSeeded] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -51,10 +51,13 @@ export default function IrresistibleOfferPage() {
 
   // Autosave the offer draft to the account once seeding is done.
   const autosaveStatus = useAutosave(
-    offer,
-    async (o) => {
+    { offer, enhancements },
+    async ({ offer: o, enhancements: e }) => {
       updatePillar("offer", offerToBrand(o));
-      await setGeneration(SLUG, { content: JSON.stringify(o), params: {} });
+      await setGeneration(SLUG, {
+        content: JSON.stringify({ offer: o, enhancements: e }),
+        params: {},
+      });
     },
     { enabled: seeded, delay: 1500 },
   );
@@ -62,7 +65,7 @@ export default function IrresistibleOfferPage() {
   const handleSave = async () => {
     updatePillar("offer", offerToBrand(offer));
     await setGeneration(SLUG, {
-      content: JSON.stringify(offer),
+      content: JSON.stringify({ offer, enhancements }),
       params: {},
     });
     setSaved(true);

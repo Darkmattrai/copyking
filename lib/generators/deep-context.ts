@@ -178,7 +178,10 @@ export async function buildDeepContext(): Promise<string> {
       const block = formatIcpMap(parsed as IcpMapSave);
       if (block) blocks.push(block);
     } else if (row.slug === "irresistible-offer") {
-      const block = formatOffer(parsed as Offer);
+      // Newer saves wrap the offer as { offer, enhancements }; older saves are
+      // the bare Offer object.
+      const offer = (parsed as { offer?: Offer }).offer ?? (parsed as Offer);
+      const block = formatOffer(offer);
       if (block) blocks.push(block);
     }
   }

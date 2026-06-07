@@ -157,7 +157,8 @@ function readFileToThumb(file: File): Promise<string> {
 }
 
 export function OfferBuilderShell() {
-  const { offer, current, patch, setField, setCurrent } = useOfferDraftStore();
+  const { offer, current, patch, setField, setCurrent, recordEnhancement } =
+    useOfferDraftStore();
   const { enhance, enhancingKey } = useEnhance();
 
   const step = STEPS[current >= STEPS.length ? 0 : current];
@@ -173,6 +174,7 @@ export function OfferBuilderShell() {
   const fieldProps = (key: string) => ({
     fieldKey: key,
     onEnhance,
+    onEnhanced: recordEnhancement,
     enhancing: enhancingKey === key,
   });
 

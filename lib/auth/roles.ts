@@ -13,6 +13,7 @@ export const CLIENT_GENERATOR_SLUGS = ["icp-map", "irresistible-offer"] as const
 const CLIENT_ALLOWED_EXACT = new Set<string>([
   "/overview",
   "/generate",
+  "/account",
   "/login",
   "/auth/callback",
 ]);
