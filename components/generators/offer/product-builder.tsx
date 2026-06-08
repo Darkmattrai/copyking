@@ -186,16 +186,6 @@ export function ProductBuilder() {
     [P?.who, P?.dream, P?.name, offer.offerName],
   );
 
-  const groups = useMemo(() => {
-    const out: { grp: string; items: { idx: number; step: StepDef }[] }[] = [];
-    STEPS.forEach((s, idx) => {
-      const last = out[out.length - 1];
-      if (last && last.grp === s.grp) last.items.push({ idx, step: s });
-      else out.push({ grp: s.grp, items: [{ idx, step: s }] });
-    });
-    return out;
-  }, []);
-
   if (!P) {
     return (
       <div className="ck-card p-6">
@@ -291,30 +281,20 @@ export function ProductBuilder() {
         >
           ← Back to ladder
         </button>
-        <nav className="flex flex-wrap items-center gap-x-1.5 gap-y-2 border-b border-border pb-3">
-          {groups.map((g, gi) => (
-            <div key={g.grp} className="flex items-center gap-1">
-              {gi > 0 && (
-                <span className="mx-1 h-4 w-px bg-border self-center" aria-hidden />
-              )}
-              <span className="text-[10px] uppercase tracking-wider text-text-tertiary font-semibold mr-0.5">
-                {g.grp}
-              </span>
-              {g.items.map(({ idx, step: s }) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setCurrent(idx)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    idx === current
-                      ? "bg-accent/10 text-accent"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface"
-                  }`}
-                >
-                  {s.crumb}
-                </button>
-              ))}
-            </div>
+        <nav className="flex flex-wrap items-end gap-x-6 gap-y-1 border-b border-border overflow-x-auto">
+          {STEPS.map((s, idx) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setCurrent(idx)}
+              className={`-mb-px whitespace-nowrap border-b-2 pb-2.5 text-sm font-medium transition-colors ${
+                idx === current
+                  ? "border-accent text-accent"
+                  : "border-transparent text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {s.crumb}
+            </button>
           ))}
         </nav>
       </div>
