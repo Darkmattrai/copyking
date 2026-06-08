@@ -9,6 +9,7 @@ import {
   offerValueTotal,
   assembleName,
   NAME_FORMULAS,
+  resultMapHasContent,
 } from "./schema";
 import { productHasContent } from "./assemble";
 
@@ -308,6 +309,7 @@ function productBreakdown(p: Product, ordinal: number): string {
     </div>
     ${avatar}
     ${engine}
+    ${resultMapSection(p)}
     ${includedSec}
     ${veqSec}
     ${pricing}
@@ -316,6 +318,34 @@ function productBreakdown(p: Product, ordinal: number): string {
     ${objections}
     ${nameSec}
   </div>`;
+}
+
+// Visual transformation tree (ultimate → cores → splinters), drawn with
+// self-contained CSS so the export stays standalone.
+function resultMapSection(p: Product): string {
+  if (!resultMapHasContent(p.resultMap)) return "";
+  const r = p.resultMap;
+  const cores = (r.cores || []).filter(
+    (c) => c.result || (c.splinters || []).some((s) => s.trim()),
+  );
+  const coresHtml = cores
+    .map((c) => {
+      const sp = (c.splinters || []).filter((s) => s.trim());
+      const splintersHtml = sp.length
+        ? `<div class="rm-trunk"></div><div class="rm-splinters">${sp
+            .map((s) => `<div class="rm-splinter">${esc(s)}</div>`)
+            .join("")}</div>`
+        : "";
+      return `<div class="rm-node"><div class="rm-core">${esc(
+        c.result || "—",
+      )}</div>${splintersHtml}</div>`;
+    })
+    .join("");
+  const inner = `<div class="rm">
+    <div class="rm-ultimate">${esc(r.ultimate || "—")}</div>
+    ${cores.length ? `<div class="rm-trunk rm-trunk-c"></div><div class="rm-cores">${coresHtml}</div>` : ""}
+  </div>`;
+  return section("Result map — the transformation", inner);
 }
 
 function continuityRow(c: Continuity): string {
@@ -447,6 +477,21 @@ export function offerExportHtml(D: Offer): string {
   .veq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .veq-grid > div { display: flex; justify-content: space-between; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-size: 12px; }
   .veq-grid span { color: var(--muted); }
+
+  .rm { text-align: center; }
+  .rm-ultimate { display: inline-block; max-width: 420px; background: var(--soft); border: 2px solid var(--accent); border-radius: 10px; padding: 9px 14px; font-weight: 700; font-size: 13px; }
+  .rm-trunk { width: 1px; height: 16px; background: var(--line); margin: 0 auto; }
+  .rm-trunk-c { height: 18px; }
+  .rm-cores { display: flex; justify-content: center; align-items: flex-start; gap: 10px; }
+  .rm-node { position: relative; padding-top: 16px; flex: 1 1 0; min-width: 0; }
+  .rm-node::before { content: ""; position: absolute; top: 0; left: 50%; width: 1px; height: 16px; background: var(--line); }
+  .rm-node::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--line); }
+  .rm-node:first-child::after { left: 50%; }
+  .rm-node:last-child::after { right: 50%; }
+  .rm-node:only-child::after { display: none; }
+  .rm-core { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 600; }
+  .rm-splinters { display: flex; flex-direction: column; gap: 6px; margin-top: 0; }
+  .rm-splinter { background: var(--soft); border: 1px dashed var(--line); border-radius: 7px; padding: 6px 8px; font-size: 11px; color: var(--muted); }
 
   .cont { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
   .cont-top { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; font-size: 13px; }

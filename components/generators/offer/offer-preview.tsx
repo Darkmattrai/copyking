@@ -8,6 +8,7 @@ import {
   money,
   stageValue,
   offerValueTotal,
+  resultMapHasContent,
 } from "@/lib/offer/schema";
 import { offerMarkdown, productHasContent } from "@/lib/offer/assemble";
 import { offerExportHtml } from "@/lib/offer/export-html";
@@ -150,6 +151,41 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
                         <span className="text-text-tertiary">Promise:</span>{" "}
                         {p.trim}
                       </p>
+                    )}
+                    {resultMapHasContent(p.resultMap) && (
+                      <div className="text-xs mt-1.5">
+                        {p.resultMap.ultimate && (
+                          <p className="text-text-secondary">
+                            <span className="text-text-tertiary">
+                              🎯 Ultimate:
+                            </span>{" "}
+                            {p.resultMap.ultimate}
+                          </p>
+                        )}
+                        {(p.resultMap.cores || []).map(
+                          (c, cidx) =>
+                            (c.result ||
+                              (c.splinters || []).some((s) => s.trim())) && (
+                              <div key={cidx} className="pl-2 mt-0.5">
+                                {c.result && (
+                                  <p className="text-text-secondary">
+                                    → {c.result}
+                                  </p>
+                                )}
+                                {(c.splinters || [])
+                                  .filter((s) => s.trim())
+                                  .map((s, sidx) => (
+                                    <p
+                                      key={sidx}
+                                      className="text-text-tertiary pl-3"
+                                    >
+                                      • {s}
+                                    </p>
+                                  ))}
+                              </div>
+                            ),
+                        )}
+                      </div>
                     )}
                     {p.usePillars && p.pillars?.length
                       ? p.pillars.map((pl, pli) => (

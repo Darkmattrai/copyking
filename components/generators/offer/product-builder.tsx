@@ -28,6 +28,7 @@ import { newPillar } from "@/lib/offer/seed";
 import type { EnhanceContext } from "@/lib/offer/enhance-prompt";
 import { OfferField, useEnhance } from "./offer-field";
 import { ListTable } from "./list-table";
+import { ResultMap } from "./result-map";
 
 interface StepDef {
   id: string;
@@ -71,6 +72,15 @@ const STEPS: StepDef[] = [
     lead: "Write the most outrageous promise this product could make, then trim to what's realistic and deliverable.",
     quote:
       "“If the offer and guarantee don't keep you up at night, it's not good enough.”",
+  },
+  {
+    id: "resultmap",
+    grp: "Foundation",
+    crumb: "Result map",
+    title: "Map the Transformation",
+    lead: "Chart the ultimate result this product delivers, the core results they must hit to get there, and the splinter results / frameworks under each. This is the skeleton your product is built on.",
+    quote:
+      "“People don't buy your product — they buy the transformation it promises.”",
   },
   {
     id: "stack",
@@ -443,6 +453,13 @@ export function ProductBuilder() {
                 onChange={(v) => set("trim", v)}
               />
             </>
+          )}
+
+          {step.id === "resultmap" && (
+            <ResultMap
+              value={P.resultMap}
+              onChange={(resultMap) => patchProduct({ resultMap })}
+            />
           )}
 
           {step.id === "stack" && (

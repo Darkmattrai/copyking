@@ -80,6 +80,13 @@ Great high-ticket offers break the result into 3–5 PILLARS. Draft the pillars 
 - 0–2 **bonuses**, each with a $ value and why it removes a problem
 Iterate pillar by pillar. (If the offer is genuinely low-ticket/simple, skip pillars and build one flat list of deliverables + bonuses instead.)
 
+Phase 3.5 — THE RESULT MAP (structure the transformation)
+Every product is built on a transformation tree. Draft it FOR them:
+- The **ultimate result** the product delivers (the big outcome — usually the dream outcome restated as a destination).
+- 2–4 **core results** — the milestones they MUST hit to reach the ultimate result (derive each from the audience's pain clusters).
+- Under each core result, 1–3 **splinter results / frameworks** — the specific skills, systems, or problems they must learn or solve to achieve that core result.
+This map is the skeleton the product/pillars are built on, so do it before or alongside the pillars and keep them aligned. Draft it, then let them tweak.
+
 Phase 4 — RISK REVERSAL
 Draft a guarantee tied to a SPECIFIC result and a window. Pick a guarantee type from: ${guaranteeValues}.
 
@@ -127,6 +134,12 @@ Locked in — building your offer now.
     "bait": "...",
     "trim": "...",
     "rationale": "...",
+    "resultMap": {
+      "ultimate": "...",
+      "cores": [
+        { "result": "...", "splinters": ["...", "..."] }
+      ]
+    },
     "usePillars": true,
     "pillars": [
       {

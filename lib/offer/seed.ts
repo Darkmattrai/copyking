@@ -1,4 +1,12 @@
-import type { Offer, Product, Ladder, Continuity, Pillar } from "./schema";
+import type {
+  Offer,
+  Product,
+  Ladder,
+  Continuity,
+  Pillar,
+  CoreResult,
+  ResultMap,
+} from "./schema";
 
 // A blank continuity / subscription offer that runs beneath the ladder.
 export function newContinuity(): Continuity {
@@ -14,6 +22,17 @@ export function newPillar(o?: Partial<Pillar>): Pillar {
     bonuses: [{ name: "", val: "", why: "" }],
     ...(o || {}),
   };
+}
+
+// A blank core result with two empty splinter slots (mirrors the diagram).
+export function newCoreResult(o?: Partial<CoreResult>): CoreResult {
+  return { result: "", splinters: ["", ""], ...(o || {}) };
+}
+
+// A blank result map (the transformation tree). Starts with no core results;
+// the editor seeds the first one when the user adds it.
+export function newResultMap(o?: Partial<ResultMap>): ResultMap {
+  return { ultimate: "", cores: [], ...(o || {}) };
 }
 
 function uid(): string {
@@ -46,6 +65,7 @@ export function newProduct(o?: Partial<Product>): Product {
     pillars: [],
     magic: "",
     trim: "",
+    resultMap: newResultMap(),
     rationale: "",
 
     veq: { dream: 5, likely: 5, time: 5, effort: 5 },
@@ -121,6 +141,23 @@ export function seed(): Offer {
             who: "Roofing-company owners doing $1M–$3M/yr who can't book enough qualified jobs.",
             dream: "10 pre-qualified roofing jobs in 60 days, hands-off.",
             trim: "10 pre-qualified roofing jobs in your first 60 days, or we work for free until you get them.",
+            resultMap: {
+              ultimate: "A calendar full of pre-qualified roofing jobs every month",
+              cores: [
+                {
+                  result: "A steady flow of qualified leads",
+                  splinters: ["High-converting ad campaigns", "A magnet offer leads can't ignore"],
+                },
+                {
+                  result: "Only talking to sales-ready buyers",
+                  splinters: ["A lead-scoring system", "An automated qualifying funnel"],
+                },
+                {
+                  result: "Leads booked without chasing",
+                  splinters: ["10-minute speed-to-lead follow-up", "Booking + reminder automation"],
+                },
+              ],
+            },
             deliverables: [
               { item: "Done-for-you ad campaigns", val: "4000" },
               { item: "Weekly strategy calls", val: "2000" },

@@ -26,6 +26,21 @@ export type Pillar = {
   bonuses: Bonus[];
 };
 
+// A "result map" structures the transformation a product delivers as a tree:
+// the ULTIMATE result (the big outcome) → the CORE results the buyer must hit
+// to get there → the SPLINTER results / frameworks under each core. It's the
+// scaffold you use to design the deliverables/pillars of any product, course
+// or service. Optional per product (rendered when it has content).
+export type CoreResult = {
+  result: string;
+  splinters: string[];
+};
+
+export type ResultMap = {
+  ultimate: string;
+  cores: CoreResult[];
+};
+
 export type FeatureBenefit = {
   f: string;
   b: string;
@@ -82,6 +97,8 @@ export interface Product {
   pillars: Pillar[];
   magic: string;
   trim: string;
+  // The transformation tree (ultimate → core → splinter results). Optional.
+  resultMap: ResultMap;
   rationale: string;
 
   // value equation + pricing framing
@@ -210,6 +227,19 @@ export function scoreNote(s: string | number): string {
   if (v >= 4) return "🔥 elite — feels like a no-brainer";
   if (v >= 1.5) return "solid — push time & effort lower";
   return "weak — raise dream/likelihood or cut time/effort";
+}
+
+// True once a result map carries any real content (ultimate, a core result,
+// or a splinter). Used to decide whether to render/export it.
+export function resultMapHasContent(r: ResultMap | undefined): boolean {
+  if (!r) return false;
+  return Boolean(
+    r.ultimate?.trim() ||
+      (r.cores || []).some(
+        (c) =>
+          c.result?.trim() || (c.splinters || []).some((s) => s?.trim()),
+      ),
+  );
 }
 
 // The deliverables that actually count for a product — flattened across pillars

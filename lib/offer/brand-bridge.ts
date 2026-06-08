@@ -5,8 +5,15 @@ import type {
   Deliverable,
   Bonus,
   Pillar,
+  ResultMap,
 } from "./schema";
-import { stageValue, money, GUARANTEE_TYPES, SCARCITY_TYPES } from "./schema";
+import {
+  stageValue,
+  money,
+  resultMapHasContent,
+  GUARANTEE_TYPES,
+  SCARCITY_TYPES,
+} from "./schema";
 
 // The "flagship" product is the one marked ⭐ most-popular, else the first product
 // of the first ladder. It's what we sync with the Brand DNA `offer` pillar.
@@ -80,6 +87,19 @@ const mapBonuses = (v: unknown): Bonus[] =>
       })
     : [];
 
+type ChatCore = { result?: unknown; splinters?: unknown };
+
+const mapResultMap = (v: unknown): ResultMap => {
+  const o = (v ?? {}) as { ultimate?: unknown; cores?: unknown };
+  const cores = Array.isArray(o.cores)
+    ? o.cores.map((c) => {
+        const x = (c ?? {}) as ChatCore;
+        return { result: str(x.result), splinters: strArray(x.splinters) };
+      })
+    : [];
+  return { ultimate: str(o.ultimate), cores };
+};
+
 const mapPillars = (v: unknown): Pillar[] =>
   Array.isArray(v)
     ? v.map((pl) => {
@@ -128,6 +148,9 @@ export function chatOfferToProduct(
 
   const realPrice = numStr(raw.realPrice);
   if (realPrice) p.realPrice = realPrice;
+
+  const resultMap = mapResultMap(raw.resultMap);
+  if (resultMapHasContent(resultMap)) p.resultMap = resultMap;
 
   const gt = pickEnum(raw.guaranteeType, GUARANTEE_TYPES);
   if (gt) p.guaranteeType = gt;

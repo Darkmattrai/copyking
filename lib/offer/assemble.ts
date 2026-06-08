@@ -7,6 +7,7 @@ import {
   stageValue,
   effectiveDeliverables,
   effectiveBonuses,
+  resultMapHasContent,
 } from "./schema";
 
 // A product is "worth printing" once it has a name, price, or any stack content.
@@ -41,6 +42,18 @@ function productMarkdown(p: Product): string {
   if (probs.length) {
     o += `\n**Problems → solutions**\n`;
     probs.forEach((x) => (o += `- ${x.p || "?"} → ${x.s || "?"}\n`));
+  }
+
+  if (resultMapHasContent(p.resultMap)) {
+    o += `\n**Result map**\n`;
+    if (p.resultMap.ultimate)
+      o += `- 🎯 Ultimate result: ${p.resultMap.ultimate}\n`;
+    (p.resultMap.cores || []).forEach((c) => {
+      const sp = (c.splinters || []).filter((s) => s.trim());
+      if (!c.result && !sp.length) return;
+      if (c.result) o += `  - Core result: ${c.result}\n`;
+      sp.forEach((s) => (o += `    - ${s}\n`));
+    });
   }
 
   if (p.usePillars && (p.pillars || []).length) {

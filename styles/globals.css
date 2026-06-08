@@ -174,6 +174,57 @@ textarea:disabled {
 	box-shadow: 0 4px 12px oklch(0 0 0 / 0.08);
 }
 
+/* ── Result-map tree connectors (org-chart style) ───────────────
+   Pure-CSS branch lines: a trunk drops from a parent box to a rail,
+   and each child hangs from that rail. Responsive + export-safe. */
+.ck-tree-trunk {
+	width: 1px;
+	height: 1.25rem;
+	background: var(--color-border-hover);
+	margin: 0 auto;
+}
+.ck-tree-children {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 0.75rem;
+}
+.ck-tree-node {
+	position: relative;
+	padding-top: 1.25rem;
+	flex: 1 1 0;
+	min-width: 0;
+}
+/* drop from the rail down into this node */
+.ck-tree-node::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: 1px;
+	height: 1.25rem;
+	background: var(--color-border-hover);
+}
+/* horizontal rail connecting sibling nodes */
+.ck-tree-node::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: var(--color-border-hover);
+}
+.ck-tree-node:first-child::after {
+	left: 50%;
+}
+.ck-tree-node:last-child::after {
+	right: 50%;
+}
+.ck-tree-node:only-child::after {
+	display: none;
+}
+
 .ck-btn-primary {
 	display: inline-flex;
 	align-items: center;
