@@ -10,6 +10,7 @@ import {
   offerValueTotal,
 } from "@/lib/offer/schema";
 import { offerMarkdown, productHasContent } from "@/lib/offer/assemble";
+import { offerExportHtml } from "@/lib/offer/export-html";
 
 export function OfferPreview({ offer: D }: { offer: Offer }) {
   const [copied, setCopied] = useState(false);
@@ -44,6 +45,24 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
     URL.revokeObjectURL(url);
   };
 
+  const exportPdf = () => {
+    const html = offerExportHtml(D);
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    // Give the new window a tick to lay out before opening the print dialog,
+    // where the user picks "Save as PDF".
+    const fire = () => {
+      win.focus();
+      win.print();
+    };
+    if (win.document.readyState === "complete") setTimeout(fire, 350);
+    else win.addEventListener("load", () => setTimeout(fire, 350));
+  };
+
   const anyContent = D.ladders.some((L) => L.products.some(productHasContent));
 
   return (
@@ -66,6 +85,13 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
             className="text-xs font-medium text-accent hover:text-accent-hover transition-colors"
           >
             Export HTML
+          </button>
+          <button
+            type="button"
+            onClick={exportPdf}
+            className="text-xs font-semibold text-accent hover:text-accent-hover transition-colors"
+          >
+            Export PDF
           </button>
         </div>
       </div>
