@@ -1,23 +1,52 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { PillarIcon } from "@/components/brand/pillar-icon";
 import type { UserRole } from "@/lib/auth/roles";
+import type { BrandDNA } from "@/types/brand";
+import {
+  buildBrandDnaAnswerGroups,
+  populatedAnswerGroups,
+  parseGenerationContent,
+} from "@/lib/account/build-answers";
+import {
+  exportAllBrandDnaDoc,
+  exportAllBrandDnaJson,
+  type UserBrandExport,
+} from "@/lib/account/export";
 
 interface UserRow {
   id: string;
   email: string | null;
   role: UserRole;
   created_at: string;
+  generationsCount: number;
+  lastActive: string | null;
+  interviewCompleted: boolean;
 }
 
+interface ExportUser {
+  id: string;
+  email: string | null;
+  role: UserRole;
+  created_at: string;
+  brandDna: BrandDNA | null;
+  interviewCompleted: boolean;
+  generations: { slug: string; content: string }[];
+}
+
+const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString() : "—");
+
 export default function AdminPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -50,13 +79,62 @@ export default function AdminPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || "Failed to update");
       }
-      setUsers((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, role } : u)),
-      );
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update");
     } finally {
       setBusyId(null);
+    }
+  };
+
+  // Pull the full bundle and turn each user into an answer-group set the export
+  // helpers understand. JSON keeps full fidelity; .doc is a readable bundle.
+  const fetchExport = async (): Promise<{
+    users: ExportUser[];
+    exportedAt: string;
+  }> => {
+    const res = await fetch("/api/admin/export", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || "Export failed");
+    return data;
+  };
+
+  const exportAllDoc = async () => {
+    setExporting(true);
+    setError(null);
+    try {
+      const { users: all } = await fetchExport();
+      const entries: UserBrandExport[] = all.map((u) => {
+        const contentBySlug: Record<string, string> = {};
+        for (const g of u.generations) contentBySlug[g.slug] = g.content;
+        const parsed = parseGenerationContent(contentBySlug);
+        const groups = populatedAnswerGroups(
+          buildBrandDnaAnswerGroups({ brandDNA: u.brandDna, ...parsed }),
+        );
+        return {
+          label: u.email || u.id,
+          meta: `${u.role} · joined ${fmtDate(u.created_at)}`,
+          groups,
+        };
+      });
+      exportAllBrandDnaDoc(entries);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const exportAllJson = async () => {
+    setExporting(true);
+    setError(null);
+    try {
+      const data = await fetchExport();
+      exportAllBrandDnaJson(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -68,7 +146,7 @@ export default function AdminPage() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
+        className="mb-6 flex items-start justify-between gap-4 flex-wrap"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent-muted flex items-center justify-center text-accent">
@@ -82,6 +160,25 @@ export default function AdminPage() {
               admin{adminCount === 1 ? "" : "s"}
             </p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={exporting || !users.length}
+            onClick={exportAllJson}
+            className="ck-btn-secondary"
+          >
+            {exporting ? "Exporting…" : "Export all (JSON)"}
+          </button>
+          <button
+            type="button"
+            disabled={exporting || !users.length}
+            onClick={exportAllDoc}
+            className="ck-btn-primary"
+          >
+            {exporting ? "Exporting…" : "Export all Brand DNA"}
+          </button>
         </div>
       </motion.div>
 
@@ -105,13 +202,20 @@ export default function AdminPage() {
               <tr className="border-b border-border text-left text-text-tertiary">
                 <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Role</th>
+                <th className="px-4 py-3 font-medium">Generations</th>
+                <th className="px-4 py-3 font-medium">Interview</th>
+                <th className="px-4 py-3 font-medium">Last active</th>
                 <th className="px-4 py-3 font-medium">Signed up</th>
                 <th className="px-4 py-3 font-medium text-right">Action</th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} className="border-b border-border last:border-0">
+                <tr
+                  key={u.id}
+                  onClick={() => router.push(`/admin/${u.id}`)}
+                  className="border-b border-border last:border-0 cursor-pointer hover:bg-surface-hover transition-colors"
+                >
                   <td className="px-4 py-3 text-text-primary">
                     {u.email || "—"}
                   </td>
@@ -126,16 +230,26 @@ export default function AdminPage() {
                       {u.role}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-text-secondary">
+                    {u.generationsCount}
+                  </td>
                   <td className="px-4 py-3 text-text-tertiary">
-                    {new Date(u.created_at).toLocaleDateString()}
+                    {u.interviewCompleted ? "✓" : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-text-tertiary">
+                    {fmtDate(u.lastActive)}
+                  </td>
+                  <td className="px-4 py-3 text-text-tertiary">
+                    {fmtDate(u.created_at)}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       type="button"
                       disabled={busyId === u.id}
-                      onClick={() =>
-                        setRole(u.id, u.role === "admin" ? "client" : "admin")
-                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRole(u.id, u.role === "admin" ? "client" : "admin");
+                      }}
                       className="ck-btn-secondary text-xs"
                     >
                       {busyId === u.id

@@ -1,0 +1,349 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+
+import type { BrandDNA } from "@/types/brand";
+import type { UserRole } from "@/lib/auth/roles";
+import type { AnswerField, AnswerGroup, FeatureTag } from "@/lib/account/brand-dna-answers";
+import {
+  buildBrandDnaAnswerGroups,
+  populatedAnswerGroups,
+  parseGenerationContent,
+} from "@/lib/account/build-answers";
+import { exportAnswersPdf, exportAnswersDoc } from "@/lib/account/export";
+
+interface Bundle {
+  profile: { id: string; email: string | null; role: UserRole; created_at: string };
+  auth: {
+    last_sign_in_at: string | null;
+    created_at: string | null;
+    email_confirmed_at: string | null;
+    provider: string | null;
+  } | null;
+  brandProfile: {
+    brand_dna: BrandDNA | null;
+    interview_completed: boolean;
+    reveal_seen: boolean;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  generations: {
+    slug: string;
+    content: string;
+    params: unknown;
+    generated_at: string;
+    created_at: string;
+    updated_at: string;
+  }[];
+}
+
+const TAG_STYLES: Record<FeatureTag, string> = {
+  ICP: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30",
+  Offer: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  "Brand DNA": "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+};
+
+const fmtDate = (s: string | null | undefined) =>
+  s ? new Date(s).toLocaleString() : "—";
+
+export default function AdminUserDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params.id as string;
+
+  const [bundle, setBundle] = useState<Bundle | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/admin/users/${id}`, { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || "Failed to load");
+        if (!cancelled) setBundle(data);
+      } catch (err) {
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : "Failed to load");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const groups = useMemo<AnswerGroup[]>(() => {
+    if (!bundle) return [];
+    const contentBySlug: Record<string, string> = {};
+    for (const g of bundle.generations) contentBySlug[g.slug] = g.content;
+    const parsed = parseGenerationContent(contentBySlug);
+    return populatedAnswerGroups(
+      buildBrandDnaAnswerGroups({
+        brandDNA: bundle.brandProfile?.brand_dna ?? null,
+        ...parsed,
+      }),
+    );
+  }, [bundle]);
+
+  const brandName = useMemo(() => {
+    if (!bundle) return "Brand DNA";
+    const dna = bundle.brandProfile?.brand_dna;
+    const fromIcp = groups
+      .find((g) => g.category === "Business & Audience")
+      ?.fields.find((f) => f.id === "icp.businessName")?.value;
+    return (
+      fromIcp ||
+      dna?.niche?.marketCategory ||
+      bundle.profile.email ||
+      "Brand DNA"
+    );
+  }, [bundle, groups]);
+
+  const completion = bundle?.brandProfile?.brand_dna?.completionScore ?? null;
+
+  return (
+    <div className="p-6 lg:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-6"
+      >
+        <button
+          onClick={() => router.push("/admin")}
+          className="flex items-center gap-1.5 text-text-tertiary hover:text-text-primary text-sm mb-4 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          All clients
+        </button>
+
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary">
+              {bundle?.profile.email || "User"}
+            </h1>
+            <p className="text-sm text-text-tertiary mt-1 font-mono">{id}</p>
+          </div>
+          {groups.length > 0 && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => exportAnswersDoc(groups, { brandName })}
+                className="ck-btn-secondary"
+              >
+                Export .doc
+              </button>
+              <button
+                type="button"
+                onClick={() => exportAnswersPdf(groups, { brandName })}
+                className="ck-btn-primary"
+              >
+                Export PDF
+              </button>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {error && (
+        <div className="mb-4 p-4 rounded-xl border border-danger/30 bg-danger/[0.06] text-sm text-danger">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="ck-card p-12 flex items-center justify-center">
+          <span className="relative h-6 w-6">
+            <span className="absolute inset-0 rounded-full border-2 border-border" />
+            <span className="absolute inset-0 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+          </span>
+        </div>
+      ) : bundle ? (
+        <div className="space-y-6">
+          {/* Tracking & usage */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <InfoCard title="Account">
+              <Stat label="Role" value={bundle.profile.role} />
+              <Stat label="Signed up" value={fmtDate(bundle.profile.created_at)} />
+              <Stat label="Email confirmed" value={fmtDate(bundle.auth?.email_confirmed_at)} />
+              <Stat label="Sign-in provider" value={bundle.auth?.provider || "email"} />
+            </InfoCard>
+
+            <InfoCard title="Activity">
+              <Stat label="Last sign-in" value={fmtDate(bundle.auth?.last_sign_in_at)} />
+              <Stat label="Generations saved" value={String(bundle.generations.length)} />
+              <Stat
+                label="Last saved"
+                value={fmtDate(
+                  bundle.generations[0]?.updated_at ??
+                    bundle.brandProfile?.updated_at,
+                )}
+              />
+              <Stat
+                label="Brand profile updated"
+                value={fmtDate(bundle.brandProfile?.updated_at)}
+              />
+            </InfoCard>
+
+            <InfoCard title="Brand DNA progress">
+              <Stat
+                label="Completion score"
+                value={completion != null ? `${completion}%` : "—"}
+              />
+              <Stat
+                label="Interview completed"
+                value={bundle.brandProfile?.interview_completed ? "Yes" : "No"}
+              />
+              <Stat
+                label="Reveal seen"
+                value={bundle.brandProfile?.reveal_seen ? "Yes" : "No"}
+              />
+              <Stat
+                label="Tools used"
+                value={
+                  bundle.generations.length
+                    ? bundle.generations.map((g) => g.slug).join(", ")
+                    : "—"
+                }
+              />
+            </InfoCard>
+          </div>
+
+          {/* Billing */}
+          <div className="ck-card p-5">
+            <h3 className="text-sm font-semibold text-text-primary mb-1">
+              Billing
+            </h3>
+            <p className="text-sm text-text-tertiary">
+              No billing provider is connected yet, so there is no plan, payment
+              method or invoice data to show. Once a billing integration (e.g.
+              Stripe) is added, subscription status, plan, MRR and invoices will
+              appear here.
+            </p>
+          </div>
+
+          {/* Answers / Brand DNA */}
+          <div>
+            <h2 className="text-base font-semibold text-text-primary mb-3">
+              Answers &amp; Brand DNA
+            </h2>
+            {groups.length === 0 ? (
+              <div className="ck-card p-10 text-center">
+                <p className="text-sm text-text-secondary">
+                  This user hasn&apos;t filled in any answers yet.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {groups.map((group) => (
+                  <GroupCard key={`${group.feature}-${group.category}`} group={group} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function InfoCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="ck-card p-5">
+      <h3 className="text-sm font-semibold text-text-primary mb-3">{title}</h3>
+      <dl className="space-y-2.5">{children}</dl>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4 text-sm">
+      <dt className="text-text-tertiary shrink-0">{label}</dt>
+      <dd className="text-text-primary font-medium text-right break-words">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function GroupCard({ group }: { group: AnswerGroup }) {
+  const fields = group.fields.filter(
+    (f) => f.value.trim() || f.enhanced?.trim(),
+  );
+  if (!fields.length) return null;
+
+  return (
+    <div className="ck-card p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <h3 className="text-sm font-semibold text-text-primary">
+          {group.category}
+        </h3>
+        <span
+          className={
+            "text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded border " +
+            TAG_STYLES[group.feature]
+          }
+        >
+          {group.feature}
+        </span>
+      </div>
+      <div className="space-y-4">
+        {fields.map((field) => (
+          <FieldRow key={field.id} field={field} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FieldRow({ field }: { field: AnswerField }) {
+  const hasEnhanced =
+    !!field.enhanced?.trim() &&
+    !!field.original?.trim() &&
+    field.original!.trim() !== field.enhanced!.trim();
+
+  return (
+    <div>
+      <label className="ck-label !mb-1 block">{field.question}</label>
+      {hasEnhanced ? (
+        <div className="space-y-1.5">
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-text-tertiary mb-0.5">
+              Original answer
+            </div>
+            <p className="text-sm text-text-tertiary whitespace-pre-wrap">
+              {field.original}
+            </p>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wide text-accent mb-0.5">
+              ✨ AI-enhanced version
+            </div>
+            <p className="text-sm text-text-secondary whitespace-pre-wrap">
+              {field.enhanced}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-text-secondary whitespace-pre-wrap">
+          {field.value || "—"}
+        </p>
+      )}
+    </div>
+  );
+}
