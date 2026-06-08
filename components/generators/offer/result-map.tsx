@@ -1,7 +1,7 @@
 "use client";
 
 import type { ResultMap as ResultMapModel, CoreResult } from "@/lib/offer/schema";
-import { newCoreResult } from "@/lib/offer/seed";
+import { newCoreResult, newResultMap } from "@/lib/offer/seed";
 
 // Interactive transformation tree:
 //   Ultimate Result (top, accent box)
@@ -13,24 +13,27 @@ export function ResultMap({
   value,
   onChange,
 }: {
-  value: ResultMapModel;
+  value: ResultMapModel | null | undefined;
   onChange: (r: ResultMapModel) => void;
 }) {
-  const cores = value.cores || [];
+  // Legacy saved offers and AI-generated products may arrive without a result
+  // map (null/undefined) — fall back to a blank one so the editor still renders.
+  const map = value ?? newResultMap();
+  const cores = map.cores || [];
 
-  const setUltimate = (ultimate: string) => onChange({ ...value, ultimate });
+  const setUltimate = (ultimate: string) => onChange({ ...map, ultimate });
 
   const setCore = (i: number, patch: Partial<CoreResult>) =>
     onChange({
-      ...value,
+      ...map,
       cores: cores.map((c, j) => (j === i ? { ...c, ...patch } : c)),
     });
 
   const addCore = () =>
-    onChange({ ...value, cores: [...cores, newCoreResult()] });
+    onChange({ ...map, cores: [...cores, newCoreResult()] });
 
   const removeCore = (i: number) =>
-    onChange({ ...value, cores: cores.filter((_, j) => j !== i) });
+    onChange({ ...map, cores: cores.filter((_, j) => j !== i) });
 
   const setSplinter = (ci: number, si: number, text: string) =>
     setCore(ci, {
@@ -56,7 +59,7 @@ export function ResultMap({
             Ultimate result
           </p>
           <textarea
-            value={value.ultimate}
+            value={map.ultimate}
             onChange={(e) => setUltimate(e.target.value)}
             placeholder="The big transformation this product delivers"
             rows={2}
