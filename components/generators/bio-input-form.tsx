@@ -86,7 +86,7 @@ export function BioInputForm({ params, onSubmit, isLoading }: BioInputFormProps)
                       id={param.key}
                       value={values[param.key] ?? ""}
                       onChange={(e) => handleChange(param.key, e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-colors"
+                      className="ck-input"
                     >
                       {param.options?.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -114,7 +114,7 @@ export function BioInputForm({ params, onSubmit, isLoading }: BioInputFormProps)
                         value={values[param.key] ?? ""}
                         onChange={(e) => handleChange(param.key, e.target.value)}
                         placeholder={param.placeholder}
-                        className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-colors"
+                        className="ck-input"
                       />
                     </div>
                   ))}

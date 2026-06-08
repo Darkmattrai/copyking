@@ -57,7 +57,7 @@ export function ParamForm({ params, onSubmit, isLoading }: ParamFormProps) {
               id={param.key}
               value={values[param.key] ?? ""}
               onChange={(e) => handleChange(param.key, e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg bg-surface border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-colors"
+              className="ck-input"
             >
               {param.options.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -74,7 +74,7 @@ export function ParamForm({ params, onSubmit, isLoading }: ParamFormProps) {
               value={values[param.key] ?? ""}
               onChange={(e) => handleChange(param.key, e.target.value)}
               placeholder={param.placeholder}
-              className="w-full px-3 py-2.5 rounded-lg bg-surface border border-border text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-colors"
+              className="ck-input"
             />
           )}
 
@@ -85,7 +85,7 @@ export function ParamForm({ params, onSubmit, isLoading }: ParamFormProps) {
               onChange={(e) => handleChange(param.key, e.target.value)}
               placeholder={param.placeholder}
               rows={3}
-              className="w-full px-3 py-2.5 rounded-lg bg-surface border border-border text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-colors resize-y"
+              className="ck-input resize-y"
             />
           )}
         </div>
