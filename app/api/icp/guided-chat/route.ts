@@ -2,6 +2,12 @@ import { NextRequest } from "next/server";
 import { anthropic } from "@/lib/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { INTERVIEW_SYSTEM_PROMPT } from "@/lib/icp/interview-prompt";
+import {
+  toAnthropicMessages,
+  type ChatClientMessage,
+} from "@/lib/chat/attachments-server";
+
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -15,7 +21,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  let messages: { role: "user" | "assistant"; content: string }[];
+  let messages: ChatClientMessage[];
   try {
     const body = await req.json();
     messages = body.messages ?? [];
@@ -26,6 +32,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const apiMessages = await toAnthropicMessages(messages);
   const model = process.env.ICP_MODEL ?? "claude-opus-4-5";
   const encoder = new TextEncoder();
 
@@ -36,7 +43,7 @@ export async function POST(req: NextRequest) {
           model,
           max_tokens: 4096,
           system: INTERVIEW_SYSTEM_PROMPT,
-          messages,
+          messages: apiMessages,
         });
 
         for await (const event of stream) {

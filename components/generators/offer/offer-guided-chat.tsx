@@ -2,8 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { ChatOfferPayload } from "@/lib/offer/brand-bridge";
+import type { ChatAttachment } from "@/lib/chat/attachments";
+import { ChatAttachmentBar } from "@/components/generators/chat-attachment-bar";
 
-type Message = { role: "user" | "assistant"; content: string };
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+  attachments?: ChatAttachment[];
+};
 
 function extractOffer(text: string): ChatOfferPayload | null {
   const match =
@@ -121,8 +127,9 @@ function Bubble({ msg, streaming }: { msg: Message; streaming?: boolean }) {
     .replace(/<OFFER_READY>[\s\S]*?<\/OFFER_READY>/g, "")
     .replace(/<OFFER_READY>[\s\S]*$/, "")
     .trim();
+  const attachments = msg.attachments ?? [];
 
-  if (!display && !streaming) return null;
+  if (!display && !attachments.length && !streaming) return null;
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
@@ -133,7 +140,26 @@ function Bubble({ msg, streaming }: { msg: Message; streaming?: boolean }) {
             : "bg-surface text-text-primary rounded-bl-sm"
         }`}
       >
-        {isUser ? display : <FormattedText text={display} />}
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {attachments.map((a) => (
+              <span
+                key={a.id}
+                className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs ${
+                  isUser ? "bg-white/20" : "bg-bg"
+                }`}
+                title={a.name}
+              >
+                <span>
+                  {a.kind === "image" ? "🖼️" : a.kind === "pdf" ? "📄" : "📎"}
+                </span>
+                <span className="truncate max-w-[160px]">{a.name}</span>
+              </span>
+            ))}
+          </div>
+        )}
+        {display &&
+          (isUser ? display : <FormattedText text={display} />)}
       </div>
     </div>
   );
@@ -152,6 +178,7 @@ export function OfferGuidedChat({
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [streamingText, setStreamingText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -244,10 +271,14 @@ export function OfferGuidedChat({
 
   const send = () => {
     const trimmed = input.trim();
-    if (!trimmed || isLoading) return;
-    const next = [...messages, { role: "user" as const, content: trimmed }];
+    if ((!trimmed && !attachments.length) || isLoading) return;
+    const next = [
+      ...messages,
+      { role: "user" as const, content: trimmed, attachments },
+    ];
     setMessages(next);
     setInput("");
+    setAttachments([]);
     callChat(next);
   };
 
@@ -288,30 +319,37 @@ export function OfferGuidedChat({
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex items-end gap-3 p-4 border-t border-border shrink-0">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          placeholder="Type your answer…"
-          rows={1}
+      <div className="flex flex-col gap-2.5 p-4 border-t border-border shrink-0">
+        <ChatAttachmentBar
+          attachments={attachments}
+          onChange={setAttachments}
           disabled={isLoading}
-          className="ck-input flex-1 resize-none !rounded-xl !py-3"
-          style={{ maxHeight: "120px" }}
         />
-        <button
-          type="button"
-          onClick={send}
-          disabled={!input.trim() || isLoading}
-          className="ck-btn-primary shrink-0 !rounded-xl !px-4 !py-3"
-        >
-          Send
-        </button>
+        <div className="flex items-end gap-3">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            placeholder="Type your answer…"
+            rows={1}
+            disabled={isLoading}
+            className="ck-input flex-1 resize-none !rounded-xl !py-3"
+            style={{ maxHeight: "120px" }}
+          />
+          <button
+            type="button"
+            onClick={send}
+            disabled={(!input.trim() && !attachments.length) || isLoading}
+            className="ck-btn-primary shrink-0 !rounded-xl !px-4 !py-3"
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );

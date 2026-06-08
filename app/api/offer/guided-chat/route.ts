@@ -2,6 +2,12 @@ import { NextRequest } from "next/server";
 import { anthropic } from "@/lib/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { buildOfferInterviewPrompt } from "@/lib/offer/interview-prompt";
+import {
+  toAnthropicMessages,
+  type ChatClientMessage,
+} from "@/lib/chat/attachments-server";
+
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -15,7 +21,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  let messages: { role: "user" | "assistant"; content: string }[];
+  let messages: ChatClientMessage[];
   let brandContext = "";
   let hasIcp = false;
   try {
@@ -30,6 +36,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const apiMessages = await toAnthropicMessages(messages);
   const model = process.env.OFFER_MODEL ?? "claude-sonnet-4-6";
   const encoder = new TextEncoder();
 
@@ -40,7 +47,7 @@ export async function POST(req: NextRequest) {
           model,
           max_tokens: 4096,
           system: buildOfferInterviewPrompt(brandContext, hasIcp),
-          messages,
+          messages: apiMessages,
         });
 
         for await (const event of stream) {
