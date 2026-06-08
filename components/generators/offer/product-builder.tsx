@@ -21,8 +21,10 @@ import {
   type Objection,
   type Deliverable,
   type Bonus,
+  type Pillar,
   type Veq,
 } from "@/lib/offer/schema";
+import { newPillar } from "@/lib/offer/seed";
 import type { EnhanceContext } from "@/lib/offer/enhance-prompt";
 import { OfferField, useEnhance } from "./offer-field";
 import { ListTable } from "./list-table";
@@ -215,6 +217,39 @@ export function ProductBuilder() {
   });
 
   const veqSet = (k: keyof Veq, v: number) => set("veq", { ...P.veq, [k]: v });
+
+  // ── Pillars (high-ticket value-stack grouping) ──────────────────────────────
+  const pillars = P.pillars || [];
+  const setPillar = (i: number, patch: Partial<Pillar>) =>
+    patchProduct({
+      pillars: pillars.map((pl, j) => (j === i ? { ...pl, ...patch } : pl)),
+    });
+  const addPillar = () =>
+    patchProduct({
+      pillars: [...pillars, newPillar({ name: `Pillar ${pillars.length + 1}` })],
+    });
+  const removePillar = (i: number) =>
+    patchProduct({ pillars: pillars.filter((_, j) => j !== i) });
+  const togglePillars = (on: boolean) => {
+    // Turning pillars ON for the first time: seed one pillar that carries over
+    // any flat deliverables/bonuses the user already entered, so nothing is lost.
+    if (on && pillars.length === 0) {
+      const deliv = (P.deliverables || []).filter((d) => d.item || d.val);
+      const bon = (P.bonuses || []).filter((b) => b.name || b.val);
+      patchProduct({
+        usePillars: true,
+        pillars: [
+          newPillar({
+            name: "Pillar 1",
+            deliverables: deliv.length ? deliv : [{ item: "", val: "" }],
+            bonuses: bon.length ? bon : [{ name: "", val: "", why: "" }],
+          }),
+        ],
+      });
+    } else {
+      patchProduct({ usePillars: on });
+    }
+  };
 
   const onProofUpload = async (files: FileList | null) => {
     if (!files) return;
@@ -441,36 +476,146 @@ export function ProductBuilder() {
                 value={P.desc}
                 onChange={(v) => set("desc", v)}
               />
-              <div>
-                <p className="ck-label">Deliverables on this product</p>
-                <ListTable<Deliverable>
-                  rows={P.deliverables}
-                  columns={[
-                    { key: "item", label: "Deliverable", placeholder: "Done-for-you ad campaigns" },
-                    { key: "val", label: "Value ($)", type: "number", placeholder: "4000" },
-                  ]}
-                  onChange={(deliverables) => patchProduct({ deliverables })}
-                  addLabel="Add deliverable"
+              {/* Pillars toggle — high-ticket offers group the stack into pillars */}
+              <label className="flex items-start gap-3 rounded-xl border border-border p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={P.usePillars}
+                  onChange={(e) => togglePillars(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-[var(--color-accent)] shrink-0"
                 />
-              </div>
-              <div>
-                <p className="ck-label">Bonuses on this product</p>
-                <ListTable<Bonus>
-                  rows={P.bonuses}
-                  columns={[
-                    { key: "name", label: "Bonus", placeholder: "Outreach script pack" },
-                    { key: "val", label: "Value ($)", type: "number", placeholder: "500" },
-                    {
-                      key: "why",
-                      label: "Why it removes a problem",
-                      type: "textarea",
-                      placeholder: "Removes the 'what do I say to leads' fear",
-                    },
-                  ]}
-                  onChange={(bonuses) => patchProduct({ bonuses })}
-                  addLabel="Add bonus"
-                />
-              </div>
+                <span>
+                  <span className="text-sm font-medium text-text-primary">
+                    Structure as pillars
+                  </span>
+                  <span className="block text-xs text-text-tertiary mt-0.5">
+                    Recommended for high-ticket. Group the offer into themed
+                    pillars, each with its own promise, deliverables and bonuses.
+                  </span>
+                </span>
+              </label>
+
+              {!P.usePillars ? (
+                <>
+                  <div>
+                    <p className="ck-label">Deliverables on this product</p>
+                    <ListTable<Deliverable>
+                      rows={P.deliverables}
+                      columns={[
+                        { key: "item", label: "Deliverable", placeholder: "Done-for-you ad campaigns" },
+                        { key: "val", label: "Value ($)", type: "number", placeholder: "4000" },
+                      ]}
+                      onChange={(deliverables) => patchProduct({ deliverables })}
+                      addLabel="Add deliverable"
+                    />
+                  </div>
+                  <div>
+                    <p className="ck-label">Bonuses on this product</p>
+                    <ListTable<Bonus>
+                      rows={P.bonuses}
+                      columns={[
+                        { key: "name", label: "Bonus", placeholder: "Outreach script pack" },
+                        { key: "val", label: "Value ($)", type: "number", placeholder: "500" },
+                        {
+                          key: "why",
+                          label: "Why it removes a problem",
+                          type: "textarea",
+                          placeholder: "Removes the 'what do I say to leads' fear",
+                        },
+                      ]}
+                      onChange={(bonuses) => patchProduct({ bonuses })}
+                      addLabel="Add bonus"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  {pillars.map((pl, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl border border-border p-4 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-accent">
+                          Pillar {i + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removePillar(i)}
+                          className="text-xs text-text-tertiary hover:text-danger transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="flex flex-col gap-1.5">
+                          <span className="ck-label !mb-0">Pillar name</span>
+                          <input
+                            type="text"
+                            value={pl.name}
+                            onChange={(e) => setPillar(i, { name: e.target.value })}
+                            placeholder="The Client-Getting Machine"
+                            className="ck-input"
+                          />
+                        </label>
+                        <label className="flex flex-col gap-1.5">
+                          <span className="ck-label !mb-0">
+                            Promise (what they get)
+                          </span>
+                          <input
+                            type="text"
+                            value={pl.promise}
+                            onChange={(e) =>
+                              setPillar(i, { promise: e.target.value })
+                            }
+                            placeholder="A predictable flow of booked calls"
+                            className="ck-input"
+                          />
+                        </label>
+                      </div>
+                      <div>
+                        <p className="ck-label">Deliverables in this pillar</p>
+                        <ListTable<Deliverable>
+                          rows={pl.deliverables}
+                          columns={[
+                            { key: "item", label: "Deliverable", placeholder: "Done-for-you ad campaigns" },
+                            { key: "val", label: "Value ($)", type: "number", placeholder: "4000" },
+                          ]}
+                          onChange={(deliverables) =>
+                            setPillar(i, { deliverables })
+                          }
+                          addLabel="Add deliverable"
+                        />
+                      </div>
+                      <div>
+                        <p className="ck-label">Bonuses in this pillar</p>
+                        <ListTable<Bonus>
+                          rows={pl.bonuses}
+                          columns={[
+                            { key: "name", label: "Bonus", placeholder: "Outreach script pack" },
+                            { key: "val", label: "Value ($)", type: "number", placeholder: "500" },
+                            {
+                              key: "why",
+                              label: "Why it removes a problem",
+                              type: "textarea",
+                              placeholder: "Removes the 'what do I say to leads' fear",
+                            },
+                          ]}
+                          onChange={(bonuses) => setPillar(i, { bonuses })}
+                          addLabel="Add bonus"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addPillar}
+                    className="ck-btn-secondary w-full"
+                  >
+                    + Add pillar
+                  </button>
+                </div>
+              )}
               <label className="flex flex-col gap-1.5">
                 <span className="ck-label !mb-0">Payment note (optional)</span>
                 <input

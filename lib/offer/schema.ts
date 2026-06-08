@@ -16,6 +16,16 @@ export type Bonus = {
   why: string;
 };
 
+// A "pillar" groups part of the offer into a themed bucket: a promise + the
+// deliverables and bonuses that fulfil it. High-ticket offers are usually sold
+// as 3–5 pillars. Optional per product (see Product.usePillars).
+export type Pillar = {
+  name: string;
+  promise: string;
+  deliverables: Deliverable[];
+  bonuses: Bonus[];
+};
+
 export type FeatureBenefit = {
   f: string;
   b: string;
@@ -66,6 +76,10 @@ export interface Product {
   problems: ProblemSolution[];
   deliverables: Deliverable[];
   bonuses: Bonus[];
+  // Optional high-ticket structuring: when usePillars is on, the value stack is
+  // organized into pillars instead of the flat deliverables/bonuses lists above.
+  usePillars: boolean;
+  pillars: Pillar[];
   magic: string;
   trim: string;
   rationale: string;
@@ -198,11 +212,25 @@ export function scoreNote(s: string | number): string {
   return "weak — raise dream/likelihood or cut time/effort";
 }
 
-// stacked $ value of one product (its deliverables + bonuses)
+// The deliverables that actually count for a product — flattened across pillars
+// when pillar mode is on, otherwise the flat list.
+export function effectiveDeliverables(p: Product): Deliverable[] {
+  if (p.usePillars && p.pillars?.length)
+    return p.pillars.flatMap((pl) => pl.deliverables || []);
+  return p.deliverables || [];
+}
+
+export function effectiveBonuses(p: Product): Bonus[] {
+  if (p.usePillars && p.pillars?.length)
+    return p.pillars.flatMap((pl) => pl.bonuses || []);
+  return p.bonuses || [];
+}
+
+// stacked $ value of one product (its deliverables + bonuses, across pillars)
 export function stageValue(p: Product): number {
   return (
-    (p.deliverables || []).reduce((a, x) => a + (+x.val || 0), 0) +
-    (p.bonuses || []).reduce((a, x) => a + (+x.val || 0), 0)
+    effectiveDeliverables(p).reduce((a, x) => a + (+x.val || 0), 0) +
+    effectiveBonuses(p).reduce((a, x) => a + (+x.val || 0), 0)
   );
 }
 
@@ -240,7 +268,7 @@ export function suggestVeq(p: Product): Veq {
   else if (wm) tm = +wm[1] <= 6 ? 3 : 5;
   else if (mm) tm = +mm[1] <= 2 ? 4 : 6;
   const time = clamp(tm);
-  const allDeliv = (p.deliverables || []).map((d) => d.item).join(" ");
+  const allDeliv = effectiveDeliverables(p).map((d) => d.item).join(" ");
   let ef = 6;
   if (/done[- ]for[- ]you|dfy|we (build|set up|run|handle|do)|managed|hands[- ]off/i.test(allDeliv))
     ef -= 3;

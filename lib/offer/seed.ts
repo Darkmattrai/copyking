@@ -1,8 +1,19 @@
-import type { Offer, Product, Ladder, Continuity } from "./schema";
+import type { Offer, Product, Ladder, Continuity, Pillar } from "./schema";
 
 // A blank continuity / subscription offer that runs beneath the ladder.
 export function newContinuity(): Continuity {
   return { on: true, name: "", price: "", cycle: "Monthly", desc: "" };
+}
+
+// A blank pillar (used by the high-ticket "structure as pillars" mode).
+export function newPillar(o?: Partial<Pillar>): Pillar {
+  return {
+    name: "",
+    promise: "",
+    deliverables: [{ item: "", val: "" }],
+    bonuses: [{ name: "", val: "", why: "" }],
+    ...(o || {}),
+  };
 }
 
 function uid(): string {
@@ -31,6 +42,8 @@ export function newProduct(o?: Partial<Product>): Product {
     problems: [{ p: "", s: "" }],
     deliverables: [{ item: "", val: "" }],
     bonuses: [{ name: "", val: "", why: "" }],
+    usePillars: false,
+    pillars: [],
     magic: "",
     trim: "",
     rationale: "",

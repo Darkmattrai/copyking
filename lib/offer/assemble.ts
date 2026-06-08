@@ -5,6 +5,8 @@ import {
   money,
   valueScore,
   stageValue,
+  effectiveDeliverables,
+  effectiveBonuses,
 } from "./schema";
 
 // A product is "worth printing" once it has a name, price, or any stack content.
@@ -12,8 +14,8 @@ export function productHasContent(p: Product): boolean {
   return Boolean(
     p.name ||
       p.price ||
-      (p.deliverables || []).some((d) => d.item) ||
-      (p.bonuses || []).some((b) => b.name) ||
+      effectiveDeliverables(p).some((d) => d.item) ||
+      effectiveBonuses(p).some((b) => b.name) ||
       p.trim ||
       p.dream,
   );
@@ -41,12 +43,24 @@ function productMarkdown(p: Product): string {
     probs.forEach((x) => (o += `- ${x.p || "?"} → ${x.s || "?"}\n`));
   }
 
-  const deliv = (p.deliverables || []).filter((d) => d.item);
-  const bonus = (p.bonuses || []).filter((b) => b.name);
-  if (deliv.length || bonus.length) {
+  if (p.usePillars && (p.pillars || []).length) {
     o += `\n**What's included**\n`;
-    deliv.forEach((d) => (o += `- ${d.item} — ${money(d.val)}\n`));
-    bonus.forEach((b) => (o += `- 🎁 ${b.name} — ${money(b.val)}${b.why ? ` (${b.why})` : ""}\n`));
+    (p.pillars || []).forEach((pl, i) => {
+      const dv = (pl.deliverables || []).filter((d) => d.item);
+      const bn = (pl.bonuses || []).filter((b) => b.name);
+      if (!pl.name && !pl.promise && !dv.length && !bn.length) return;
+      o += `\n_${pl.name || `Pillar ${i + 1}`}${pl.promise ? ` — ${pl.promise}` : ""}_\n`;
+      dv.forEach((d) => (o += `- ${d.item} — ${money(d.val)}\n`));
+      bn.forEach((b) => (o += `- 🎁 ${b.name} — ${money(b.val)}${b.why ? ` (${b.why})` : ""}\n`));
+    });
+  } else {
+    const deliv = (p.deliverables || []).filter((d) => d.item);
+    const bonus = (p.bonuses || []).filter((b) => b.name);
+    if (deliv.length || bonus.length) {
+      o += `\n**What's included**\n`;
+      deliv.forEach((d) => (o += `- ${d.item} — ${money(d.val)}\n`));
+      bonus.forEach((b) => (o += `- 🎁 ${b.name} — ${money(b.val)}${b.why ? ` (${b.why})` : ""}\n`));
+    }
   }
   if (p.payment) o += `- 💳 ${p.payment}\n`;
 

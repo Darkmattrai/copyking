@@ -151,30 +151,72 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
                         {p.trim}
                       </p>
                     )}
-                    {p.deliverables.map(
-                      (d, di) =>
-                        d.item && (
-                          <div
-                            key={di}
-                            className="flex justify-between text-xs text-text-secondary"
-                          >
-                            <span>• {d.item}</span>
-                            <span>{money(d.val)}</span>
+                    {p.usePillars && p.pillars?.length
+                      ? p.pillars.map((pl, pli) => (
+                          <div key={pli} className="mt-1.5">
+                            <div className="text-xs font-medium text-text-primary">
+                              {pl.name || `Pillar ${pli + 1}`}
+                              {pl.promise && (
+                                <span className="text-text-tertiary font-normal">
+                                  {" "}
+                                  — {pl.promise}
+                                </span>
+                              )}
+                            </div>
+                            {pl.deliverables.map(
+                              (d, di) =>
+                                d.item && (
+                                  <div
+                                    key={di}
+                                    className="flex justify-between text-xs text-text-secondary pl-2"
+                                  >
+                                    <span>• {d.item}</span>
+                                    <span>{money(d.val)}</span>
+                                  </div>
+                                ),
+                            )}
+                            {pl.bonuses.map(
+                              (b, bi) =>
+                                b.name && (
+                                  <div
+                                    key={bi}
+                                    className="flex justify-between text-xs text-text-secondary pl-2"
+                                  >
+                                    <span>🎁 {b.name}</span>
+                                    <span>{money(b.val)}</span>
+                                  </div>
+                                ),
+                            )}
                           </div>
-                        ),
-                    )}
-                    {p.bonuses.map(
-                      (b, bi) =>
-                        b.name && (
-                          <div
-                            key={bi}
-                            className="flex justify-between text-xs text-text-secondary"
-                          >
-                            <span>🎁 {b.name}</span>
-                            <span>{money(b.val)}</span>
-                          </div>
-                        ),
-                    )}
+                        ))
+                      : (
+                          <>
+                            {p.deliverables.map(
+                              (d, di) =>
+                                d.item && (
+                                  <div
+                                    key={di}
+                                    className="flex justify-between text-xs text-text-secondary"
+                                  >
+                                    <span>• {d.item}</span>
+                                    <span>{money(d.val)}</span>
+                                  </div>
+                                ),
+                            )}
+                            {p.bonuses.map(
+                              (b, bi) =>
+                                b.name && (
+                                  <div
+                                    key={bi}
+                                    className="flex justify-between text-xs text-text-secondary"
+                                  >
+                                    <span>🎁 {b.name}</span>
+                                    <span>{money(b.val)}</span>
+                                  </div>
+                                ),
+                            )}
+                          </>
+                        )}
                     {(sv > 0 || p.realPrice) && (
                       <div className="flex justify-between text-xs mt-1 pt-1 border-t border-border">
                         <span className="text-text-tertiary">

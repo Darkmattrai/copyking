@@ -25,9 +25,17 @@ const esc = (s: string | number | null | undefined) =>
 
 const has = (s: string | null | undefined) => Boolean(s && String(s).trim());
 
-// A labelled row, rendered only when the value has content.
-function row(label: string, value: string | null | undefined): string {
-  if (!has(value)) return "";
+// A labelled row. Hidden when empty unless `always` is set, in which case it
+// renders a muted placeholder so core sections never look like they're missing.
+function row(
+  label: string,
+  value: string | null | undefined,
+  always = false,
+): string {
+  if (!has(value)) {
+    if (!always) return "";
+    return `<div class="row"><div class="row-k">${esc(label)}</div><div class="row-v empty">Not provided</div></div>`;
+  }
   return `<div class="row"><div class="row-k">${esc(label)}</div><div class="row-v">${esc(
     value,
   )}</div></div>`;
@@ -36,6 +44,7 @@ function row(label: string, value: string | null | undefined): string {
 function pairList(
   title: string,
   pairs: { a: string; b: string; sep?: string }[],
+  always = false,
 ): string {
   const rows = pairs
     .filter((x) => has(x.a) || has(x.b))
@@ -46,12 +55,18 @@ function pairList(
         }</span><span class="pl-b">${esc(x.b || "—")}</span></li>`,
     )
     .join("");
-  if (!rows) return "";
+  if (!rows) {
+    if (!always) return "";
+    return `<div class="block"><div class="block-h">${esc(title)}</div><div class="empty">None added</div></div>`;
+  }
   return `<div class="block"><div class="block-h">${esc(title)}</div><ul class="pairs">${rows}</ul></div>`;
 }
 
-function section(title: string, inner: string): string {
-  if (!inner.trim()) return "";
+function section(title: string, inner: string, always = false): string {
+  if (!inner.trim()) {
+    if (!always) return "";
+    return `<div class="sec"><h4 class="sec-h">${esc(title)}</h4><div class="empty">Not provided</div></div>`;
+  }
   return `<div class="sec"><h4 class="sec-h">${esc(title)}</h4>${inner}</div>`;
 }
 
@@ -59,9 +74,30 @@ function section(title: string, inner: string): string {
 function ladderCard(p: Product): string {
   const t = tierOf(p.price);
   const sv = stageValue(p);
-  const deliv = (p.deliverables || []).filter((d) => d.item);
-  const bonus = (p.bonuses || []).filter((b) => b.name);
-  return `<div class="lc">
+  const delivLine = (d: { item: string; val: string }) =>
+    `<div class="lc-line"><span>• ${esc(d.item)}</span><span>${esc(money(d.val))}</span></div>`;
+  const bonusLine = (b: { name: string; val: string }) =>
+    `<div class="lc-line"><span>🎁 ${esc(b.name)}</span><span>${esc(money(b.val))}</span></div>`;
+
+  let stackHtml: string;
+  if (p.usePillars && (p.pillars || []).length) {
+    stackHtml = (p.pillars || [])
+      .map((pl, i) => {
+        const dv = (pl.deliverables || []).filter((d) => d.item);
+        const bn = (pl.bonuses || []).filter((b) => b.name);
+        if (!pl.name && !pl.promise && !dv.length && !bn.length) return "";
+        return `<div class="lc-pillar"><b>${esc(pl.name || `Pillar ${i + 1}`)}</b>${
+          pl.promise ? ` <span class="lc-tier">${esc(pl.promise)}</span>` : ""
+        }</div>${dv.map(delivLine).join("")}${bn.map(bonusLine).join("")}`;
+      })
+      .join("");
+  } else {
+    stackHtml =
+      (p.deliverables || []).filter((d) => d.item).map(delivLine).join("") +
+      (p.bonuses || []).filter((b) => b.name).map(bonusLine).join("");
+  }
+
+  return `<div class="lc"${t ? ` style="border-left:3px solid ${esc(t.color)}"` : ""}>
     <div class="lc-top">
       <span class="lc-name">${esc(p.name || "Product")}${p.pop ? " ⭐" : ""}${
         t ? ` <span class="lc-tier">${esc(t.label)}</span>` : ""
@@ -70,22 +106,7 @@ function ladderCard(p: Product): string {
     </div>
     ${p.desc ? `<div class="lc-desc">${esc(p.desc)}</div>` : ""}
     ${p.trim ? `<div class="lc-promise"><b>Promise:</b> ${esc(p.trim)}</div>` : ""}
-    ${deliv
-      .map(
-        (d) =>
-          `<div class="lc-line"><span>• ${esc(d.item)}</span><span>${esc(
-            money(d.val),
-          )}</span></div>`,
-      )
-      .join("")}
-    ${bonus
-      .map(
-        (b) =>
-          `<div class="lc-line"><span>🎁 ${esc(b.name)}</span><span>${esc(
-            money(b.val),
-          )}</span></div>`,
-      )
-      .join("")}
+    ${stackHtml}
     ${
       sv > 0 || has(p.realPrice)
         ? `<div class="lc-foot">${sv > 0 ? `<span>${esc(money(sv))} value</span>` : "<span></span>"}${
@@ -105,58 +126,86 @@ function productBreakdown(p: Product, ordinal: number): string {
   const name = assembleName(p.nm);
   const formula = NAME_FORMULAS.find((f) => f.key === p.nm?.formula);
 
-  // Avatar / bullseye
+  // Avatar / bullseye — always shown so it never appears missing
   const avatar = section(
     "Avatar & bullseye",
     [
-      row("Who it's for", p.who),
-      row("Where to find them", p.where),
-      row("Dream outcome", p.dream),
-      row("Driving emotion", p.emotion),
-      row("Bait / lead magnet", p.bait),
+      row("Who it's for", p.who, true),
+      row("Where to find them", p.where, true),
+      row("Dream outcome", p.dream, true),
+      row("Driving emotion", p.emotion, true),
+      row("Bait / lead magnet", p.bait, true),
     ].join(""),
+    true,
   );
 
-  // Value engine
+  // Value engine — features→benefits, problems→solutions, magic wand always shown
   const featuresBlock = pairList(
     "Features → benefits",
     (p.features || []).map((f) => ({ a: f.f, b: f.b })),
+    true,
   );
   const problemsBlock = pairList(
-    "Problems → solutions",
+    "Problems → solutions (deliverables that solve them)",
     (p.problems || []).map((x) => ({ a: x.p, b: x.s })),
+    true,
   );
-  const magicBlock = [
-    row("Magic-wand outcome", p.magic),
-    row("Trimmed promise", p.trim),
-    row("Rationale (why this offer)", p.rationale),
-  ].join("");
+  const magicBlock =
+    `<div class="block"><div class="block-h">Magic-wand</div>` +
+    [
+      row("Magic-wand outcome", p.magic, true),
+      row("Trimmed promise", p.trim, true),
+      row("Rationale (why this offer)", p.rationale, true),
+    ].join("") +
+    `</div>`;
   const engine = section(
     "Value engine",
     featuresBlock + problemsBlock + magicBlock,
+    true,
   );
 
-  // What's included (deliverables + bonuses with full detail)
-  const deliv = (p.deliverables || []).filter((d) => d.item);
-  const bonus = (p.bonuses || []).filter((b) => b.name);
-  let included = "";
-  if (deliv.length) {
-    included += `<div class="block"><div class="block-h">Deliverables</div><table class="tbl"><tbody>${deliv
+  // What's included (deliverables + bonuses with full detail). When pillar mode
+  // is on, group everything under each pillar with its promise.
+  const delivTable = (rows: { item: string; val: string }[]) =>
+    `<table class="tbl"><tbody>${rows
       .map(
         (d) =>
           `<tr><td>${esc(d.item)}</td><td class="num">${esc(money(d.val))}</td></tr>`,
       )
-      .join("")}</tbody></table></div>`;
-  }
-  if (bonus.length) {
-    included += `<div class="block"><div class="block-h">Bonuses</div><table class="tbl"><tbody>${bonus
+      .join("")}</tbody></table>`;
+  const bonusTable = (rows: { name: string; val: string; why: string }[]) =>
+    `<table class="tbl"><tbody>${rows
       .map(
         (b) =>
           `<tr><td>🎁 ${esc(b.name)}${b.why ? `<div class="why">${esc(b.why)}</div>` : ""}</td><td class="num">${esc(
             money(b.val),
           )}</td></tr>`,
       )
-      .join("")}</tbody></table></div>`;
+      .join("")}</tbody></table>`;
+
+  let included = "";
+  if (p.usePillars && (p.pillars || []).length) {
+    included = (p.pillars || [])
+      .map((pl, i) => {
+        const dv = (pl.deliverables || []).filter((d) => d.item);
+        const bn = (pl.bonuses || []).filter((b) => b.name);
+        if (!pl.name && !pl.promise && !dv.length && !bn.length) return "";
+        return `<div class="block"><div class="block-h">${esc(
+          pl.name || `Pillar ${i + 1}`,
+        )}</div>${
+          pl.promise ? `<div class="pillar-promise">${esc(pl.promise)}</div>` : ""
+        }${dv.length ? delivTable(dv) : ""}${bn.length ? bonusTable(bn) : ""}</div>`;
+      })
+      .join("");
+  } else {
+    const deliv = (p.deliverables || []).filter((d) => d.item);
+    const bonus = (p.bonuses || []).filter((b) => b.name);
+    if (deliv.length) {
+      included += `<div class="block"><div class="block-h">Deliverables</div>${delivTable(deliv)}</div>`;
+    }
+    if (bonus.length) {
+      included += `<div class="block"><div class="block-h">Bonuses</div>${bonusTable(bonus)}</div>`;
+    }
   }
   const includedSec = section("What's included", included);
 
@@ -327,7 +376,12 @@ export function offerExportHtml(D: Offer): string {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${esc(D.offerName || "Offer")} — Offer Ladder</title>
 <style>
-  :root { --ink:#16151a; --muted:#6b6976; --line:#e7e5ec; --accent:#6d3df0; --bg:#ffffff; --soft:#f7f6fb; }
+  :root {
+    --ink:#16151a; --muted:#6b6976; --line:#e7e5ec; --accent:#6d3df0; --bg:#ffffff; --soft:#f7f6fb;
+    /* Value-ladder price-tier colors (light-mode values, matching the app) */
+    --color-tier-free:#1b5c36; --color-tier-low:#2563b0; --color-tier-mid:#b5891f; --color-tier-midhi:#d2791b; --color-tier-high:#c0392b;
+    --color-tier-free-bg:#dcebe1; --color-tier-low-bg:#dde8f6; --color-tier-mid-bg:#f6eecb; --color-tier-midhi-bg:#f7e2cd; --color-tier-high-bg:#f6d8d3;
+  }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); margin: 0; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .wrap { max-width: 820px; margin: 0 auto; padding: 48px 40px 64px; }
@@ -370,6 +424,7 @@ export function offerExportHtml(D: Offer): string {
   .row { display: grid; grid-template-columns: 190px 1fr; gap: 12px; padding: 5px 0; border-bottom: 1px dotted var(--line); font-size: 13px; }
   .row-k { color: var(--muted); }
   .row-v { white-space: pre-wrap; }
+  .empty { color: #b4b1bf; font-style: italic; font-size: 12px; }
 
   .block { margin: 10px 0; }
   .block-h { font-size: 12px; font-weight: 700; margin-bottom: 5px; }
@@ -384,6 +439,8 @@ export function offerExportHtml(D: Offer): string {
   table.tbl td { padding: 5px 0; border-bottom: 1px dotted var(--line); vertical-align: top; }
   table.tbl td.num { text-align: right; white-space: nowrap; color: var(--muted); width: 90px; }
   .why { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .pillar-promise { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .lc-pillar { font-size: 12px; margin-top: 6px; }
 
   .veq-score { font-size: 14px; margin-bottom: 8px; }
   .veq-note { color: var(--muted); font-size: 12px; }
