@@ -176,6 +176,13 @@ export default function IrresistibleOfferPage() {
               <AutosaveIndicator status={autosaveStatus} />
               <button
                 type="button"
+                onClick={() => setMode("guided")}
+                className="ck-btn-secondary"
+              >
+                Guided interview
+              </button>
+              <button
+                type="button"
                 onClick={startOver}
                 className="ck-btn-secondary"
               >
