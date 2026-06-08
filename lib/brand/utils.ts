@@ -36,6 +36,20 @@ export function createEmptyBrandDNA(): BrandDNA {
       dreamOutcome: "",
       failedSolutions: [],
       platforms: [],
+      universal: {
+        painChallenge: [],
+        painNight: [],
+        painTried: [],
+        goals: [],
+        emotionalFingerprint: "",
+        triggers: [],
+        objections: [],
+        hesitations: [],
+      },
+      segments: [],
+      businessName: "",
+      industryLabel: "",
+      regionLabel: "",
     },
     offer: {
       dreamOutcome: "",
@@ -166,6 +180,124 @@ export function createMockBrandDNA(): BrandDNA {
         "Cold DM agencies",
       ],
       platforms: ["Instagram", "Twitter/X", "YouTube", "Email newsletter"],
+      businessName: "Solo Scale Lab",
+      industryLabel: "Business coaching & consulting",
+      regionLabel: "US, UK, Canada, Australia",
+      universal: {
+        painChallenge: [
+          "Capped income trading hours for dollars",
+          "No time to market while drowning in delivery",
+          "Tactical advice that never compounds into a system",
+        ],
+        painNight: [
+          "Burning out before the business ever frees them",
+          "Plateauing at the same revenue forever",
+          "Being exposed as a fraud to peers",
+        ],
+        painTried: [
+          "Generic mastermind groups",
+          "$2K Instagram-growth courses",
+          "Hiring a VA before having systems",
+        ],
+        goals: [
+          "A business that runs without them",
+          "Predictable $30K+ months",
+          "Time freedom to travel and parent",
+        ],
+        emotionalFingerprint:
+          "Ambitious but exhausted; craves control and proof, allergic to hype and fluff.",
+        triggers: [
+          "A peer hits the income they want in less time",
+          "A delivery week that swallows every free hour",
+          "A failed launch that wasted weeks",
+        ],
+        objections: [
+          "Another course that's all theory",
+          "I don't have time to implement one more thing",
+          "My niche is different, this won't work for me",
+        ],
+        hesitations: [
+          "Burned by past coaches",
+          "Skeptical of bold income claims",
+          "Worried it needs a team they don't have",
+        ],
+      },
+      segments: [
+        {
+          name: "Maya the Burnt-Out Solopreneur",
+          oneLine:
+            "Capped service provider drowning in delivery, desperate for leverage.",
+          pain: [
+            "Capped at $15K/month trading hours for dollars",
+            "No time to market between client work",
+            "Courses gave tactics, not a strategy",
+          ],
+          goals: [
+            "$50K/month in 25 hours/week",
+            "A system that runs without her",
+            "Stop launching new offers to grow",
+          ],
+          mindset: [
+            "Most business advice is repackaged fluff",
+            "I should scale without selling my soul",
+            "Hard work eventually pays off",
+          ],
+          objections: [
+            "I've already tried courses and coaches",
+            "I can't add more to my plate",
+            "Show me it works for service businesses",
+          ],
+          triggers: [
+            "A fully-booked month with no room to grow",
+            "Seeing a peer scale past her",
+            "A burnout scare",
+          ],
+          intensity: {
+            painIntensity: 85,
+            goalClarity: 70,
+            buyingUrgency: 65,
+            priceSensitivity: 55,
+            skepticism: 75,
+          },
+        },
+        {
+          name: "Daniel the Plateaued Agency Owner",
+          oneLine:
+            "Small-team founder stuck at a ceiling, wants systems not more hustle.",
+          pain: [
+            "Revenue flat despite working harder",
+            "Team depends on him for everything",
+            "Feast-or-famine client pipeline",
+          ],
+          goals: [
+            "Predictable recurring revenue",
+            "An operation that doesn't need him daily",
+            "A repeatable client-acquisition system",
+          ],
+          mindset: [
+            "I need systems, not another tactic",
+            "Most gurus have never run a real business",
+            "Profit beats vanity revenue",
+          ],
+          objections: [
+            "I've built a team, will this even fit?",
+            "I don't want generic coaching",
+            "Prove the ROI",
+          ],
+          triggers: [
+            "A churned anchor client",
+            "A month where he was the bottleneck",
+            "A competitor scaling cleanly",
+          ],
+          intensity: {
+            painIntensity: 70,
+            goalClarity: 80,
+            buyingUrgency: 55,
+            priceSensitivity: 40,
+            skepticism: 65,
+          },
+        },
+      ],
     },
     offer: {
       dreamOutcome:

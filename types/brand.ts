@@ -25,6 +25,44 @@ export const PsychographicsSchema = z.object({
   desires: z.array(z.string()).default([]),
 });
 
+// Universal/generic psychology shared across every segment of the audience.
+// Lenient (no fixed array length) so older Brand DNA records still parse.
+export const ICPUniversalSchema = z.object({
+  painChallenge: z.array(z.string()).default([]),
+  painNight: z.array(z.string()).default([]),
+  painTried: z.array(z.string()).default([]),
+  goals: z.array(z.string()).default([]),
+  emotionalFingerprint: z.string().default(""),
+  triggers: z.array(z.string()).default([]),
+  objections: z.array(z.string()).default([]),
+  hesitations: z.array(z.string()).default([]),
+});
+
+export const ICPSegmentIntensitySchema = z.object({
+  painIntensity: z.number().default(0),
+  goalClarity: z.number().default(0),
+  buyingUrgency: z.number().default(0),
+  priceSensitivity: z.number().default(0),
+  skepticism: z.number().default(0),
+});
+
+export const ICPSegmentSchema = z.object({
+  name: z.string().default(""),
+  oneLine: z.string().default(""),
+  pain: z.array(z.string()).default([]),
+  goals: z.array(z.string()).default([]),
+  mindset: z.array(z.string()).default([]),
+  objections: z.array(z.string()).default([]),
+  triggers: z.array(z.string()).default([]),
+  intensity: ICPSegmentIntensitySchema.default({
+    painIntensity: 0,
+    goalClarity: 0,
+    buyingUrgency: 0,
+    priceSensitivity: 0,
+    skepticism: 0,
+  }),
+});
+
 export const ICPSchema = z.object({
   name: z.string().default(""),
   demographics: DemographicsSchema.default({
@@ -44,6 +82,21 @@ export const ICPSchema = z.object({
   dreamOutcome: z.string().default(""),
   failedSolutions: z.array(z.string()).default([]),
   platforms: z.array(z.string()).default([]),
+  // Rich ICP-Map data: the universal block + every audience segment.
+  universal: ICPUniversalSchema.default({
+    painChallenge: [],
+    painNight: [],
+    painTried: [],
+    goals: [],
+    emotionalFingerprint: "",
+    triggers: [],
+    objections: [],
+    hesitations: [],
+  }),
+  segments: z.array(ICPSegmentSchema).default([]),
+  businessName: z.string().default(""),
+  industryLabel: z.string().default(""),
+  regionLabel: z.string().default(""),
 });
 
 export const OfferSchema = z.object({
@@ -184,6 +237,8 @@ export type Niche = z.infer<typeof NicheSchema>;
 export type Demographics = z.infer<typeof DemographicsSchema>;
 export type Psychographics = z.infer<typeof PsychographicsSchema>;
 export type ICP = z.infer<typeof ICPSchema>;
+export type ICPUniversal = z.infer<typeof ICPUniversalSchema>;
+export type ICPSegment = z.infer<typeof ICPSegmentSchema>;
 export type Offer = z.infer<typeof OfferSchema>;
 export type Competitor = z.infer<typeof CompetitorSchema>;
 export type Positioning = z.infer<typeof PositioningSchema>;

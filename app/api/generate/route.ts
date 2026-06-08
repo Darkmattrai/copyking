@@ -26,18 +26,69 @@ function buildBrandContext(brandDNA: BrandDNA): string {
 - Congregation points: ${brandDNA.niche.congregationPoints?.join(", ") || "N/A"}`);
   }
 
-  if (brandDNA.icp?.name) {
+  if (brandDNA.icp?.name || brandDNA.icp?.segments?.length) {
     const icp = brandDNA.icp;
-    sections.push(`## Ideal Customer Profile (ICP)
-- Name/Avatar: ${icp.name}
-- Demographics: ${icp.demographics?.ageRange || ""}, ${icp.demographics?.gender || ""}, ${icp.demographics?.location || ""}, ${icp.demographics?.incomeRange || ""}, ${icp.demographics?.jobTitle || ""}
-- Pain points: ${icp.painPoints?.join("; ") || "N/A"}
-- Dream outcome: ${icp.dreamOutcome || "N/A"}
-- Failed solutions: ${icp.failedSolutions?.join("; ") || "N/A"}
-- Values: ${icp.psychographics?.values?.join(", ") || "N/A"}
-- Fears: ${icp.psychographics?.fears?.join(", ") || "N/A"}
-- Desires: ${icp.psychographics?.desires?.join(", ") || "N/A"}
-- Platforms: ${icp.platforms?.join(", ") || "N/A"}`);
+    const lines: string[] = ["## Ideal Customer Profile (ICP)"];
+
+    if (icp.businessName || icp.industryLabel || icp.regionLabel) {
+      lines.push(
+        `- Business: ${icp.businessName || "N/A"} | Industry: ${icp.industryLabel || "N/A"} | Region: ${icp.regionLabel || "N/A"}`,
+      );
+    }
+    lines.push(
+      `- Primary avatar: ${icp.name || "N/A"}`,
+      `- Demographics: ${icp.demographics?.ageRange || ""}, ${icp.demographics?.gender || ""}, ${icp.demographics?.location || ""}, ${icp.demographics?.incomeRange || ""}, ${icp.demographics?.jobTitle || ""}`,
+      `- Platforms: ${icp.platforms?.join(", ") || "N/A"}`,
+    );
+
+    const u = icp.universal;
+    const hasUniversal =
+      u &&
+      (u.painChallenge?.length ||
+        u.goals?.length ||
+        u.emotionalFingerprint ||
+        u.triggers?.length ||
+        u.objections?.length);
+    if (hasUniversal) {
+      lines.push(`
+### Universal psychology (shared across every segment)
+- Core challenges: ${u.painChallenge?.join("; ") || "N/A"}
+- Keeps them up at night: ${u.painNight?.join("; ") || "N/A"}
+- Already tried (failed): ${u.painTried?.join("; ") || "N/A"}
+- Goals: ${u.goals?.join("; ") || "N/A"}
+- Emotional fingerprint: ${u.emotionalFingerprint || "N/A"}
+- Buying triggers: ${u.triggers?.join("; ") || "N/A"}
+- Objections: ${u.objections?.join("; ") || "N/A"}
+- Hesitations: ${u.hesitations?.join("; ") || "N/A"}`);
+    } else {
+      // Fall back to the flattened fields for older Brand DNA records.
+      lines.push(
+        `- Pain points: ${icp.painPoints?.join("; ") || "N/A"}`,
+        `- Dream outcome: ${icp.dreamOutcome || "N/A"}`,
+        `- Failed solutions: ${icp.failedSolutions?.join("; ") || "N/A"}`,
+        `- Values: ${icp.psychographics?.values?.join(", ") || "N/A"}`,
+        `- Fears: ${icp.psychographics?.fears?.join(", ") || "N/A"}`,
+        `- Desires: ${icp.psychographics?.desires?.join(", ") || "N/A"}`,
+      );
+    }
+
+    if (icp.segments?.length) {
+      lines.push(`
+### Audience segments (${icp.segments.length})`);
+      icp.segments.forEach((s, i) => {
+        const it = s.intensity;
+        lines.push(`
+**Segment ${i + 1}: ${s.name || "Unnamed"}**${s.oneLine ? ` — ${s.oneLine}` : ""}
+- Pain: ${s.pain?.join("; ") || "N/A"}
+- Goals: ${s.goals?.join("; ") || "N/A"}
+- Mindset: ${s.mindset?.join("; ") || "N/A"}
+- Objections: ${s.objections?.join("; ") || "N/A"}
+- Triggers: ${s.triggers?.join("; ") || "N/A"}
+- Intensity: pain ${it?.painIntensity ?? 0}, goal-clarity ${it?.goalClarity ?? 0}, urgency ${it?.buyingUrgency ?? 0}, price-sensitivity ${it?.priceSensitivity ?? 0}, skepticism ${it?.skepticism ?? 0}`);
+      });
+    }
+
+    sections.push(lines.join("\n"));
   }
 
   if (brandDNA.offer?.dreamOutcome) {

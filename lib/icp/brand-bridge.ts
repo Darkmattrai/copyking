@@ -30,6 +30,8 @@ export function brandToIntake(icp: ICP): Partial<Intake> {
 }
 
 // Write a generated ICP map back into the Brand DNA `icp` pillar.
+// Preserves the FULL map (universal block + every segment) alongside the
+// flattened convenience fields older consumers still read.
 export function generatedToBrand(icp: GeneratedICP): Partial<ICP> {
   const u = icp.universal;
   const firstSegment = icp.segments[0];
@@ -45,5 +47,29 @@ export function generatedToBrand(icp: GeneratedICP): Partial<ICP> {
       fears: u.painNight,
       desires: u.goals,
     },
+    // Rich, lossless map data — what content generation should rely on.
+    universal: {
+      painChallenge: u.painChallenge,
+      painNight: u.painNight,
+      painTried: u.painTried,
+      goals: u.goals,
+      emotionalFingerprint: u.emotionalFingerprint,
+      triggers: u.triggers,
+      objections: u.objections,
+      hesitations: u.hesitations,
+    },
+    segments: icp.segments.map((s) => ({
+      name: s.name,
+      oneLine: s.oneLine,
+      pain: s.pain,
+      goals: s.goals,
+      mindset: s.mindset,
+      objections: s.objections,
+      triggers: s.triggers,
+      intensity: { ...s.intensity },
+    })),
+    businessName: icp.businessName,
+    industryLabel: icp.industryLabel,
+    regionLabel: icp.regionLabel,
   };
 }

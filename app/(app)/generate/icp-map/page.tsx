@@ -102,7 +102,13 @@ export default function IcpMapPage() {
       }
       const icp = await res.json();
       setResult(icp);
-      setSaved(false);
+      // Auto-save the freshly generated map back to Brand DNA + the account.
+      updatePillar("icp", generatedToBrand(icp));
+      await setGeneration(SLUG, {
+        content: JSON.stringify({ formData, segments, result: icp }),
+        params: {},
+      });
+      setSaved(true);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to generate ICP map",
