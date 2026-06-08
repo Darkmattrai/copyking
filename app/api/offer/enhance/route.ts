@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { anthropic } from "@/lib/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { buildEnhancePrompt, type EnhanceContext } from "@/lib/offer/enhance-prompt";
+import { logUsage } from "@/lib/usage/log";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -36,6 +37,12 @@ export async function POST(req: NextRequest) {
       model,
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
+    });
+    await logUsage({
+      userId: user.id,
+      feature: "offer-enhance",
+      model,
+      usage: message.usage,
     });
     const text = message.content
       .filter((b) => b.type === "text")

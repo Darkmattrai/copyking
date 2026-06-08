@@ -3,6 +3,7 @@ import { anthropic } from "@/lib/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { IntakeSchema, GeneratedICPSchema } from "@/lib/icp/schema";
 import { SYSTEM_PROMPT, buildUserMessage } from "@/lib/icp/prompt";
+import { logUsage } from "@/lib/usage/log";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -47,6 +48,12 @@ export async function POST(req: NextRequest) {
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
+      });
+      await logUsage({
+        userId: user.id,
+        feature: "icp-generate",
+        model,
+        usage: message.usage,
       });
       rawText = message.content
         .filter((b) => b.type === "text")

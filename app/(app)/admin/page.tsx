@@ -17,6 +17,14 @@ import {
   exportAllBrandDnaJson,
   type UserBrandExport,
 } from "@/lib/account/export";
+import { formatUsd } from "@/lib/usage/pricing";
+
+const fmtTokens = (n: number) =>
+  n >= 1_000_000
+    ? `${(n / 1_000_000).toFixed(1)}M`
+    : n >= 1_000
+      ? `${(n / 1_000).toFixed(1)}k`
+      : String(n);
 
 interface UserRow {
   id: string;
@@ -26,6 +34,8 @@ interface UserRow {
   generationsCount: number;
   lastActive: string | null;
   interviewCompleted: boolean;
+  costUsd: number;
+  totalTokens: number;
 }
 
 interface ExportUser {
@@ -43,6 +53,10 @@ const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString() : "�
 export default function AdminPage() {
   const router = useRouter();
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [totals, setTotals] = useState<{ costUsd: number; totalTokens: number }>({
+    costUsd: 0,
+    totalTokens: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -56,6 +70,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to load");
       setUsers(data.users);
+      if (data.totals) setTotals(data.totals);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -157,7 +172,11 @@ export default function AdminPage() {
             <p className="text-sm text-text-tertiary">
               {users.length} account{users.length === 1 ? "" : "s"} ·{" "}
               {clientCount} client{clientCount === 1 ? "" : "s"} · {adminCount}{" "}
-              admin{adminCount === 1 ? "" : "s"}
+              admin{adminCount === 1 ? "" : "s"} ·{" "}
+              <span className="text-text-secondary font-medium">
+                {formatUsd(totals.costUsd)}
+              </span>{" "}
+              Anthropic spend ({fmtTokens(totals.totalTokens)} tokens)
             </p>
           </div>
         </div>
@@ -204,6 +223,7 @@ export default function AdminPage() {
                 <th className="px-4 py-3 font-medium">Role</th>
                 <th className="px-4 py-3 font-medium">Generations</th>
                 <th className="px-4 py-3 font-medium">Interview</th>
+                <th className="px-4 py-3 font-medium text-right">AI cost</th>
                 <th className="px-4 py-3 font-medium">Last active</th>
                 <th className="px-4 py-3 font-medium">Signed up</th>
                 <th className="px-4 py-3 font-medium text-right">Action</th>
@@ -232,6 +252,16 @@ export default function AdminPage() {
                   </td>
                   <td className="px-4 py-3 text-text-secondary">
                     {u.generationsCount}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-text-primary font-medium">
+                      {formatUsd(u.costUsd)}
+                    </span>
+                    {u.totalTokens > 0 && (
+                      <span className="block text-[11px] text-text-tertiary">
+                        {fmtTokens(u.totalTokens)} tok
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-text-tertiary">
                     {u.interviewCompleted ? "✓" : "—"}

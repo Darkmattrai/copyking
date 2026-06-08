@@ -1,6 +1,7 @@
 import { getUserRole } from "@/lib/auth/get-role";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/auth/roles";
+import { costForUsage } from "@/lib/usage/pricing";
 
 // Lists every signup with role, created date, and usage/tracking rollups
 // (generation count, last activity, whether their interview is complete).
@@ -12,7 +13,7 @@ export async function GET() {
 
   const admin = createAdminClient();
 
-  const [profilesRes, gensRes, brandRes] = await Promise.all([
+  const [profilesRes, gensRes, brandRes, usageRes] = await Promise.all([
     admin
       .from("profiles")
       .select("id, email, role, created_at")
@@ -21,6 +22,11 @@ export async function GET() {
     admin
       .from("brand_profiles")
       .select("user_id, interview_completed, updated_at"),
+    admin
+      .from("usage_events")
+      .select(
+        "user_id, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens",
+      ),
   ]);
 
   if (profilesRes.error) {
@@ -49,14 +55,36 @@ export async function GET() {
     }
   }
 
+  // Roll up token usage + cost per user, plus a global total for the header.
+  const cost = new Map<string, number>();
+  const tokens = new Map<string, number>();
+  let totalCost = 0;
+  let totalTokens = 0;
+  for (const e of usageRes.data ?? []) {
+    if (!e.user_id) continue;
+    const c = costForUsage(e.model, {
+      input_tokens: e.input_tokens,
+      output_tokens: e.output_tokens,
+      cache_creation_tokens: e.cache_creation_tokens,
+      cache_read_tokens: e.cache_read_tokens,
+    });
+    const t = (e.input_tokens ?? 0) + (e.output_tokens ?? 0);
+    cost.set(e.user_id, (cost.get(e.user_id) ?? 0) + c);
+    tokens.set(e.user_id, (tokens.get(e.user_id) ?? 0) + t);
+    totalCost += c;
+    totalTokens += t;
+  }
+
   const users = (profilesRes.data ?? []).map((u) => ({
     ...u,
     generationsCount: counts.get(u.id) ?? 0,
     lastActive: lastActive.get(u.id) ?? null,
     interviewCompleted: interview.get(u.id) ?? false,
+    costUsd: cost.get(u.id) ?? 0,
+    totalTokens: tokens.get(u.id) ?? 0,
   }));
 
-  return Response.json({ users });
+  return Response.json({ users, totals: { costUsd: totalCost, totalTokens } });
 }
 
 // Changes a user's role (promote/demote). Admin-only.

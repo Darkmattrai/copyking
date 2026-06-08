@@ -1,5 +1,6 @@
 import { getUserRole } from "@/lib/auth/get-role";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { summarizeUsage } from "@/lib/usage/rollup";
 
 // Full per-user bundle for the admin detail view: profile, auth/session
 // metadata, Brand DNA JSON, and every saved generation (their answers).
@@ -17,7 +18,7 @@ export async function GET(
 
   const admin = createAdminClient();
 
-  const [profileRes, brandRes, gensRes, authRes] = await Promise.all([
+  const [profileRes, brandRes, gensRes, usageRes, authRes] = await Promise.all([
     admin.from("profiles").select("id, email, role, created_at").eq("id", id).single(),
     admin
       .from("brand_profiles")
@@ -29,6 +30,12 @@ export async function GET(
       .select("slug, content, params, generated_at, created_at, updated_at")
       .eq("user_id", id)
       .order("updated_at", { ascending: false }),
+    admin
+      .from("usage_events")
+      .select(
+        "feature, model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens",
+      )
+      .eq("user_id", id),
     admin.auth.admin.getUserById(id),
   ]);
 
@@ -37,6 +44,7 @@ export async function GET(
   }
 
   const authUser = authRes.data?.user;
+  const usage = summarizeUsage(usageRes.data ?? []);
 
   return Response.json({
     profile: profileRes.data,
@@ -50,5 +58,6 @@ export async function GET(
       : null,
     brandProfile: brandRes.data ?? null,
     generations: gensRes.data ?? [],
+    usage,
   });
 }

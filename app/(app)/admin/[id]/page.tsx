@@ -13,6 +13,42 @@ import {
   parseGenerationContent,
 } from "@/lib/account/build-answers";
 import { exportAnswersPdf, exportAnswersDoc } from "@/lib/account/export";
+import { formatUsd } from "@/lib/usage/pricing";
+
+interface UsageBreakdownItem {
+  key: string;
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  costUsd: number;
+}
+
+interface UsageSummary {
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  totalTokens: number;
+  costUsd: number;
+  byFeature: UsageBreakdownItem[];
+  byModel: UsageBreakdownItem[];
+}
+
+const FEATURE_LABELS: Record<string, string> = {
+  "icp-generate": "ICP Map generation",
+  "icp-chat": "ICP guided chat",
+  "offer-enhance": "Offer field enhance",
+  "offer-chat": "Offer guided chat",
+};
+
+const fmtTokens = (n: number) =>
+  n >= 1_000_000
+    ? `${(n / 1_000_000).toFixed(2)}M`
+    : n >= 1_000
+      ? `${(n / 1_000).toFixed(1)}k`
+      : String(n);
 
 interface Bundle {
   profile: { id: string; email: string | null; role: UserRole; created_at: string };
@@ -37,6 +73,7 @@ interface Bundle {
     created_at: string;
     updated_at: string;
   }[];
+  usage?: UsageSummary;
 }
 
 const TAG_STYLES: Record<FeatureTag, string> = {
@@ -217,6 +254,9 @@ export default function AdminUserDetailPage() {
             </InfoCard>
           </div>
 
+          {/* AI usage & cost */}
+          <UsageSection usage={bundle.usage} />
+
           {/* Billing */}
           <div className="ck-card p-5">
             <h3 className="text-sm font-semibold text-text-primary mb-1">
@@ -251,6 +291,93 @@ export default function AdminUserDetailPage() {
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function UsageSection({ usage }: { usage?: UsageSummary }) {
+  const u = usage ?? {
+    calls: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheCreationTokens: 0,
+    cacheReadTokens: 0,
+    totalTokens: 0,
+    costUsd: 0,
+    byFeature: [],
+    byModel: [],
+  };
+
+  return (
+    <div>
+      <h2 className="text-base font-semibold text-text-primary mb-3">
+        AI usage &amp; cost
+      </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="ck-card p-5">
+          <div className="text-xs uppercase tracking-wide text-text-tertiary mb-1">
+            Total Anthropic cost
+          </div>
+          <div className="text-3xl font-bold text-text-primary">
+            {formatUsd(u.costUsd)}
+          </div>
+          <div className="text-xs text-text-tertiary mt-1">
+            {u.calls} call{u.calls === 1 ? "" : "s"} · {fmtTokens(u.totalTokens)} tokens
+          </div>
+          <dl className="mt-4 space-y-2.5">
+            <Stat label="Input tokens" value={fmtTokens(u.inputTokens)} />
+            <Stat label="Output tokens" value={fmtTokens(u.outputTokens)} />
+            {u.cacheReadTokens > 0 && (
+              <Stat label="Cache read tokens" value={fmtTokens(u.cacheReadTokens)} />
+            )}
+            {u.cacheCreationTokens > 0 && (
+              <Stat label="Cache write tokens" value={fmtTokens(u.cacheCreationTokens)} />
+            )}
+          </dl>
+        </div>
+
+        <UsageBreakdownCard
+          title="By feature"
+          items={u.byFeature.map((i) => ({ ...i, label: FEATURE_LABELS[i.key] ?? i.key }))}
+        />
+        <UsageBreakdownCard
+          title="By model"
+          items={u.byModel.map((i) => ({ ...i, label: i.key }))}
+        />
+      </div>
+    </div>
+  );
+}
+
+function UsageBreakdownCard({
+  title,
+  items,
+}: {
+  title: string;
+  items: (UsageBreakdownItem & { label: string })[];
+}) {
+  return (
+    <div className="ck-card p-5">
+      <h3 className="text-sm font-semibold text-text-primary mb-3">{title}</h3>
+      {items.length === 0 ? (
+        <p className="text-sm text-text-tertiary">No AI usage yet.</p>
+      ) : (
+        <ul className="space-y-3">
+          {items.map((i) => (
+            <li key={i.key} className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm text-text-primary truncate">{i.label}</div>
+                <div className="text-[11px] text-text-tertiary">
+                  {i.calls} call{i.calls === 1 ? "" : "s"} · {fmtTokens(i.totalTokens)} tok
+                </div>
+              </div>
+              <div className="text-sm font-medium text-text-primary shrink-0">
+                {formatUsd(i.costUsd)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

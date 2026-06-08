@@ -6,6 +6,7 @@ import {
   toAnthropicMessages,
   type ChatClientMessage,
 } from "@/lib/chat/attachments-server";
+import { logUsage } from "@/lib/usage/log";
 
 export const runtime = "nodejs";
 
@@ -55,6 +56,14 @@ export async function POST(req: NextRequest) {
             controller.enqueue(encoder.encode(chunk));
           }
         }
+
+        const finalMessage = await stream.finalMessage();
+        await logUsage({
+          userId: user.id,
+          feature: "icp-chat",
+          model,
+          usage: finalMessage.usage,
+        });
 
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
