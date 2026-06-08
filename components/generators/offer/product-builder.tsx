@@ -281,9 +281,9 @@ export function ProductBuilder() {
   const assembled = assembleName(P.nm);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-5">
-      {/* LEFT RAIL */}
-      <nav className="hidden lg:block space-y-4">
+    <div className="space-y-5">
+      {/* TAB BAR — step navigation, grouped, horizontal */}
+      <div className="space-y-3">
         <button
           type="button"
           onClick={() => setCurProduct(null)}
@@ -291,20 +291,23 @@ export function ProductBuilder() {
         >
           ← Back to ladder
         </button>
-        {groups.map((g) => (
-          <div key={g.grp}>
-            <p className="text-[10px] uppercase tracking-wider text-text-tertiary font-semibold mb-1.5 px-2">
-              {g.grp}
-            </p>
-            <div className="space-y-0.5">
+        <nav className="flex flex-wrap items-center gap-x-1.5 gap-y-2 border-b border-border pb-3">
+          {groups.map((g, gi) => (
+            <div key={g.grp} className="flex items-center gap-1">
+              {gi > 0 && (
+                <span className="mx-1 h-4 w-px bg-border self-center" aria-hidden />
+              )}
+              <span className="text-[10px] uppercase tracking-wider text-text-tertiary font-semibold mr-0.5">
+                {g.grp}
+              </span>
               {g.items.map(({ idx, step: s }) => (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => setCurrent(idx)}
-                  className={`w-full text-left px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
                     idx === current
-                      ? "bg-accent/10 text-accent font-medium"
+                      ? "bg-accent/10 text-accent"
                       : "text-text-secondary hover:text-text-primary hover:bg-surface"
                   }`}
                 >
@@ -312,20 +315,13 @@ export function ProductBuilder() {
                 </button>
               ))}
             </div>
-          </div>
-        ))}
-      </nav>
+          ))}
+        </nav>
+      </div>
 
       {/* PANEL */}
       <div className="space-y-5">
         <div>
-          <button
-            type="button"
-            onClick={() => setCurProduct(null)}
-            className="lg:hidden text-sm font-medium text-accent mb-2"
-          >
-            ← Back to ladder
-          </button>
           <p className="text-xs text-text-tertiary mb-1">
             {P.name || "Untitled product"}
             {P.price ? ` · ${P.price}` : ""} — step {current + 1} of {STEPS.length}
