@@ -14,15 +14,22 @@ export const GENERATORS: GeneratorDef[] = [
     category: "foundation",
     outputFormat: "structured",
   },
-
-  // ── Social ──────────────────────────────────────────────────────
+  {
+    slug: "irresistible-offer",
+    name: "Irresistible Offer Builder",
+    description:
+      "11-step Grand Slam offer builder: bullseye, features/benefits, value ladder pricing, guarantee, scarcity, objections, and naming — with AI field enhancement",
+    icon: "offer",
+    category: "foundation",
+    outputFormat: "structured",
+  },
   {
     slug: "instagram-bio",
-    name: "Instagram Bio Generator",
+    name: "Instagram Profile Optimisation",
     description:
       "Full 2026 profile package: SEO audit, 6 bio formulas, multi-link strategy, highlights, pinned posts, and a bio score",
     icon: "instagram",
-    category: "social",
+    category: "foundation",
     params: [
       {
         key: "accountType",
@@ -102,13 +109,251 @@ export const GENERATORS: GeneratorDef[] = [
     ],
     outputFormat: "markdown",
   },
+
+  // ── Lead Gen ────────────────────────────────────────────────────
+  {
+    slug: "lead-magnet-ideas",
+    name: "Lead Magnet Idea Generator",
+    description: "10 ranked lead magnet ideas with conversion estimates, bridge-to-offer mapping, and ready-to-use headlines",
+    icon: "funnel",
+    category: "lead-gen",
+    params: [
+      {
+        key: "trafficTemperature",
+        label: "Traffic temperature (where will most leads come from?)",
+        type: "select",
+        required: false,
+        options: [
+          { value: "cold", label: "Cold — paid ads, SEO, cold outreach (problem-aware/unaware)" },
+          { value: "warm", label: "Warm — organic social, podcast guests, partner audiences (solution-aware)" },
+          { value: "hot", label: "Hot — email list, retargeting, existing community (product-aware)" },
+          { value: "mixed", label: "Mixed — give me a balanced spread" },
+        ],
+      },
+      {
+        key: "primaryChannel",
+        label: "Primary traffic source (optional)",
+        type: "select",
+        required: false,
+        options: [
+          { value: "meta-ads", label: "Meta ads (Facebook/Instagram)" },
+          { value: "google-ads", label: "Google ads / search" },
+          { value: "organic-social", label: "Organic social (IG, TikTok, LinkedIn, X)" },
+          { value: "seo-blog", label: "SEO / blog" },
+          { value: "email-list", label: "Existing email list" },
+          { value: "cold-outreach", label: "Cold outreach (DM / email)" },
+          { value: "podcast-youtube", label: "Podcast / YouTube" },
+        ],
+      },
+      {
+        key: "bridgeOffer",
+        label: "Bridge offer focus (optional)",
+        type: "textarea",
+        placeholder: "Which paid offer should these magnets bridge to? Leave blank to use the default offer from your Brand DNA.",
+        required: false,
+      },
+    ],
+    outputFormat: "markdown",
+  },
+  {
+    slug: "lead-magnet-funnel",
+    name: "Lead Magnet Funnel Generator",
+    description: "Landing page + thank you page + 5-email welcome sequence",
+    icon: "funnel",
+    category: "lead-gen",
+    params: [
+      {
+        key: "leadMagnet",
+        label: "Which lead magnet?",
+        type: "textarea",
+        placeholder: "Describe your lead magnet (name, format, what it teaches)",
+        required: true,
+      },
+    ],
+    outputFormat: "markdown",
+  },
+  {
+    slug: "vsl-script",
+    name: "VSL Script Generator",
+    description: "Full video sales letter script using the proven 5-part VSL framework: hook, problem, solution, proof, offer & close",
+    icon: "funnel",
+    category: "lead-gen",
+    params: [
+      {
+        key: "offerName",
+        label: "Offer name",
+        type: "text",
+        placeholder: "e.g. The 90-Day Transformation Program",
+        required: true,
+      },
+      {
+        key: "length",
+        label: "Target length",
+        type: "select",
+        required: false,
+        options: [
+          { value: "short", label: "Short (5-8 min)" },
+          { value: "standard", label: "Standard (12-18 min)" },
+          { value: "long", label: "Long-form (20-30 min)" },
+        ],
+      },
+    ],
+    outputFormat: "markdown",
+  },
+  {
+    slug: "vsl-funnel",
+    name: "VSL Funnel Generator",
+    description: "Full VSL funnel: landing page, VSL script, and order page copy",
+    icon: "funnel",
+    category: "lead-gen",
+    params: [
+      {
+        key: "offerName",
+        label: "Offer name",
+        type: "text",
+        placeholder: "e.g. The 90-Day Transformation Program",
+        required: true,
+      },
+    ],
+    outputFormat: "markdown",
+  },
+  {
+    slug: "webinar-funnel",
+    name: "Webinar Funnel Generator",
+    description: "Registration page, confirmation/thank-you page, indoctrination email sequence, and replay page copy",
+    icon: "funnel",
+    category: "lead-gen",
+    params: [
+      {
+        key: "topic",
+        label: "Webinar topic",
+        type: "text",
+        placeholder: "e.g. The 3 Secrets to Scaling Your Agency Past $50K/mo",
+        required: true,
+      },
+      {
+        key: "offerPrice",
+        label: "Offer price point",
+        type: "text",
+        placeholder: "e.g. $2,997 or $497/mo",
+        required: true,
+      },
+    ],
+    outputFormat: "markdown",
+  },
+  {
+    slug: "webinar-script",
+    name: "Webinar Script Generator",
+    description: "60-min script: intro, 3 secrets, offer stack, close",
+    icon: "video",
+    category: "lead-gen",
+    params: [
+      {
+        key: "topic",
+        label: "Webinar topic",
+        type: "text",
+        placeholder: "e.g. The 3 Secrets to Scaling Your Agency Past $50K/mo",
+        required: true,
+      },
+      {
+        key: "offerPrice",
+        label: "Offer price point",
+        type: "text",
+        placeholder: "e.g. $2,997 or $497/mo",
+        required: true,
+      },
+    ],
+    outputFormat: "markdown",
+  },
+  {
+    slug: "webinar-slides",
+    name: "Webinar Slides Generator",
+    description: "Slide-by-slide deck outline with on-slide copy and speaker notes for a high-converting webinar",
+    icon: "video",
+    category: "lead-gen",
+    params: [
+      {
+        key: "topic",
+        label: "Webinar topic",
+        type: "text",
+        placeholder: "e.g. The 3 Secrets to Scaling Your Agency Past $50K/mo",
+        required: true,
+      },
+    ],
+    outputFormat: "markdown",
+  },
+  {
+    slug: "soap-opera-sequence",
+    name: "Soap Opera Sequence Generator",
+    description: "5-email story arc with cliffhangers that sell",
+    icon: "email",
+    category: "lead-gen",
+    outputFormat: "markdown",
+  },
+  {
+    slug: "seinfeld-sequence",
+    name: "Seinfeld Sequence Generator",
+    description: "7 edu-tainment emails that build trust and sell softly",
+    icon: "email",
+    category: "lead-gen",
+    outputFormat: "markdown",
+  },
+  {
+    slug: "high-ticket-questionnaire",
+    name: "High Ticket Questionnaire Generator",
+    description: "Application page + questions + confirmation + review email",
+    icon: "email",
+    category: "lead-gen",
+    outputFormat: "markdown",
+  },
+
+  // ── Traffic System ──────────────────────────────────────────────
+  {
+    slug: "short-form-content",
+    name: "Short Form Content Generator",
+    description: "Reels / TikTok / Shorts scripts with scroll-stopping hooks, beat-by-beat structure, and CTAs built for the 2026 algorithm",
+    icon: "megaphone",
+    category: "traffic-system",
+    params: [
+      {
+        key: "platform",
+        label: "Platform",
+        type: "select",
+        required: true,
+        options: [
+          { value: "reels", label: "Instagram Reels" },
+          { value: "tiktok", label: "TikTok" },
+          { value: "shorts", label: "YouTube Shorts" },
+          { value: "all", label: "All (cross-platform)" },
+        ],
+      },
+      {
+        key: "count",
+        label: "How many scripts?",
+        type: "select",
+        required: false,
+        options: [
+          { value: "3", label: "3 scripts" },
+          { value: "5", label: "5 scripts" },
+          { value: "10", label: "10 scripts" },
+        ],
+      },
+      {
+        key: "topic",
+        label: "Topic or angle (optional)",
+        type: "text",
+        placeholder: "e.g. 3 pricing mistakes coaches make",
+      },
+    ],
+    outputFormat: "markdown",
+  },
   {
     slug: "instagram-stories",
-    name: "Instagram Stories Generator",
+    name: "Story Sequences Generator",
     description:
       "Slide-by-slide story series tuned for the 2026 Stories algorithm: stickers, DM ladder, safe-zone visual direction, posting cadence, and metric targets",
     icon: "instagram",
-    category: "social",
+    category: "traffic-system",
     params: [
       {
         key: "objective",
@@ -176,153 +421,40 @@ export const GENERATORS: GeneratorDef[] = [
     outputFormat: "markdown",
   },
   {
-    slug: "organic-content-ideas",
-    name: "Instagram Content Calendar Generator",
-    description: "30-day Instagram calendar built for the 2026 algorithm: Reels, carousels, hooks, SEO keywords, save/send triggers",
-    icon: "instagram",
-    category: "social",
-    outputFormat: "markdown",
-  },
-
-  // ── Funnels ─────────────────────────────────────────────────────
-  {
-    slug: "lead-magnet-ideas",
-    name: "Lead Magnet Idea Generator",
-    description: "10 ranked lead magnet ideas with conversion estimates, bridge-to-offer mapping, and ready-to-use headlines",
-    icon: "funnel",
-    category: "funnels",
+    slug: "short-form-captions",
+    name: "Short Form Captions Generator",
+    description: "Scroll-stopping captions with hook, value, and CTA for short-form posts — multiple variations per angle",
+    icon: "megaphone",
+    category: "traffic-system",
     params: [
       {
-        key: "trafficTemperature",
-        label: "Traffic temperature (where will most leads come from?)",
+        key: "platform",
+        label: "Platform",
         type: "select",
         required: false,
         options: [
-          { value: "cold", label: "Cold — paid ads, SEO, cold outreach (problem-aware/unaware)" },
-          { value: "warm", label: "Warm — organic social, podcast guests, partner audiences (solution-aware)" },
-          { value: "hot", label: "Hot — email list, retargeting, existing community (product-aware)" },
-          { value: "mixed", label: "Mixed — give me a balanced spread" },
+          { value: "instagram", label: "Instagram" },
+          { value: "tiktok", label: "TikTok" },
+          { value: "linkedin", label: "LinkedIn" },
+          { value: "x", label: "X / Twitter" },
         ],
       },
       {
-        key: "primaryChannel",
-        label: "Primary traffic source (optional)",
-        type: "select",
-        required: false,
-        options: [
-          { value: "meta-ads", label: "Meta ads (Facebook/Instagram)" },
-          { value: "google-ads", label: "Google ads / search" },
-          { value: "organic-social", label: "Organic social (IG, TikTok, LinkedIn, X)" },
-          { value: "seo-blog", label: "SEO / blog" },
-          { value: "email-list", label: "Existing email list" },
-          { value: "cold-outreach", label: "Cold outreach (DM / email)" },
-          { value: "podcast-youtube", label: "Podcast / YouTube" },
-        ],
-      },
-      {
-        key: "bridgeOffer",
-        label: "Bridge offer focus (optional)",
-        type: "textarea",
-        placeholder: "Which paid offer should these magnets bridge to? Leave blank to use the default offer from your Brand DNA.",
-        required: false,
-      },
-    ],
-    outputFormat: "markdown",
-  },
-  {
-    slug: "lead-magnet-funnel",
-    name: "Lead Magnet Funnel Generator",
-    description: "Landing page + thank you page + 5-email welcome sequence",
-    icon: "funnel",
-    category: "funnels",
-    params: [
-      {
-        key: "leadMagnet",
-        label: "Which lead magnet?",
-        type: "textarea",
-        placeholder: "Describe your lead magnet (name, format, what it teaches)",
-        required: true,
-      },
-    ],
-    outputFormat: "markdown",
-  },
-  {
-    slug: "vsl-funnel",
-    name: "VSL Script & Funnel Generator",
-    description: "Full VSL script + landing page + order page copy",
-    icon: "funnel",
-    category: "funnels",
-    params: [
-      {
-        key: "offerName",
-        label: "Offer name",
+        key: "topic",
+        label: "Post topic or angle",
         type: "text",
-        placeholder: "e.g. The 90-Day Transformation Program",
+        placeholder: "e.g. why most funnels fail in the first 7 days",
         required: true,
       },
     ],
     outputFormat: "markdown",
   },
-
-  // ── Email ───────────────────────────────────────────────────────
-  {
-    slug: "soap-opera-sequence",
-    name: "Soap Opera Sequence Generator",
-    description: "5-email story arc with cliffhangers that sell",
-    icon: "email",
-    category: "email",
-    outputFormat: "markdown",
-  },
-  {
-    slug: "seinfeld-sequence",
-    name: "Seinfeld Sequence Generator",
-    description: "7 edu-tainment emails that build trust and sell softly",
-    icon: "email",
-    category: "email",
-    outputFormat: "markdown",
-  },
-  {
-    slug: "high-ticket-questionnaire",
-    name: "High Ticket Application Funnel",
-    description: "Application page + questions + confirmation + review email",
-    icon: "email",
-    category: "email",
-    outputFormat: "markdown",
-  },
-
-  // ── Sales ───────────────────────────────────────────────────────
-  {
-    slug: "dm-setting-script",
-    name: "DM Setting Script Generator",
-    description: "Natural DM framework: opener → qualifier → book call",
-    icon: "sales",
-    category: "sales",
-    outputFormat: "markdown",
-  },
-  {
-    slug: "phone-setting-script",
-    name: "Phone Setting Script Generator",
-    description: "Appointment setting call script with objection handlers",
-    icon: "sales",
-    category: "sales",
-    outputFormat: "markdown",
-  },
-  {
-    slug: "sales-closing-script",
-    name: "Sales Closing Script Generator",
-    description: "Consultative close: diagnosis → offer → objection handling",
-    icon: "sales",
-    category: "sales",
-    outputFormat: "markdown",
-  },
-
-  // ── Ads ─────────────────────────────────────────────────────────
   {
     slug: "ad-copy",
     name: "Ad Copy Generator",
     description: "3 ad copy variations using PAS, AIDA, and Story frameworks",
     icon: "ad",
-    category: "ads",
+    category: "traffic-system",
     params: [
       {
         key: "platform",
@@ -350,7 +482,7 @@ export const GENERATORS: GeneratorDef[] = [
     name: "Image Ad Generator",
     description: "3 ad concepts with creative direction, copy, and design specs",
     icon: "ad",
-    category: "ads",
+    category: "traffic-system",
     params: [
       {
         key: "platform",
@@ -378,7 +510,7 @@ export const GENERATORS: GeneratorDef[] = [
     name: "Video Ad Generator",
     description: "Hook-problem-solution-CTA script with visual direction",
     icon: "ad",
-    category: "ads",
+    category: "traffic-system",
     params: [
       {
         key: "length",
@@ -406,14 +538,12 @@ export const GENERATORS: GeneratorDef[] = [
     ],
     outputFormat: "markdown",
   },
-
-  // ── Video ───────────────────────────────────────────────────────
   {
     slug: "youtube-video",
     name: "YouTube Video Generator",
     description: "Title + thumbnail + full script with retention hooks",
     icon: "video",
-    category: "video",
+    category: "traffic-system",
     params: [
       {
         key: "topic",
@@ -441,7 +571,7 @@ export const GENERATORS: GeneratorDef[] = [
     name: "YouTube Thumbnail Generator",
     description: "3 thumbnail concepts with composition, colors, and text",
     icon: "video",
-    category: "video",
+    category: "traffic-system",
     params: [
       {
         key: "topic",
@@ -454,39 +584,38 @@ export const GENERATORS: GeneratorDef[] = [
     outputFormat: "markdown",
   },
   {
-    slug: "webinar-script",
-    name: "Webinar Script Generator",
-    description: "60-min script: intro, 3 secrets, offer stack, close",
-    icon: "video",
-    category: "video",
-    params: [
-      {
-        key: "topic",
-        label: "Webinar topic",
-        type: "text",
-        placeholder: "e.g. The 3 Secrets to Scaling Your Agency Past $50K/mo",
-        required: true,
-      },
-      {
-        key: "offerPrice",
-        label: "Offer price point",
-        type: "text",
-        placeholder: "e.g. $2,997 or $497/mo",
-        required: true,
-      },
-    ],
+    slug: "organic-content-ideas",
+    name: "Instagram Content Calendar Generator",
+    description: "30-day Instagram calendar built for the 2026 algorithm: Reels, carousels, hooks, SEO keywords, save/send triggers",
+    icon: "instagram",
+    category: "traffic-system",
     outputFormat: "markdown",
   },
 
-  // ── Offers ──────────────────────────────────────────────────────
+  // ── Sales System ────────────────────────────────────────────────
   {
-    slug: "irresistible-offer",
-    name: "Irresistible Offer Builder",
-    description:
-      "11-step Grand Slam offer builder: bullseye, features/benefits, value ladder pricing, guarantee, scarcity, objections, and naming — with AI field enhancement",
-    icon: "offer",
-    category: "foundation",
-    outputFormat: "structured",
+    slug: "dm-setting-script",
+    name: "DM Setting Script Generator",
+    description: "Natural DM framework: opener → qualifier → book call",
+    icon: "sales",
+    category: "sales-system",
+    outputFormat: "markdown",
+  },
+  {
+    slug: "phone-setting-script",
+    name: "Phone Setting Script Generator",
+    description: "Appointment setting call script with objection handlers",
+    icon: "sales",
+    category: "sales-system",
+    outputFormat: "markdown",
+  },
+  {
+    slug: "sales-closing-script",
+    name: "Sales Closing Script Generator",
+    description: "Consultative close: diagnosis → offer → objection handling",
+    icon: "sales",
+    category: "sales-system",
+    outputFormat: "markdown",
   },
 ];
 

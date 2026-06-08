@@ -1,11 +1,8 @@
 export type GeneratorCategory =
   | "foundation"
-  | "social"
-  | "funnels"
-  | "email"
-  | "sales"
-  | "ads"
-  | "video";
+  | "lead-gen"
+  | "traffic-system"
+  | "sales-system";
 
 export interface ParamDef {
   key: string;
@@ -34,10 +31,7 @@ export interface CategoryMeta {
 
 export const GENERATOR_CATEGORIES: CategoryMeta[] = [
   { key: "foundation", label: "Foundation", icon: "target" },
-  { key: "social", label: "Social Media", icon: "instagram" },
-  { key: "funnels", label: "Funnels", icon: "funnel" },
-  { key: "email", label: "Email", icon: "email" },
-  { key: "sales", label: "Sales", icon: "sales" },
-  { key: "ads", label: "Ads", icon: "ad" },
-  { key: "video", label: "Video", icon: "video" },
+  { key: "lead-gen", label: "Lead Gen", icon: "funnel" },
+  { key: "traffic-system", label: "Traffic System", icon: "megaphone" },
+  { key: "sales-system", label: "Sales System", icon: "sales" },
 ];
