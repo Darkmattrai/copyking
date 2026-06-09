@@ -13,6 +13,7 @@ import {
   parseGenerationContent,
 } from "@/lib/account/build-answers";
 import { AnswerCategories } from "@/components/brand/answer-categories";
+import { OfferDrawings } from "@/components/generators/offer/offer-drawings";
 import { exportAnswersPdf, exportAnswersDoc } from "@/lib/account/export";
 import { formatUsd } from "@/lib/usage/pricing";
 
@@ -111,18 +112,22 @@ export default function AdminUserDetailPage() {
     };
   }, [id]);
 
-  const groups = useMemo<AnswerGroup[]>(() => {
-    if (!bundle) return [];
+  const parsed = useMemo(() => {
+    if (!bundle) return null;
     const contentBySlug: Record<string, string> = {};
     for (const g of bundle.generations) contentBySlug[g.slug] = g.content;
-    const parsed = parseGenerationContent(contentBySlug);
+    return parseGenerationContent(contentBySlug);
+  }, [bundle]);
+
+  const groups = useMemo<AnswerGroup[]>(() => {
+    if (!bundle || !parsed) return [];
     return populatedAnswerGroups(
       buildBrandDnaAnswerGroups({
         brandDNA: bundle.brandProfile?.brand_dna ?? null,
         ...parsed,
       }),
     );
-  }, [bundle]);
+  }, [bundle, parsed]);
 
   const brandName = useMemo(() => {
     if (!bundle) return "Brand DNA";
@@ -279,6 +284,7 @@ export default function AdminUserDetailPage() {
             ) : (
               <AnswerCategories
                 groups={groups}
+                extras={{ Offer: <OfferDrawings offer={parsed?.offer ?? null} /> }}
                 renderGroup={(group) => (
                   <GroupCard
                     key={`${group.feature}-${group.category}`}

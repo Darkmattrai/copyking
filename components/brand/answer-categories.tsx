@@ -45,9 +45,13 @@ const CATEGORIES: CategoryMeta[] = [
 export function AnswerCategories({
   groups,
   renderGroup,
+  extras,
 }: {
   groups: AnswerGroup[];
   renderGroup: (group: AnswerGroup) => ReactNode;
+  // Optional visual block rendered at the top of a category's panel (e.g. the
+  // value-ladder + result-map drawings under the Offer tab).
+  extras?: Partial<Record<FeatureTag, ReactNode>>;
 }) {
   // Only categories that actually have answers become tabs.
   const available = CATEGORIES.map((cat) => ({
@@ -102,6 +106,7 @@ export function AnswerCategories({
 
       {/* Active category */}
       <p className="mt-4 mb-4 text-sm text-text-tertiary">{current.blurb}</p>
+      {extras?.[current.feature]}
       <div className="space-y-4">{current.groups.map(renderGroup)}</div>
     </div>
   );

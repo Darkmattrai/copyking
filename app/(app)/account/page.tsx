@@ -21,6 +21,7 @@ import {
   type AnswerGroup,
 } from "@/lib/account/brand-dna-answers";
 import { AnswerCategories } from "@/components/brand/answer-categories";
+import { OfferDrawings } from "@/components/generators/offer/offer-drawings";
 import { exportAnswersPdf, exportAnswersDoc } from "@/lib/account/export";
 
 type Tab = "account" | "brand-dna" | "billing";
@@ -264,6 +265,7 @@ function AccountPageInner() {
           ) : (
             <AnswerCategories
               groups={populatedGroups}
+              extras={{ Offer: <OfferDrawings offer={offer} /> }}
               renderGroup={(group) => (
                 <GroupCard
                   key={`${group.feature}-${group.category}`}
