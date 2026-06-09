@@ -349,8 +349,8 @@ export function ProductBuilder() {
     if (
       stepId === "guarantee" &&
       P &&
-      !P.guaranteeResult.trim() &&
-      P.trim.trim()
+      !(P.guaranteeResult ?? "").trim() &&
+      (P.trim ?? "").trim()
     ) {
       setProductField("guaranteeResult", P.trim);
     }
@@ -491,7 +491,7 @@ export function ProductBuilder() {
             <>
               <IcpProfilePicker
                 segments={icp.segments}
-                selectedRefs={P.icpSegmentRefs}
+                selectedRefs={P.icpSegmentRefs ?? []}
                 onChange={(selected) =>
                   patchProduct(icpSegmentsToProduct(selected, icp))
                 }
