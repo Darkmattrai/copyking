@@ -1,4 +1,5 @@
-import type { Offer as BrandOffer, ICP } from "@/types/brand";
+import type { Offer as BrandOffer, ICP, ICPSegment } from "@/types/brand";
+import { CHANNELS } from "@/lib/icp/schema";
 import type {
   Offer as BuilderOffer,
   Product,
@@ -35,6 +36,36 @@ export function brandToProduct(brand: BrandOffer): Partial<Product> {
     if (num) seed.realPrice = num;
   }
   return seed;
+}
+
+// ─── ICP segment → product bullseye ───────────────────────────────────────────
+//
+// Map a chosen ICP-map audience segment onto a product's bullseye so the lead
+// doesn't re-answer who/where/dream/emotion/bait, and record the link so copy
+// generation can refer back to that exact segment. Overwrites the bullseye
+// fields from the segment (the linked profile is the source of truth).
+
+const channelLabels = (vals: string[] | undefined): string =>
+  (vals ?? [])
+    .map((v) => CHANNELS.find((c) => c.value === v)?.label ?? v)
+    .join(", ");
+
+export function icpSegmentToProduct(
+  segment: ICPSegment,
+  icp: ICP,
+): Partial<Product> {
+  const patch: Partial<Product> = {
+    icpSegmentRef: segment.name,
+    who: segment.oneLine || segment.name,
+    dream: (segment.goals ?? []).join("; "),
+    emotion: (segment.pain ?? []).join("; "),
+    bait: (segment.triggers ?? []).join("; "),
+  };
+  // Channels live on the ICP as a whole, not per-segment. Only set "where" when
+  // there are channels, so picking a profile never blanks an existing value.
+  const where = channelLabels(icp.platforms);
+  if (where) patch.where = where;
+  return patch;
 }
 
 // ─── Guided-chat <OFFER_READY> payload mapping ─────────────────────────────────

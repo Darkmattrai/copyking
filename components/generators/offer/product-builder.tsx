@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
+import { useBrandStore } from "@/lib/brand/store";
+import { icpSegmentToProduct } from "@/lib/offer/brand-bridge";
+import type { ICPSegment } from "@/types/brand";
 import { useOfferDraftStore } from "@/lib/offer/store";
 import {
   NAME_FORMULAS,
@@ -163,6 +166,109 @@ function readFileToThumb(file: File): Promise<string> {
   });
 }
 
+// Pick a saved ICP-map audience segment to target with this product. Picking one
+// fills the bullseye from that segment and links the product so copy generation
+// writes to that exact avatar.
+function IcpProfilePicker({
+  segments,
+  linkedRef,
+  onPick,
+  onUnlink,
+}: {
+  segments: ICPSegment[];
+  linkedRef: string;
+  onPick: (seg: ICPSegment) => void;
+  onUnlink: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (!segments.length) {
+    return (
+      <div className="rounded-lg border border-dashed border-border bg-surface px-3 py-2.5 text-xs text-text-tertiary">
+        Build your{" "}
+        <a
+          href="/generate/icp-map"
+          className="font-medium text-accent hover:underline"
+        >
+          ICP Map
+        </a>{" "}
+        to target a saved audience profile here.
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {linkedRef ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent/40 bg-accent/[0.06] px-3 py-2">
+          <span className="text-xs font-semibold text-accent">
+            🔗 Targeting ICP profile:
+          </span>
+          <span className="text-sm font-medium text-text-primary">
+            {linkedRef}
+          </span>
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setOpen((o) => !o)}
+              className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
+            >
+              Change
+            </button>
+            <button
+              type="button"
+              onClick={onUnlink}
+              className="text-xs text-text-tertiary hover:text-danger transition-colors"
+            >
+              Unlink
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent"
+        >
+          <span className="text-base leading-none">＋</span>
+          Use an ICP profile
+        </button>
+      )}
+
+      {open && (
+        <div className="absolute z-20 mt-1.5 w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
+          <div className="border-b border-border px-3 py-2 text-[10px] uppercase tracking-wider text-text-tertiary">
+            Your ICP Map segments
+          </div>
+          <ul className="max-h-64 overflow-y-auto">
+            {segments.map((seg, i) => (
+              <li key={i}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onPick(seg);
+                    setOpen(false);
+                  }}
+                  className="w-full px-3 py-2.5 text-left transition-colors hover:bg-surface-hover"
+                >
+                  <div className="text-sm font-semibold text-text-primary">
+                    {seg.name || `Segment ${i + 1}`}
+                  </div>
+                  {seg.oneLine && (
+                    <div className="line-clamp-2 text-xs text-text-tertiary">
+                      {seg.oneLine}
+                    </div>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ProductBuilder() {
   const {
     offer,
@@ -177,13 +283,28 @@ export function ProductBuilder() {
   } = useOfferDraftStore();
   const { enhance, enhancingKey } = useEnhance();
 
+  const icp = useBrandStore((s) => s.brandDNA.icp);
+
   const ladder = offer.ladders[curLadder];
   const P: Product | undefined =
     curProduct !== null ? ladder?.products[curProduct] : undefined;
 
+  const linkedSegment =
+    icp.segments.find((s) => s.name === P?.icpSegmentRef) ?? null;
+
   const ctx: EnhanceContext = useMemo(
-    () => ({ who: P?.who, dream: P?.dream, offerName: P?.name || offer.offerName }),
-    [P?.who, P?.dream, P?.name, offer.offerName],
+    () => ({
+      who: P?.who,
+      dream: P?.dream,
+      offerName: P?.name || offer.offerName,
+      segmentName: linkedSegment?.name,
+      segmentPain: linkedSegment?.pain,
+      segmentGoals: linkedSegment?.goals,
+      segmentMindset: linkedSegment?.mindset,
+      segmentObjections: linkedSegment?.objections,
+      segmentTriggers: linkedSegment?.triggers,
+    }),
+    [P?.who, P?.dream, P?.name, offer.offerName, linkedSegment],
   );
 
   if (!P) {
@@ -318,6 +439,12 @@ export function ProductBuilder() {
         <div className="space-y-4">
           {step.id === "bullseye" && (
             <>
+              <IcpProfilePicker
+                segments={icp.segments}
+                linkedRef={P.icpSegmentRef}
+                onPick={(seg) => patchProduct(icpSegmentToProduct(seg, icp))}
+                onUnlink={() => set("icpSegmentRef", "")}
+              />
               <OfferField
                 {...fieldProps("who")}
                 label="Who is this product's dream prospect?"

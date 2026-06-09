@@ -18,6 +18,7 @@ import {
   flagshipProduct,
   chatOfferToProduct,
   chatIcpToBrand,
+  icpSegmentToProduct,
   type ChatOfferPayload,
 } from "@/lib/offer/brand-bridge";
 import {
@@ -54,7 +55,16 @@ export default function IrresistibleOfferPage() {
     const flag = flagshipProduct(offer);
     const untouched = flag && !flag.who && !flag.dream && !flag.realPrice;
     if (untouched) {
-      const seedFromBrand = brandToProduct(brandDNA.offer);
+      // Seed the flagship from the offer pillar, and pre-link it to the primary
+      // ICP segment (its bullseye wins, since that's the audience this product
+      // targets) so a fresh offer starts already tied to the dream customer.
+      const primarySegment = brandDNA.icp.segments[0];
+      const seedFromBrand = {
+        ...brandToProduct(brandDNA.offer),
+        ...(primarySegment
+          ? icpSegmentToProduct(primarySegment, brandDNA.icp)
+          : {}),
+      };
       if (Object.keys(seedFromBrand).length) {
         // Locate the flagship's [ladder, product] indices to patch it in place.
         for (let li = 0; li < offer.ladders.length; li++) {

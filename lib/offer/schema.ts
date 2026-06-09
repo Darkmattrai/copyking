@@ -85,6 +85,10 @@ export interface Product {
   dream: string;
   emotion: string;
   bait: string;
+  // Link to a saved ICP-map audience segment (by its name). When set, the
+  // bullseye was filled from that segment and copy generation references its
+  // psychology so it writes to that exact avatar. "" = no linked profile.
+  icpSegmentRef: string;
 
   // value engine
   features: FeatureBenefit[];
