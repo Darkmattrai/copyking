@@ -102,22 +102,25 @@ export function ValueLadder() {
         />
       </label>
 
-      {/* Ladder tabs (most users have one) */}
+      {/* Ladder tabs + per-ladder name only matter with multiple ladders. With a
+          single ladder the offer name above already names it, so we just show a
+          "+ New ladder" affordance to keep that capability discoverable. */}
       <div className="flex flex-wrap items-center gap-2">
-        {ladders.map((l, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setCurLadder(i)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-              i === idx
-                ? "bg-accent text-white"
-                : "bg-surface border border-border text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            {l.name || `Ladder ${i + 1}`}
-          </button>
-        ))}
+        {ladders.length > 1 &&
+          ladders.map((l, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setCurLadder(i)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                i === idx
+                  ? "bg-accent text-white"
+                  : "bg-surface border border-border text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {l.name || `Ladder ${i + 1}`}
+            </button>
+          ))}
         <button
           type="button"
           onClick={addLadder}
@@ -136,16 +139,18 @@ export function ValueLadder() {
         )}
       </div>
 
-      <label className="flex flex-col gap-1.5">
-        <span className="ck-label !mb-0">Value ladder name</span>
-        <input
-          type="text"
-          value={L.name}
-          onChange={(e) => updateLadder(idx, { name: e.target.value })}
-          placeholder="e.g. Get-More-Jobs Ladder"
-          className="ck-input"
-        />
-      </label>
+      {ladders.length > 1 && (
+        <label className="flex flex-col gap-1.5">
+          <span className="ck-label !mb-0">Value ladder name</span>
+          <input
+            type="text"
+            value={L.name}
+            onChange={(e) => updateLadder(idx, { name: e.target.value })}
+            placeholder="e.g. Get-More-Jobs Ladder"
+            className="ck-input"
+          />
+        </label>
+      )}
 
       <p className="text-xs text-text-tertiary">
         ↑ Each product is its own complete offer — its own avatar, promise, value
