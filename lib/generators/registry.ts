@@ -18,7 +18,7 @@ export const GENERATORS: GeneratorDef[] = [
     slug: "irresistible-offer",
     name: "Irresistible Offer Builder",
     description:
-      "11-step Grand Slam offer builder: bullseye, features/benefits, value ladder pricing, guarantee, scarcity, objections, and naming — with AI field enhancement",
+      "11-step Titanium Offer Builder: bullseye, features/benefits, value ladder pricing, guarantee, scarcity, objections, and naming — with AI field enhancement",
     icon: "offer",
     category: "foundation",
     outputFormat: "structured",

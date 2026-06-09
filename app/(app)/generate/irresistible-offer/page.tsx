@@ -10,7 +10,6 @@ import { getGenerator } from "@/lib/generators/registry";
 import { useAutosave } from "@/lib/hooks/use-autosave";
 import { AutosaveIndicator } from "@/components/brand/autosave-indicator";
 import { PillarIcon } from "@/components/brand/pillar-icon";
-import { BrandDNAHero } from "@/components/generators/brand-dna-hero";
 import { useOfferDraftStore } from "@/lib/offer/store";
 import {
   brandToProduct,
@@ -202,8 +201,6 @@ export default function IrresistibleOfferPage() {
         </div>
       </motion.div>
 
-      <BrandDNAHero />
-
       {mode === "select" ? (
         /* MODE SELECTOR */
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
@@ -220,7 +217,7 @@ export default function IrresistibleOfferPage() {
             </h3>
             <p className="text-sm text-text-tertiary">
               Don&apos;t know what to sell yet? Answer a few questions and let
-              Claude propose and assemble a Grand-Slam offer for you.
+              Claude propose and assemble a Titanium offer for you.
             </p>
           </button>
 
