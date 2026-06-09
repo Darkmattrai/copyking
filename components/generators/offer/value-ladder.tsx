@@ -447,7 +447,7 @@ export function ValueLadder() {
                 onChange={(rows) =>
                   updateContinuity(idx, ci, { deliverables: rows })
                 }
-                addLabel="+ What they get"
+                addLabel="What they get"
               />
             </div>
 
@@ -463,7 +463,7 @@ export function ValueLadder() {
                 onChange={(rows) =>
                   updateContinuity(idx, ci, { bonuses: rows })
                 }
-                addLabel="+ Bonus"
+                addLabel="Bonus"
               />
             </div>
           </div>
