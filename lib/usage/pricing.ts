@@ -12,8 +12,12 @@ export interface ModelPricing {
 
 // Keyed by model id prefix; lookup falls back to the longest matching prefix.
 export const MODEL_PRICING: Record<string, ModelPricing> = {
-  // Opus 4.x family
-  "claude-opus-4": { input: 15, output: 75, cacheWrite: 18.75, cacheRead: 1.5 },
+  // Opus 4.5+ family (Opus 4.5 / 4.6 / 4.7 / 4.8): $5 / $25 per 1M.
+  "claude-opus-4": { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
+  // The original Opus 4.0 / 4.1 were priced at $15 / $75 — match those
+  // explicitly (longer prefix wins) so historical usage is costed correctly.
+  "claude-opus-4-0": { input: 15, output: 75, cacheWrite: 18.75, cacheRead: 1.5 },
+  "claude-opus-4-1": { input: 15, output: 75, cacheWrite: 18.75, cacheRead: 1.5 },
   // Sonnet 4.x family
   "claude-sonnet-4": { input: 3, output: 15, cacheWrite: 3.75, cacheRead: 0.3 },
   // Haiku 4.x family
