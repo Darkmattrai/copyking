@@ -22,6 +22,7 @@ import {
 } from "@/lib/account/brand-dna-answers";
 import { AnswerCategories } from "@/components/brand/answer-categories";
 import { OfferDrawings } from "@/components/generators/offer/offer-drawings";
+import { OfferPreview } from "@/components/generators/offer/offer-preview";
 import { exportAnswersPdf, exportAnswersDoc } from "@/lib/account/export";
 
 type Tab = "account" | "brand-dna" | "billing";
@@ -240,14 +241,14 @@ function AccountPageInner() {
               <AutosaveIndicator status={saveStatus} />
               <button
                 type="button"
-                onClick={() => exportAnswersDoc(populatedGroups, { brandName })}
+                onClick={() => exportAnswersDoc(populatedGroups, { brandName, offer })}
                 className="ck-btn-secondary"
               >
                 Export .doc
               </button>
               <button
                 type="button"
-                onClick={() => exportAnswersPdf(populatedGroups, { brandName })}
+                onClick={() => exportAnswersPdf(populatedGroups, { brandName, offer })}
                 className="ck-btn-primary"
               >
                 Export PDF
@@ -265,7 +266,14 @@ function AccountPageInner() {
           ) : (
             <AnswerCategories
               groups={populatedGroups}
-              extras={{ Offer: <OfferDrawings offer={offer} /> }}
+              extras={{
+                Offer: (
+                  <>
+                    <OfferDrawings offer={offer} />
+                    <OfferPreview offer={offer} embedded />
+                  </>
+                ),
+              }}
               renderGroup={(group) => (
                 <GroupCard
                   key={`${group.feature}-${group.category}`}

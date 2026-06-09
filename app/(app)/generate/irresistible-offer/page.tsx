@@ -26,7 +26,6 @@ import {
   hasIcpBuilt,
 } from "@/lib/offer/brand-context";
 import { OfferBuilderShell } from "@/components/generators/offer/offer-builder-shell";
-import { OfferPreview } from "@/components/generators/offer/offer-preview";
 import { OfferGuidedChat } from "@/components/generators/offer/offer-guided-chat";
 import { productHasContent } from "@/lib/offer/assemble";
 
@@ -262,13 +261,8 @@ export default function IrresistibleOfferPage() {
           />
         </div>
       ) : (
-        /* MANUAL BUILDER */
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
-          <OfferBuilderShell />
-          <div>
-            <OfferPreview offer={offer} />
-          </div>
-        </div>
+        /* MANUAL BUILDER — the offer-ladder preview now lives in Brand DNA */
+        <OfferBuilderShell />
       )}
     </div>
   );

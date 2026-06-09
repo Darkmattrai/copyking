@@ -13,7 +13,15 @@ import {
 import { offerMarkdown, productHasContent } from "@/lib/offer/assemble";
 import { offerExportHtml } from "@/lib/offer/export-html";
 
-export function OfferPreview({ offer: D }: { offer: Offer }) {
+export function OfferPreview({
+  offer: D,
+  embedded = false,
+}: {
+  offer: Offer;
+  // `embedded` drops the export toolbar and sticky positioning so the ladder can
+  // be shown read-only inside the Brand DNA / answers view.
+  embedded?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   const valTotal = offerValueTotal(D);
   const multi = D.ladders.length > 1;
@@ -67,37 +75,41 @@ export function OfferPreview({ offer: D }: { offer: Offer }) {
   const anyContent = D.ladders.some((L) => L.products.some(productHasContent));
 
   return (
-    <div className="ck-card p-5 space-y-3 sticky top-6">
+    <div className={`ck-card p-5 space-y-3 ${embedded ? "" : "sticky top-6"}`}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs uppercase tracking-wider text-text-tertiary font-semibold">
           Your offer ladder
         </span>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={copy}
-            className="text-xs font-medium text-accent hover:text-accent-hover transition-colors"
-          >
-            {copied ? "Copied ✓" : "Copy text"}
-          </button>
-          <button
-            type="button"
-            onClick={exportHtml}
-            className="text-xs font-medium text-accent hover:text-accent-hover transition-colors"
-          >
-            Export HTML
-          </button>
-          <button
-            type="button"
-            onClick={exportPdf}
-            className="text-xs font-semibold text-accent hover:text-accent-hover transition-colors"
-          >
-            Export PDF
-          </button>
-        </div>
+        {!embedded && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={copy}
+              className="text-xs font-medium text-accent hover:text-accent-hover transition-colors"
+            >
+              {copied ? "Copied ✓" : "Copy text"}
+            </button>
+            <button
+              type="button"
+              onClick={exportHtml}
+              className="text-xs font-medium text-accent hover:text-accent-hover transition-colors"
+            >
+              Export HTML
+            </button>
+            <button
+              type="button"
+              onClick={exportPdf}
+              className="text-xs font-semibold text-accent hover:text-accent-hover transition-colors"
+            >
+              Export PDF
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="border-t border-border pt-3 max-h-[70vh] overflow-y-auto space-y-3 text-sm">
+      <div
+        className={`border-t border-border pt-3 space-y-3 text-sm ${embedded ? "" : "max-h-[70vh] overflow-y-auto"}`}
+      >
         {!anyContent && (
           <p className="text-text-tertiary">
             Add products and build each one — your offer ladder assembles here.

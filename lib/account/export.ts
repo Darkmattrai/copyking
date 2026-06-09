@@ -3,9 +3,22 @@
 // "Save as PDF"); the .doc path downloads a Word-compatible HTML blob.
 
 import type { AnswerGroup } from "./brand-dna-answers";
+import type { Offer } from "@/lib/offer/schema";
+import {
+  sortProducts,
+  tierOf,
+  money,
+  stageValue,
+  offerValueTotal,
+  effectiveDeliverables,
+  effectiveBonuses,
+} from "@/lib/offer/schema";
+import { productHasContent } from "@/lib/offer/assemble";
 
 interface ExportMeta {
   brandName?: string;
+  // When provided, the offer ladder is rendered into the document.
+  offer?: Offer | null;
 }
 
 const esc = (s: string) =>
@@ -39,6 +52,73 @@ function fieldHtml(question: string, value: string, original?: string, enhanced?
     <div class="q">${esc(question)}</div>
     <div class="a">${nl2br(value)}</div>
   </div>`;
+}
+
+// Render the offer ladder (the same summary shown in the builder/Brand DNA) as
+// a self-contained HTML section so it appears in the exported PDF/.doc.
+function offerLadderHtml(offer?: Offer | null): string {
+  if (!offer) return "";
+  const anyContent = offer.ladders.some((L) =>
+    L.products.some(productHasContent),
+  );
+  if (!anyContent) return "";
+
+  const ladders = offer.ladders
+    .map((L) => {
+      const products = sortProducts(L.products).filter(productHasContent);
+      const conts = (L.continuities ?? []).filter(
+        (c) => c.on && (c.name || c.price),
+      );
+      if (!products.length && !conts.length) return "";
+
+      const prods = products
+        .map((p) => {
+          const t = tierOf(p.price);
+          const sv = stageValue(p);
+          const stack = [
+            ...effectiveDeliverables(p)
+              .filter((d) => d.item)
+              .map(
+                (d) =>
+                  `<li>${esc(d.item)}${d.val ? `<span class="v">${esc(money(d.val))}</span>` : ""}</li>`,
+              ),
+            ...effectiveBonuses(p)
+              .filter((b) => b.name)
+              .map(
+                (b) =>
+                  `<li>🎁 ${esc(b.name)}${b.val ? `<span class="v">${esc(money(b.val))}</span>` : ""}</li>`,
+              ),
+          ].join("");
+          return `<div class="prod"${t ? ` style="border-left:3px solid ${t.color}"` : ""}>
+            <div class="prod-head"><strong>${esc(p.name || "Product")}${p.pop ? " ⭐" : ""}</strong>${t ? ` <span class="tier">${esc(t.label)}</span>` : ""}<span class="price">${esc(p.price)}</span></div>
+            ${p.desc ? `<div class="prod-desc">${esc(p.desc)}</div>` : ""}
+            ${p.trim ? `<div class="prod-promise"><em>Promise:</em> ${esc(p.trim)}</div>` : ""}
+            ${stack ? `<ul class="stack">${stack}</ul>` : ""}
+            ${sv > 0 || p.realPrice ? `<div class="prod-foot">${sv > 0 ? `${esc(money(sv))} value` : ""}${p.realPrice ? ` &rarr; <strong>${esc(money(p.realPrice))}</strong>` : ""}</div>` : ""}
+            ${p.guaranteeResult ? `<div class="prod-guar">✅ ${esc(p.guaranteeResult)}</div>` : ""}
+          </div>`;
+        })
+        .join("");
+
+      const continuity = conts
+        .map(
+          (c) =>
+            `<div class="cont">🔁 ${esc(c.name || "Continuity")}<span class="price">${esc(c.price)}${c.cycle ? `/${esc(c.cycle.toLowerCase())}` : ""}</span></div>`,
+        )
+        .join("");
+
+      return prods + continuity;
+    })
+    .join("");
+
+  const total = offerValueTotal(offer);
+
+  return `<section class="group offer-ladder">
+    <h2>Offer Ladder <span class="tag">Offer</span></h2>
+    <div class="ladder-name">${esc(offer.offerName || "(unnamed offer)")}</div>
+    ${ladders}
+    ${total > 0 ? `<div class="ladder-total">Total stacked value<span>${esc(money(total))}</span></div>` : ""}
+  </section>`;
 }
 
 function buildBodyHtml(groups: AnswerGroup[]): string {
@@ -90,6 +170,20 @@ function buildDocument(groups: AnswerGroup[], meta: ExportMeta): string {
   .sub { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin: 6px 0 2px; }
   .a.orig { color: #777; }
   .a.enh { color: #1a1a1a; }
+  .offer-ladder .ladder-name { font-size: 16px; font-weight: bold; margin: 0 0 12px; }
+  .offer-ladder .prod { border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px; margin: 0 0 10px; page-break-inside: avoid; }
+  .offer-ladder .prod-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; }
+  .offer-ladder .prod-head .tier { color: #888; font-weight: normal; font-size: 11px; margin-right: auto; padding-left: 6px; }
+  .offer-ladder .prod-head .price { font-weight: bold; }
+  .offer-ladder .prod-desc { font-size: 12px; color: #666; margin-top: 2px; }
+  .offer-ladder .prod-promise { font-size: 12px; color: #333; margin-top: 4px; }
+  .offer-ladder ul.stack { list-style: none; margin: 6px 0 0; padding: 0; }
+  .offer-ladder ul.stack li { display: flex; justify-content: space-between; font-size: 12px; color: #333; padding: 1px 0; }
+  .offer-ladder ul.stack li .v { color: #666; }
+  .offer-ladder .prod-foot { display: flex; justify-content: space-between; font-size: 12px; color: #666; border-top: 1px solid #eee; margin-top: 6px; padding-top: 4px; }
+  .offer-ladder .prod-guar { font-size: 12px; color: #555; margin-top: 4px; }
+  .offer-ladder .cont { display: flex; justify-content: space-between; font-size: 12px; color: #555; padding: 2px 0; }
+  .offer-ladder .ladder-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; border-top: 2px solid #333; margin-top: 8px; padding-top: 6px; }
   @media print { body { margin: 0.6in; } }
 </style>
 </head>
@@ -98,6 +192,7 @@ function buildDocument(groups: AnswerGroup[], meta: ExportMeta): string {
     <h1>${esc(title)}</h1>
     <div class="meta">Exported ${esc(date)}</div>
   </div>
+  ${offerLadderHtml(meta.offer)}
   ${buildBodyHtml(groups)}
 </body>
 </html>`;

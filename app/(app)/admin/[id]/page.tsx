@@ -14,6 +14,7 @@ import {
 } from "@/lib/account/build-answers";
 import { AnswerCategories } from "@/components/brand/answer-categories";
 import { OfferDrawings } from "@/components/generators/offer/offer-drawings";
+import { OfferPreview } from "@/components/generators/offer/offer-preview";
 import { exportAnswersPdf, exportAnswersDoc } from "@/lib/account/export";
 import { formatUsd } from "@/lib/usage/pricing";
 
@@ -173,14 +174,14 @@ export default function AdminUserDetailPage() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => exportAnswersDoc(groups, { brandName })}
+                onClick={() => exportAnswersDoc(groups, { brandName, offer: parsed?.offer ?? null })}
                 className="ck-btn-secondary"
               >
                 Export .doc
               </button>
               <button
                 type="button"
-                onClick={() => exportAnswersPdf(groups, { brandName })}
+                onClick={() => exportAnswersPdf(groups, { brandName, offer: parsed?.offer ?? null })}
                 className="ck-btn-primary"
               >
                 Export PDF
@@ -284,7 +285,16 @@ export default function AdminUserDetailPage() {
             ) : (
               <AnswerCategories
                 groups={groups}
-                extras={{ Offer: <OfferDrawings offer={parsed?.offer ?? null} /> }}
+                extras={{
+                  Offer: (
+                    <>
+                      <OfferDrawings offer={parsed?.offer ?? null} />
+                      {parsed?.offer && (
+                        <OfferPreview offer={parsed.offer} embedded />
+                      )}
+                    </>
+                  ),
+                }}
                 renderGroup={(group) => (
                   <GroupCard
                     key={`${group.feature}-${group.category}`}
