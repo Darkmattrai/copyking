@@ -236,7 +236,7 @@ function IcpProfilePicker({
       )}
 
       {open && (
-        <div className="absolute z-20 mt-1.5 w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
+        <div className="absolute z-30 mt-1.5 w-full max-w-md overflow-hidden rounded-xl border border-border bg-background shadow-lg">
           <div className="border-b border-border px-3 py-2 text-[10px] uppercase tracking-wider text-text-tertiary">
             Your ICP Map segments
           </div>
