@@ -230,11 +230,11 @@ export const useOfferDraftStore = create<OfferDraftStore>()(
     }),
     {
       name: "copyking-offer-draft",
-      // v4: products gained `icpSegmentRefs`. Bumping forces migrate() to run on
-      // already-persisted v3 offers so every product is normalized through
-      // newProduct() and the new field is present (else the bullseye picker
-      // crashes calling .includes() on undefined).
-      version: 4,
+      // v4: products gained `icpSegmentRefs`. v5: continuity offers gained
+      // `deliverables` and `bonuses`. Bumping forces migrate() to re-normalize
+      // already-persisted offers so the new fields are always present (the UI
+      // reads them via .map/.filter and would otherwise crash on undefined).
+      version: 5,
       partialize: (s) => ({ offer: s.offer, enhancements: s.enhancements }),
       migrate: (persisted) => {
         const p = (persisted ?? {}) as {

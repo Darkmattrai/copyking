@@ -82,6 +82,8 @@ function normCont(c: Continuity): Continuity {
     price: c.price ?? "",
     cycle: c.cycle ?? "Monthly",
     desc: c.desc ?? "",
+    deliverables: Array.isArray(c.deliverables) ? c.deliverables : [],
+    bonuses: Array.isArray(c.bonuses) ? c.bonuses : [],
   };
 }
 

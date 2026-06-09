@@ -289,12 +289,33 @@ export function OfferPreview({
                 );
               })}
               {conts.map((c, ci) => (
-                <div
-                  key={ci}
-                  className="flex justify-between text-xs text-text-secondary"
-                >
-                  <span>🔁 {c.name}</span>
-                  <span>{c.price}</span>
+                <div key={ci} className="text-xs">
+                  <div className="flex justify-between font-medium text-text-secondary">
+                    <span>🔁 {c.name}</span>
+                    <span>{c.price}</span>
+                  </div>
+                  {(c.deliverables ?? [])
+                    .filter((d) => d.item)
+                    .map((d, di) => (
+                      <div
+                        key={di}
+                        className="flex justify-between text-text-tertiary pl-3"
+                      >
+                        <span>• {d.item}</span>
+                        <span>{d.val ? money(d.val) : ""}</span>
+                      </div>
+                    ))}
+                  {(c.bonuses ?? [])
+                    .filter((b) => b.name)
+                    .map((b, bi) => (
+                      <div
+                        key={bi}
+                        className="flex justify-between text-text-tertiary pl-3"
+                      >
+                        <span>🎁 {b.name}</span>
+                        <span>{b.val ? money(b.val) : ""}</span>
+                      </div>
+                    ))}
                 </div>
               ))}
             </div>

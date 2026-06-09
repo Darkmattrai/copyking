@@ -10,7 +10,15 @@ import type {
 
 // A blank continuity / subscription offer that runs beneath the ladder.
 export function newContinuity(): Continuity {
-  return { on: true, name: "", price: "", cycle: "Monthly", desc: "" };
+  return {
+    on: true,
+    name: "",
+    price: "",
+    cycle: "Monthly",
+    desc: "",
+    deliverables: [],
+    bonuses: [],
+  };
 }
 
 // A blank pillar (used by the high-ticket "structure as pillars" mode).
@@ -189,6 +197,18 @@ export function seed(): Offer {
             price: "$297/mo",
             cycle: "Monthly",
             desc: "Ongoing campaign optimization, fresh ad templates each month, and a live group call — they stay subscribed.",
+            deliverables: [
+              { item: "Monthly campaign optimization", val: "500" },
+              { item: "Fresh ad-creative templates", val: "300" },
+              { item: "Live monthly group strategy call", val: "400" },
+            ],
+            bonuses: [
+              {
+                name: "Private members-only community",
+                val: "200",
+                why: "Peer support keeps them engaged and subscribed",
+              },
+            ],
           },
         ],
       },

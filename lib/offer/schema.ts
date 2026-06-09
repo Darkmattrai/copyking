@@ -139,6 +139,10 @@ export interface Continuity {
   price: string;
   cycle: string;
   desc: string;
+  // What the member gets each cycle (the recurring value stack) + any join /
+  // loyalty bonuses. Optional — empty lists are fine.
+  deliverables: Deliverable[];
+  bonuses: Bonus[];
 }
 
 export interface Ladder {

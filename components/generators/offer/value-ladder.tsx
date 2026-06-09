@@ -9,7 +9,10 @@ import {
   money,
   CONTINUITY_CYCLES,
   type Product,
+  type Deliverable,
+  type Bonus,
 } from "@/lib/offer/schema";
+import { ListTable } from "./list-table";
 
 // A spiky "$" starburst that anchors the top of the ladder (the big payday).
 function burstPoints(cx: number, cy: number, spikes: number, outer: number, inner: number) {
@@ -426,10 +429,43 @@ export function ValueLadder() {
               onChange={(e) =>
                 updateContinuity(idx, ci, { desc: e.target.value })
               }
-              placeholder="The ongoing value that earns the recurring charge."
+              placeholder="Why they stay subscribed — the ongoing value in one line."
               rows={2}
               className="ck-input resize-none !py-2"
             />
+
+            <div>
+              <span className="ck-label !mb-1 block">
+                What they get each {c.cycle.toLowerCase()}
+              </span>
+              <ListTable<Deliverable>
+                rows={c.deliverables ?? []}
+                columns={[
+                  { key: "item", label: "What's included", placeholder: "Fresh ad-creative templates" },
+                  { key: "val", label: "Value ($)", type: "number", placeholder: "500" },
+                ]}
+                onChange={(rows) =>
+                  updateContinuity(idx, ci, { deliverables: rows })
+                }
+                addLabel="+ What they get"
+              />
+            </div>
+
+            <div>
+              <span className="ck-label !mb-1 block">Bonuses (optional)</span>
+              <ListTable<Bonus>
+                rows={c.bonuses ?? []}
+                columns={[
+                  { key: "name", label: "Bonus", placeholder: "Private members-only community" },
+                  { key: "val", label: "Value ($)", type: "number", placeholder: "200" },
+                  { key: "why", label: "Why it matters", type: "textarea", placeholder: "Peer support keeps them subscribed" },
+                ]}
+                onChange={(rows) =>
+                  updateContinuity(idx, ci, { bonuses: rows })
+                }
+                addLabel="+ Bonus"
+              />
+            </div>
           </div>
         ))}
 

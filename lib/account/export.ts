@@ -101,10 +101,22 @@ function offerLadderHtml(offer?: Offer | null): string {
         .join("");
 
       const continuity = conts
-        .map(
-          (c) =>
-            `<div class="cont">🔁 ${esc(c.name || "Continuity")}<span class="price">${esc(c.price)}${c.cycle ? `/${esc(c.cycle.toLowerCase())}` : ""}</span></div>`,
-        )
+        .map((c) => {
+          const cd = (c.deliverables ?? [])
+            .filter((d) => d.item)
+            .map(
+              (d) =>
+                `<li>${esc(d.item)}${d.val ? `<span class="v">${esc(money(d.val))}</span>` : ""}</li>`,
+            );
+          const cb = (c.bonuses ?? [])
+            .filter((b) => b.name)
+            .map(
+              (b) =>
+                `<li>🎁 ${esc(b.name)}${b.val ? `<span class="v">${esc(money(b.val))}</span>` : ""}</li>`,
+            );
+          const stack = [...cd, ...cb].join("");
+          return `<div class="cont">🔁 ${esc(c.name || "Continuity")}<span class="price">${esc(c.price)}${c.cycle ? `/${esc(c.cycle.toLowerCase())}` : ""}</span></div>${stack ? `<ul class="stack">${stack}</ul>` : ""}`;
+        })
         .join("");
 
       return prods + continuity;
