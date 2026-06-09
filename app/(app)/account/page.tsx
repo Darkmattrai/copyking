@@ -19,8 +19,8 @@ import {
   useBrandDnaAnswers,
   type AnswerField,
   type AnswerGroup,
-  type FeatureTag,
 } from "@/lib/account/brand-dna-answers";
+import { AnswerCategories } from "@/components/brand/answer-categories";
 import { exportAnswersPdf, exportAnswersDoc } from "@/lib/account/export";
 
 type Tab = "account" | "brand-dna" | "billing";
@@ -30,12 +30,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "brand-dna", label: "Brand DNA" },
   { id: "billing", label: "Billing" },
 ];
-
-const TAG_STYLES: Record<FeatureTag, string> = {
-  ICP: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30",
-  Offer: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  "Brand DNA": "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-};
 
 export default function AccountPage() {
   return (
@@ -268,11 +262,15 @@ function AccountPageInner() {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {populatedGroups.map((group) => (
-                <GroupCard key={`${group.feature}-${group.category}`} group={group} />
-              ))}
-            </div>
+            <AnswerCategories
+              groups={populatedGroups}
+              renderGroup={(group) => (
+                <GroupCard
+                  key={`${group.feature}-${group.category}`}
+                  group={group}
+                />
+              )}
+            />
           )}
         </div>
       )}
@@ -313,19 +311,9 @@ function GroupCard({ group }: { group: AnswerGroup }) {
 
   return (
     <div className="ck-card p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-sm font-semibold text-text-primary">
-          {group.category}
-        </h3>
-        <span
-          className={
-            "text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded border " +
-            TAG_STYLES[group.feature]
-          }
-        >
-          {group.feature}
-        </span>
-      </div>
+      <h3 className="text-sm font-semibold text-text-primary mb-4">
+        {group.category}
+      </h3>
       <div className="space-y-4">
         {fields.map((field) => (
           <FieldRow key={field.id} field={field} />

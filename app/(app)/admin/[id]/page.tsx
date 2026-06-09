@@ -6,12 +6,13 @@ import { motion } from "framer-motion";
 
 import type { BrandDNA } from "@/types/brand";
 import type { UserRole } from "@/lib/auth/roles";
-import type { AnswerField, AnswerGroup, FeatureTag } from "@/lib/account/brand-dna-answers";
+import type { AnswerField, AnswerGroup } from "@/lib/account/brand-dna-answers";
 import {
   buildBrandDnaAnswerGroups,
   populatedAnswerGroups,
   parseGenerationContent,
 } from "@/lib/account/build-answers";
+import { AnswerCategories } from "@/components/brand/answer-categories";
 import { exportAnswersPdf, exportAnswersDoc } from "@/lib/account/export";
 import { formatUsd } from "@/lib/usage/pricing";
 
@@ -75,12 +76,6 @@ interface Bundle {
   }[];
   usage?: UsageSummary;
 }
-
-const TAG_STYLES: Record<FeatureTag, string> = {
-  ICP: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30",
-  Offer: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  "Brand DNA": "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-};
 
 const fmtDate = (s: string | null | undefined) =>
   s ? new Date(s).toLocaleString() : "—";
@@ -282,11 +277,15 @@ export default function AdminUserDetailPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {groups.map((group) => (
-                  <GroupCard key={`${group.feature}-${group.category}`} group={group} />
-                ))}
-              </div>
+              <AnswerCategories
+                groups={groups}
+                renderGroup={(group) => (
+                  <GroupCard
+                    key={`${group.feature}-${group.category}`}
+                    group={group}
+                  />
+                )}
+              />
             )}
           </div>
         </div>
@@ -416,19 +415,9 @@ function GroupCard({ group }: { group: AnswerGroup }) {
 
   return (
     <div className="ck-card p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-sm font-semibold text-text-primary">
-          {group.category}
-        </h3>
-        <span
-          className={
-            "text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded border " +
-            TAG_STYLES[group.feature]
-          }
-        >
-          {group.feature}
-        </span>
-      </div>
+      <h3 className="text-sm font-semibold text-text-primary mb-4">
+        {group.category}
+      </h3>
       <div className="space-y-4">
         {fields.map((field) => (
           <FieldRow key={field.id} field={field} />
