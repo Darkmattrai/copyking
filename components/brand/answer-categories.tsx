@@ -1,11 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { AnswerGroup, FeatureTag } from "@/lib/account/brand-dna-answers";
 
 // Top-level categories the saved answers are grouped under. ICP Map and Offer
 // are the two the client actually fills; Brand DNA holds the deeper discovery
-// pillars (only shows when populated). Order here = display order.
+// pillars (only shows when populated). Order here = tab order.
 interface CategoryMeta {
   feature: FeatureTag;
   title: string;
@@ -38,9 +38,9 @@ const CATEGORIES: CategoryMeta[] = [
 ];
 
 /**
- * Renders saved AnswerGroups split into clear top-level categories (ICP Map /
- * Offer / Brand DNA). The caller supplies how each group card is rendered, so
- * the editable account view and the read-only admin view share one layout.
+ * Renders saved AnswerGroups as switchable tabs (ICP Map / Offer / Brand DNA).
+ * The caller supplies how each group card is rendered, so the editable account
+ * view and the read-only admin view share one tabbed layout.
  */
 export function AnswerCategories({
   groups,
@@ -49,30 +49,60 @@ export function AnswerCategories({
   groups: AnswerGroup[];
   renderGroup: (group: AnswerGroup) => ReactNode;
 }) {
-  return (
-    <div className="space-y-10">
-      {CATEGORIES.map((cat) => {
-        const inCategory = groups.filter((g) => g.feature === cat.feature);
-        if (!inCategory.length) return null;
+  // Only categories that actually have answers become tabs.
+  const available = CATEGORIES.map((cat) => ({
+    ...cat,
+    groups: groups.filter((g) => g.feature === cat.feature),
+  })).filter((cat) => cat.groups.length > 0);
 
-        return (
-          <section key={cat.feature}>
-            <div className="flex items-center gap-2.5">
-              <span className={`h-2.5 w-2.5 rounded-full ${cat.dot}`} />
-              <h2 className="text-lg font-bold text-text-primary">
-                {cat.title}
-              </h2>
-              <span className="text-xs text-text-tertiary">
-                {inCategory.length} section{inCategory.length === 1 ? "" : "s"}
+  const [active, setActive] = useState<FeatureTag>(
+    available[0]?.feature ?? "ICP",
+  );
+
+  if (!available.length) return null;
+
+  // Guard against the active tab emptying out (e.g. after an inline edit).
+  const current =
+    available.find((cat) => cat.feature === active) ?? available[0];
+
+  return (
+    <div>
+      {/* Tab bar */}
+      <div className="flex flex-wrap gap-2">
+        {available.map((cat) => {
+          const isActive = cat.feature === current.feature;
+          return (
+            <button
+              key={cat.feature}
+              type="button"
+              onClick={() => setActive(cat.feature)}
+              className={
+                "flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors " +
+                (isActive
+                  ? "border-accent bg-accent/10 text-text-primary"
+                  : "border-border text-text-tertiary hover:text-text-secondary hover:border-border-hover")
+              }
+            >
+              <span className={`h-2 w-2 rounded-full ${cat.dot}`} />
+              {cat.title}
+              <span
+                className={
+                  "rounded-full px-1.5 text-[11px] " +
+                  (isActive
+                    ? "bg-accent/20 text-text-secondary"
+                    : "bg-surface-hover text-text-tertiary")
+                }
+              >
+                {cat.groups.length}
               </span>
-            </div>
-            <p className="mt-0.5 mb-4 ml-5 text-sm text-text-tertiary">
-              {cat.blurb}
-            </p>
-            <div className="space-y-4">{inCategory.map(renderGroup)}</div>
-          </section>
-        );
-      })}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Active category */}
+      <p className="mt-4 mb-4 text-sm text-text-tertiary">{current.blurb}</p>
+      <div className="space-y-4">{current.groups.map(renderGroup)}</div>
     </div>
   );
 }
