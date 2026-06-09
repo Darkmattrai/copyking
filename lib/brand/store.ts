@@ -41,6 +41,9 @@ interface BrandStore {
     key: K,
     data: PillarDataMap[K],
   ) => void;
+  // Merge several pillars in one pass and sync ONCE. Returns the sync promise
+  // so callers can await persistence (used by the ICP map → Brand DNA save).
+  updatePillars: (updates: Partial<PillarDataMap>) => Promise<void>;
   setInterviewCompleted: (v: boolean) => void;
   setRevealSeen: (v: boolean) => void;
   syncFromSupabase: () => Promise<void>;
@@ -82,6 +85,26 @@ export const useBrandStore = create<BrandStore>()(
           return { brandDNA: updated };
         });
         void get().syncToSupabase();
+      },
+
+      updatePillars: (updates) => {
+        set((state) => {
+          let updated: BrandDNA = {
+            ...state.brandDNA,
+            updatedAt: new Date().toISOString(),
+          };
+          (Object.keys(updates) as PillarKey[]).forEach((key) => {
+            const data = updates[key];
+            if (!data) return;
+            updated = {
+              ...updated,
+              [key]: { ...updated[key], ...data },
+            };
+          });
+          updated.completionScore = computeCompletionScore(updated);
+          return { brandDNA: updated };
+        });
+        return get().syncToSupabase();
       },
 
       setInterviewCompleted: (v) => {

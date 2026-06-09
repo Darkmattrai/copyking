@@ -82,7 +82,9 @@ export function generateStandaloneHTML(
   let css: string;
   try {
     css = readFileSync(join(process.cwd(), "lib/icp/icp.css"), "utf-8");
-  } catch {
+  } catch (err) {
+    // Don't silently ship an unstyled map — surface it in server logs.
+    console.error("[icp/serialize] failed to read lib/icp/icp.css:", err);
     css = "/* icp.css not found */";
   }
 
@@ -90,7 +92,11 @@ export function generateStandaloneHTML(
   try {
     const brainBuf = readFileSync(join(process.cwd(), "public/brain.png"));
     brainDataUrl = `data:image/png;base64,${brainBuf.toString("base64")}`;
-  } catch {}
+  } catch (err) {
+    // The brain centrepiece going missing is exactly the prod bug we hit —
+    // log loudly rather than swallowing so a missing asset is debuggable.
+    console.error("[icp/serialize] failed to read public/brain.png:", err);
+  }
 
   const u = icp.universal;
   const slug = icp.businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-");

@@ -11,7 +11,7 @@ import { useAutosave } from "@/lib/hooks/use-autosave";
 import { AutosaveIndicator } from "@/components/brand/autosave-indicator";
 import { PillarIcon } from "@/components/brand/pillar-icon";
 import { useIcpDraftStore, blankSegment } from "@/lib/icp/store";
-import { brandToIntake, generatedToBrand } from "@/lib/icp/brand-bridge";
+import { brandToIntake, icpToBrandUpdate } from "@/lib/icp/brand-bridge";
 import type { Intake } from "@/lib/icp/schema";
 import { IcpIntakeForm } from "@/components/generators/icp/icp-intake-form";
 import { IcpGuidedChat } from "@/components/generators/icp/icp-guided-chat";
@@ -26,7 +26,7 @@ export default function IcpMapPage() {
   const generator = getGenerator(SLUG);
 
   const brandDNA = useBrandStore((s) => s.brandDNA);
-  const updatePillar = useBrandStore((s) => s.updatePillar);
+  const updatePillars = useBrandStore((s) => s.updatePillars);
   const setGeneration = useGenerationsStore((s) => s.setGeneration);
 
   const {
@@ -36,6 +36,8 @@ export default function IcpMapPage() {
     setFormData,
     segments,
     setSegments,
+    lastIntake,
+    setLastIntake,
     reset,
   } = useIcpDraftStore();
 
@@ -76,7 +78,7 @@ export default function IcpMapPage() {
   // Autosave the intake draft (and any generated map) to the account.
   // logoDataUrl is intentionally excluded to keep payloads small.
   const autosaveStatus = useAutosave(
-    { formData, segments, result },
+    { formData, segments, result, lastIntake },
     (draft) =>
       setGeneration(SLUG, {
         content: JSON.stringify(draft),
@@ -102,10 +104,17 @@ export default function IcpMapPage() {
       }
       const icp = await res.json();
       setResult(icp);
-      // Auto-save the freshly generated map back to Brand DNA + the account.
-      updatePillar("icp", generatedToBrand(icp));
+      setLastIntake(intake);
+      // Mirror EVERY captured field into Brand DNA across pillars, then await
+      // the sync so the data is actually persisted before we mark it saved.
+      const patch = icpToBrandUpdate(
+        icp,
+        intake,
+        useBrandStore.getState().brandDNA,
+      );
+      await updatePillars(patch);
       await setGeneration(SLUG, {
-        content: JSON.stringify({ formData, segments, result: icp }),
+        content: JSON.stringify({ formData, segments, result: icp, intake }),
         params: {},
       });
       setSaved(true);
@@ -120,9 +129,19 @@ export default function IcpMapPage() {
 
   const handleSaveToBrand = async () => {
     if (!result) return;
-    updatePillar("icp", generatedToBrand(result));
+    const patch = icpToBrandUpdate(
+      result,
+      lastIntake ?? undefined,
+      useBrandStore.getState().brandDNA,
+    );
+    await updatePillars(patch);
     await setGeneration(SLUG, {
-      content: JSON.stringify({ formData, segments, result }),
+      content: JSON.stringify({
+        formData,
+        segments,
+        result,
+        intake: lastIntake,
+      }),
       params: {},
     });
     setSaved(true);

@@ -27,11 +27,17 @@ interface IcpDraftStore {
   segments: IcpSegmentDraft[];
   logoDataUrl?: string;
   result: GeneratedICP | null;
+  // The exact intake used for the last generation. The guided-chat flow
+  // assembles an intake without populating formData/segments, so this is the
+  // only complete record of the answers — needed to mirror EVERY field into
+  // Brand DNA and to recover answers later.
+  lastIntake: Intake | null;
 
   setFormData: (updates: Partial<Intake>) => void;
   setSegments: (segments: IcpSegmentDraft[]) => void;
   setLogo: (dataUrl?: string) => void;
   setResult: (icp: GeneratedICP | null) => void;
+  setLastIntake: (intake: Intake | null) => void;
   reset: () => void;
 }
 
@@ -42,18 +48,21 @@ export const useIcpDraftStore = create<IcpDraftStore>()(
       segments: [blankSegment(1)],
       logoDataUrl: undefined,
       result: null,
+      lastIntake: null,
 
       setFormData: (updates) =>
         set((state) => ({ formData: { ...state.formData, ...updates } })),
       setSegments: (segments) => set({ segments }),
       setLogo: (logoDataUrl) => set({ logoDataUrl }),
       setResult: (result) => set({ result }),
+      setLastIntake: (lastIntake) => set({ lastIntake }),
       reset: () =>
         set({
           formData: {},
           segments: [blankSegment(1)],
           logoDataUrl: undefined,
           result: null,
+          lastIntake: null,
         }),
     }),
     {
