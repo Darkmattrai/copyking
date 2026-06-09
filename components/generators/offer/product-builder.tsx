@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useBrandStore } from "@/lib/brand/store";
 import { icpSegmentToProduct } from "@/lib/offer/brand-bridge";
@@ -306,6 +306,23 @@ export function ProductBuilder() {
     }),
     [P?.who, P?.dream, P?.name, offer.offerName, linkedSegment],
   );
+
+  // The guarantee's "result" is almost always the trimmed promise restated.
+  // Prefill it from `trim` the first time the lead reaches the guarantee step
+  // (fill-empty only — they can edit or clear it; the step still owns the
+  // type / window / conditions / payback).
+  const stepId = STEPS[current >= STEPS.length ? 0 : current]?.id;
+  useEffect(() => {
+    if (
+      stepId === "guarantee" &&
+      P &&
+      !P.guaranteeResult.trim() &&
+      P.trim.trim()
+    ) {
+      setProductField("guaranteeResult", P.trim);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepId, P?.id]);
 
   if (!P) {
     return (

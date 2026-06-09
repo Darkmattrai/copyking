@@ -48,9 +48,14 @@ the generated output (`GeneratedICPSchema`), you **must** add it to
 - The asset-read catches now `console.error` instead of swallowing — a missing
   asset must be loud, not invisible.
 
+## Preview server (localhost:3000) — front-end design only
+- The `copyking-dev` preview is ONLY for front-end/visual design work. Do **not**
+  start, restart, or screenshot it as part of general app/backend work. Leave it
+  stopped unless the user is actively iterating on visual design.
+
 ## Deploy ritual (do not build while the preview server runs)
-1. Stop the preview server.
+1. Stop the preview server if one is running.
 2. `rm -rf .next`
 3. `npx --yes pnpm@10.4.1 build`
 4. `npx --yes vercel@latest --prod --yes`
-5. Restart the preview server.
+   (Do NOT restart the preview server afterward — see the note above.)
