@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useBrandStore } from "@/lib/brand/store";
-import { icpSegmentToProduct } from "@/lib/offer/brand-bridge";
+import { icpSegmentsToProduct } from "@/lib/offer/brand-bridge";
 import type { ICPSegment } from "@/types/brand";
 import { useOfferDraftStore } from "@/lib/offer/store";
 import {
@@ -166,19 +166,17 @@ function readFileToThumb(file: File): Promise<string> {
   });
 }
 
-// Pick a saved ICP-map audience segment to target with this product. Picking one
-// fills the bullseye from that segment and links the product so copy generation
-// writes to that exact avatar.
+// Pick one or more saved ICP-map audience segments to target with this product.
+// The bullseye is merged from every selected segment and the links let copy
+// generation write to all of those avatars.
 function IcpProfilePicker({
   segments,
-  linkedRef,
-  onPick,
-  onUnlink,
+  selectedRefs,
+  onChange,
 }: {
   segments: ICPSegment[];
-  linkedRef: string;
-  onPick: (seg: ICPSegment) => void;
-  onUnlink: () => void;
+  selectedRefs: string[];
+  onChange: (selected: ICPSegment[]) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -192,37 +190,49 @@ function IcpProfilePicker({
         >
           ICP Map
         </a>{" "}
-        to target a saved audience profile here.
+        to target saved audience profiles here.
       </div>
     );
   }
 
+  const selected = segments.filter((s) => selectedRefs.includes(s.name));
+  const isSelected = (name: string) => selectedRefs.includes(name);
+
+  const toggle = (seg: ICPSegment) => {
+    const nextRefs = isSelected(seg.name)
+      ? selectedRefs.filter((r) => r !== seg.name)
+      : [...selectedRefs, seg.name];
+    onChange(segments.filter((s) => nextRefs.includes(s.name)));
+  };
+
   return (
     <div className="relative">
-      {linkedRef ? (
+      {selected.length ? (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent/40 bg-accent/[0.06] px-3 py-2">
-          <span className="text-xs font-semibold text-accent">
-            🔗 Targeting ICP profile:
-          </span>
-          <span className="text-sm font-medium text-text-primary">
-            {linkedRef}
-          </span>
-          <div className="ml-auto flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setOpen((o) => !o)}
-              className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
+          <span className="text-xs font-semibold text-accent">🔗 Targeting:</span>
+          {selected.map((s) => (
+            <span
+              key={s.name}
+              className="inline-flex items-center gap-1 rounded-md bg-accent/10 px-2 py-0.5 text-xs font-medium text-text-primary"
             >
-              Change
-            </button>
-            <button
-              type="button"
-              onClick={onUnlink}
-              className="text-xs text-text-tertiary hover:text-danger transition-colors"
-            >
-              Unlink
-            </button>
-          </div>
+              {s.name}
+              <button
+                type="button"
+                onClick={() => toggle(s)}
+                aria-label={`Remove ${s.name}`}
+                className="text-text-tertiary hover:text-danger transition-colors"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="ml-auto text-xs text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            Edit
+          </button>
         </div>
       ) : (
         <button
@@ -231,37 +241,57 @@ function IcpProfilePicker({
           className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent"
         >
           <span className="text-base leading-none">＋</span>
-          Use an ICP profile
+          Use ICP profile(s)
         </button>
       )}
 
       {open && (
         <div className="absolute z-30 mt-1.5 w-full max-w-md overflow-hidden rounded-xl border border-border bg-background shadow-lg">
-          <div className="border-b border-border px-3 py-2 text-[10px] uppercase tracking-wider text-text-tertiary">
-            Your ICP Map segments
+          <div className="flex items-center justify-between border-b border-border px-3 py-2">
+            <span className="text-[10px] uppercase tracking-wider text-text-tertiary">
+              Pick one or more segments
+            </span>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-xs font-medium text-accent hover:text-accent-hover transition-colors"
+            >
+              Done
+            </button>
           </div>
           <ul className="max-h-64 overflow-y-auto">
-            {segments.map((seg, i) => (
-              <li key={i}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onPick(seg);
-                    setOpen(false);
-                  }}
-                  className="w-full px-3 py-2.5 text-left transition-colors hover:bg-surface-hover"
-                >
-                  <div className="text-sm font-semibold text-text-primary">
-                    {seg.name || `Segment ${i + 1}`}
-                  </div>
-                  {seg.oneLine && (
-                    <div className="line-clamp-2 text-xs text-text-tertiary">
-                      {seg.oneLine}
-                    </div>
-                  )}
-                </button>
-              </li>
-            ))}
+            {segments.map((seg, i) => {
+              const sel = isSelected(seg.name);
+              return (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onClick={() => toggle(seg)}
+                    className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-surface-hover"
+                  >
+                    <span
+                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold leading-none ${
+                        sel
+                          ? "border-accent bg-accent text-white"
+                          : "border-border-hover text-transparent"
+                      }`}
+                    >
+                      ✓
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-text-primary">
+                        {seg.name || `Segment ${i + 1}`}
+                      </span>
+                      {seg.oneLine && (
+                        <span className="block line-clamp-2 text-xs text-text-tertiary">
+                          {seg.oneLine}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -289,22 +319,25 @@ export function ProductBuilder() {
   const P: Product | undefined =
     curProduct !== null ? ladder?.products[curProduct] : undefined;
 
-  const linkedSegment =
-    icp.segments.find((s) => s.name === P?.icpSegmentRef) ?? null;
+  const linkedRefs = P?.icpSegmentRefs ?? [];
+  const linkedSegments = useMemo(
+    () => icp.segments.filter((s) => linkedRefs.includes(s.name)),
+    [icp.segments, linkedRefs],
+  );
 
   const ctx: EnhanceContext = useMemo(
     () => ({
       who: P?.who,
       dream: P?.dream,
       offerName: P?.name || offer.offerName,
-      segmentName: linkedSegment?.name,
-      segmentPain: linkedSegment?.pain,
-      segmentGoals: linkedSegment?.goals,
-      segmentMindset: linkedSegment?.mindset,
-      segmentObjections: linkedSegment?.objections,
-      segmentTriggers: linkedSegment?.triggers,
+      segmentName: linkedSegments.map((s) => s.name).join(", ") || undefined,
+      segmentPain: linkedSegments.flatMap((s) => s.pain ?? []),
+      segmentGoals: linkedSegments.flatMap((s) => s.goals ?? []),
+      segmentMindset: linkedSegments.flatMap((s) => s.mindset ?? []),
+      segmentObjections: linkedSegments.flatMap((s) => s.objections ?? []),
+      segmentTriggers: linkedSegments.flatMap((s) => s.triggers ?? []),
     }),
-    [P?.who, P?.dream, P?.name, offer.offerName, linkedSegment],
+    [P?.who, P?.dream, P?.name, offer.offerName, linkedSegments],
   );
 
   // The guarantee's "result" is almost always the trimmed promise restated.
@@ -458,9 +491,10 @@ export function ProductBuilder() {
             <>
               <IcpProfilePicker
                 segments={icp.segments}
-                linkedRef={P.icpSegmentRef}
-                onPick={(seg) => patchProduct(icpSegmentToProduct(seg, icp))}
-                onUnlink={() => set("icpSegmentRef", "")}
+                selectedRefs={P.icpSegmentRefs}
+                onChange={(selected) =>
+                  patchProduct(icpSegmentsToProduct(selected, icp))
+                }
               />
               <OfferField
                 {...fieldProps("who")}

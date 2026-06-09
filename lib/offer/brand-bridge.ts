@@ -38,28 +38,36 @@ export function brandToProduct(brand: BrandOffer): Partial<Product> {
   return seed;
 }
 
-// ─── ICP segment → product bullseye ───────────────────────────────────────────
+// ─── ICP segments → product bullseye ───────────────────────────────────────────
 //
-// Map a chosen ICP-map audience segment onto a product's bullseye so the lead
-// doesn't re-answer who/where/dream/emotion/bait, and record the link so copy
-// generation can refer back to that exact segment. Overwrites the bullseye
-// fields from the segment (the linked profile is the source of truth).
+// Map one or more chosen ICP-map audience segments onto a product's bullseye so
+// the lead doesn't re-answer who/where/dream/emotion/bait, and record the links
+// so copy generation can refer back to those segments. With multiple segments
+// the bullseye is the merged union of all of them (the linked profiles are the
+// source of truth). With none, only the links are cleared — the typed bullseye
+// text is left intact (nothing to overwrite it with).
 
 const channelLabels = (vals: string[] | undefined): string =>
   (vals ?? [])
     .map((v) => CHANNELS.find((c) => c.value === v)?.label ?? v)
     .join(", ");
 
-export function icpSegmentToProduct(
-  segment: ICPSegment,
+const uniq = (arr: string[]): string[] =>
+  Array.from(new Set(arr.map((s) => s.trim()).filter(Boolean)));
+
+export function icpSegmentsToProduct(
+  segments: ICPSegment[],
   icp: ICP,
 ): Partial<Product> {
+  const refs = uniq(segments.map((s) => s.name));
+  if (!segments.length) return { icpSegmentRefs: refs };
+
   const patch: Partial<Product> = {
-    icpSegmentRef: segment.name,
-    who: segment.oneLine || segment.name,
-    dream: (segment.goals ?? []).join("; "),
-    emotion: (segment.pain ?? []).join("; "),
-    bait: (segment.triggers ?? []).join("; "),
+    icpSegmentRefs: refs,
+    who: uniq(segments.map((s) => s.oneLine || s.name)).join("; "),
+    dream: uniq(segments.flatMap((s) => s.goals ?? [])).join("; "),
+    emotion: uniq(segments.flatMap((s) => s.pain ?? [])).join("; "),
+    bait: uniq(segments.flatMap((s) => s.triggers ?? [])).join("; "),
   };
   // Channels live on the ICP as a whole, not per-segment. Only set "where" when
   // there are channels, so picking a profile never blanks an existing value.

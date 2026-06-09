@@ -56,7 +56,7 @@ export function newProduct(o?: Partial<Product>): Product {
     dream: "",
     emotion: "",
     bait: "",
-    icpSegmentRef: "",
+    icpSegmentRefs: [],
 
     features: [{ f: "", b: "" }],
     problems: [{ p: "", s: "" }],

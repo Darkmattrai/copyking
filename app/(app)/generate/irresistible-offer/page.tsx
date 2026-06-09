@@ -18,7 +18,7 @@ import {
   flagshipProduct,
   chatOfferToProduct,
   chatIcpToBrand,
-  icpSegmentToProduct,
+  icpSegmentsToProduct,
   type ChatOfferPayload,
 } from "@/lib/offer/brand-bridge";
 import {
@@ -61,7 +61,7 @@ export default function IrresistibleOfferPage() {
       const seedFromBrand = {
         ...brandToProduct(brandDNA.offer),
         ...(primarySegment
-          ? icpSegmentToProduct(primarySegment, brandDNA.icp)
+          ? icpSegmentsToProduct([primarySegment], brandDNA.icp)
           : {}),
       };
       if (Object.keys(seedFromBrand).length) {

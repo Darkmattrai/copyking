@@ -98,9 +98,18 @@ function readContinuities(L: {
 }
 
 // Ensure a (possibly partial) product from storage has every field the current
-// schema expects, without clobbering the user's saved values.
-function normalizeProduct(p: Partial<Product>): Product {
-  return newProduct(p);
+// schema expects, without clobbering the user's saved values. Also upgrades the
+// legacy single `icpSegmentRef` (string) into the new `icpSegmentRefs` (string[]).
+function normalizeProduct(
+  p: Partial<Product> & { icpSegmentRef?: string },
+): Product {
+  const { icpSegmentRef: legacyRef, ...rest } = p;
+  const icpSegmentRefs = Array.isArray(rest.icpSegmentRefs)
+    ? rest.icpSegmentRefs
+    : typeof legacyRef === "string" && legacyRef.trim()
+      ? [legacyRef]
+      : [];
+  return newProduct({ ...rest, icpSegmentRefs });
 }
 
 // Convert the old flat offer into the ladder-of-products shape. Every old tier
