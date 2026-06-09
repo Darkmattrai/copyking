@@ -17,6 +17,7 @@ import type {
   AnswerGroup,
   FieldKind,
 } from "./brand-dna-answers";
+import { icpBrandPsychologyGroups, hasBrandIcpSegments } from "./icp-groups";
 
 export interface BuildAnswersInput {
   brandDNA?: BrandDNA | null;
@@ -48,36 +49,49 @@ export function buildBrandDnaAnswerGroups(
   // ── ICP (from the ICP Map intake) ────────────────────────────────────────
   const formData = input.icpFormData ?? {};
   const segments = input.icpSegments ?? [];
+  const b = input.brandDNA;
 
+  // Business overview — prefer the raw intake, fall back to the saved Brand DNA
+  // so guided-chat clients (blank intake) still show their identity.
   const icpFields: AnswerField[] = [
-    { id: "icp.businessName", feature: "ICP", question: "What's your business name?", value: formData.businessName ?? "", kind: "text" },
-    { id: "icp.whatYouDo", feature: "ICP", question: "What do you do?", value: formData.whatYouDo ?? "", kind: "textarea" },
-    { id: "icp.industry", feature: "ICP", question: "What industry are you in?", value: formData.industry ?? "", kind: "text" },
-    { id: "icp.offer", feature: "ICP", question: "What's your core offer?", value: formData.offer ?? "", kind: "textarea" },
-    { id: "icp.brandReference", feature: "ICP", question: "A brand you admire / want to feel like", value: formData.brandReference ?? "", kind: "text" },
-    { id: "icp.socialProof", feature: "ICP", question: "Social proof (results, testimonials, numbers)", value: formData.socialProof ?? "", kind: "textarea" },
+    { id: "icp.businessName", feature: "ICP", question: "What's your business name?", value: formData.businessName || b?.icp.businessName || "", kind: "text" },
+    { id: "icp.whatYouDo", feature: "ICP", question: "What do you do?", value: formData.whatYouDo || b?.niche.subNiche || "", kind: "textarea" },
+    { id: "icp.industry", feature: "ICP", question: "What industry are you in?", value: formData.industry || b?.icp.industryLabel || "", kind: "text" },
+    { id: "icp.region", feature: "ICP", question: "Region / market", value: b?.icp.regionLabel ?? "", kind: "readonly" },
+    { id: "icp.offer", feature: "ICP", question: "What's your core offer?", value: formData.offer || b?.offer.grandSlamDescription || "", kind: "textarea" },
+    { id: "icp.brandReference", feature: "ICP", question: "A brand you admire / want to feel like", value: formData.brandReference || b?.voice.brandPersona || "", kind: "text" },
+    { id: "icp.socialProof", feature: "ICP", question: "Social proof (results, testimonials, numbers)", value: formData.socialProof || b?.offer.perceivedLikelihood || "", kind: "textarea" },
   ];
-  if (formData.channels?.length)
-    icpFields.push({ id: "icp.channels", feature: "ICP", question: "Channels you reach them on", value: labelFor(formData.channels, CHANNELS), kind: "readonly" });
-  if (formData.tone?.length)
-    icpFields.push({ id: "icp.tone", feature: "ICP", question: "Brand tone", value: labelFor(formData.tone, TONES), kind: "readonly" });
+  const channels = formData.channels?.length ? formData.channels : b?.icp.platforms;
+  if (channels?.length)
+    icpFields.push({ id: "icp.channels", feature: "ICP", question: "Channels you reach them on", value: labelFor(channels, CHANNELS), kind: "readonly" });
+  const tone = formData.tone?.length ? formData.tone : b?.voice.toneAttributes;
+  if (tone?.length)
+    icpFields.push({ id: "icp.tone", feature: "ICP", question: "Brand tone", value: labelFor(tone, TONES), kind: "readonly" });
   groups.push({ feature: "ICP", category: "Business & Audience", fields: icpFields });
 
-  segments.forEach((seg, idx) => {
-    groups.push({
-      feature: "ICP",
-      category: `Audience Segment: ${seg.name || `Audience Segment ${idx + 1}`}`,
-      fields: [
-        { id: `icp.seg.${idx}.name`, feature: "ICP", question: "Audience segment name", value: seg.name ?? "", kind: "text" },
-        { id: `icp.seg.${idx}.pain`, feature: "ICP", question: "Their biggest pain", value: seg.pain ?? "", kind: "textarea" },
-        { id: `icp.seg.${idx}.goals`, feature: "ICP", question: "Their goals", value: seg.goals ?? "", kind: "textarea" },
-        { id: `icp.seg.${idx}.mindset`, feature: "ICP", question: "Their mindset", value: seg.mindset ?? "", kind: "textarea" },
-        { id: `icp.seg.${idx}.emotional`, feature: "ICP", question: "Emotional fingerprint", value: seg.emotional ?? "", kind: "textarea" },
-        { id: `icp.seg.${idx}.objections`, feature: "ICP", question: "Their objections", value: seg.objections ?? "", kind: "textarea" },
-        { id: `icp.seg.${idx}.triggers`, feature: "ICP", question: "Buying triggers", value: seg.triggers ?? "", kind: "textarea" },
-      ],
+  // The real psychology + segments live in the saved Brand DNA `icp` pillar.
+  groups.push(...icpBrandPsychologyGroups(b));
+
+  // Only fall back to the raw intake segments when Brand DNA has none (avoids
+  // showing blank default "Audience Segment 1" rows next to the real ones).
+  if (!hasBrandIcpSegments(b)) {
+    segments.forEach((seg, idx) => {
+      groups.push({
+        feature: "ICP",
+        category: `Audience Segment: ${seg.name || `Audience Segment ${idx + 1}`}`,
+        fields: [
+          { id: `icp.seg.${idx}.name`, feature: "ICP", question: "Audience segment name", value: seg.name ?? "", kind: "text" },
+          { id: `icp.seg.${idx}.pain`, feature: "ICP", question: "Their biggest pain", value: seg.pain ?? "", kind: "textarea" },
+          { id: `icp.seg.${idx}.goals`, feature: "ICP", question: "Their goals", value: seg.goals ?? "", kind: "textarea" },
+          { id: `icp.seg.${idx}.mindset`, feature: "ICP", question: "Their mindset", value: seg.mindset ?? "", kind: "textarea" },
+          { id: `icp.seg.${idx}.emotional`, feature: "ICP", question: "Emotional fingerprint", value: seg.emotional ?? "", kind: "textarea" },
+          { id: `icp.seg.${idx}.objections`, feature: "ICP", question: "Their objections", value: seg.objections ?? "", kind: "textarea" },
+          { id: `icp.seg.${idx}.triggers`, feature: "ICP", question: "Buying triggers", value: seg.triggers ?? "", kind: "textarea" },
+        ],
+      });
     });
-  });
+  }
 
   // ── Offer (from the Offer Builder) ───────────────────────────────────────
   const offer = input.offer;
@@ -196,7 +210,6 @@ export function buildBrandDnaAnswerGroups(
   }
 
   // ── Brand DNA pillars (the deeper discovery beyond ICP & Offer) ───────────
-  const b = input.brandDNA;
   if (b) {
     groups.push({
       feature: "Brand DNA",

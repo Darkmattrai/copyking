@@ -6,6 +6,7 @@ import { useBrandStore } from "@/lib/brand/store";
 import { useOfferDraftStore } from "@/lib/offer/store";
 import { useIcpDraftStore } from "@/lib/icp/store";
 import { CHANNELS, TONES } from "@/lib/icp/schema";
+import { icpBrandPsychologyGroups, hasBrandIcpSegments } from "./icp-groups";
 
 // A single feature/tool an answer belongs to (shown as a tag in the UI).
 export type FeatureTag = "ICP" | "Offer" | "Brand DNA";
@@ -76,7 +77,7 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
         id: "icp.businessName",
         feature: "ICP",
         question: "What's your business name?",
-        value: formData.businessName ?? "",
+        value: formData.businessName || brandDNA.icp.businessName || "",
         kind: "text",
         onChange: (v) => setFormData({ businessName: v }),
       },
@@ -84,7 +85,7 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
         id: "icp.whatYouDo",
         feature: "ICP",
         question: "What do you do?",
-        value: formData.whatYouDo ?? "",
+        value: formData.whatYouDo || brandDNA.niche.subNiche || "",
         kind: "textarea",
         onChange: (v) => setFormData({ whatYouDo: v }),
       },
@@ -92,15 +93,22 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
         id: "icp.industry",
         feature: "ICP",
         question: "What industry are you in?",
-        value: formData.industry ?? "",
+        value: formData.industry || brandDNA.icp.industryLabel || "",
         kind: "text",
         onChange: (v) => setFormData({ industry: v }),
+      },
+      {
+        id: "icp.region",
+        feature: "ICP",
+        question: "Region / market",
+        value: brandDNA.icp.regionLabel ?? "",
+        kind: "readonly",
       },
       {
         id: "icp.offer",
         feature: "ICP",
         question: "What's your core offer?",
-        value: formData.offer ?? "",
+        value: formData.offer || brandDNA.offer.grandSlamDescription || "",
         kind: "textarea",
         onChange: (v) => setFormData({ offer: v }),
       },
@@ -108,7 +116,7 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
         id: "icp.brandReference",
         feature: "ICP",
         question: "A brand you admire / want to feel like",
-        value: formData.brandReference ?? "",
+        value: formData.brandReference || brandDNA.voice.brandPersona || "",
         kind: "text",
         onChange: (v) => setFormData({ brandReference: v }),
       },
@@ -116,31 +124,43 @@ export function useBrandDnaAnswers(): AnswerGroup[] {
         id: "icp.socialProof",
         feature: "ICP",
         question: "Social proof (results, testimonials, numbers)",
-        value: formData.socialProof ?? "",
+        value: formData.socialProof || brandDNA.offer.perceivedLikelihood || "",
         kind: "textarea",
         onChange: (v) => setFormData({ socialProof: v }),
       },
     ];
-    if (formData.channels?.length)
+    const icpChannels = formData.channels?.length
+      ? formData.channels
+      : brandDNA.icp.platforms;
+    if (icpChannels?.length)
       icpFields.push({
         id: "icp.channels",
         feature: "ICP",
         question: "Channels you reach them on",
-        value: labelFor(formData.channels, CHANNELS),
+        value: labelFor(icpChannels, CHANNELS),
         kind: "readonly",
       });
-    if (formData.tone?.length)
+    const icpTone = formData.tone?.length
+      ? formData.tone
+      : brandDNA.voice.toneAttributes;
+    if (icpTone?.length)
       icpFields.push({
         id: "icp.tone",
         feature: "ICP",
         question: "Brand tone",
-        value: labelFor(formData.tone, TONES),
+        value: labelFor(icpTone, TONES),
         kind: "readonly",
       });
     groups.push({ feature: "ICP", category: "Business & Audience", fields: icpFields });
 
-    // One group per audience segment the user described.
-    segments.forEach((seg, idx) => {
+    // The real psychology + segments live in the saved Brand DNA `icp` pillar
+    // (read-only here — they're regenerated from the ICP Map, not hand-edited).
+    groups.push(...icpBrandPsychologyGroups(brandDNA));
+
+    // Fall back to the raw intake segments only when Brand DNA has none, so we
+    // never show blank default "Audience Segment 1" rows beside the real ones.
+    if (!hasBrandIcpSegments(brandDNA))
+      segments.forEach((seg, idx) => {
       const set = (key: keyof typeof seg, v: string) =>
         setSegments(segments.map((s, i) => (i === idx ? { ...s, [key]: v } : s)));
       groups.push({
