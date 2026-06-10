@@ -21,7 +21,6 @@ import { MarkdownRenderer } from "@/components/generators/markdown-renderer";
 import { BioInputForm } from "@/components/generators/bio-input-form";
 import { BioScoreCard, type BioScore } from "@/components/generators/bio-score-card";
 import { BioStrategyCard } from "@/components/generators/bio-strategy-card";
-import { BrandDNAHero } from "@/components/generators/brand-dna-hero";
 import { ConnectInstagram } from "@/components/generators/instagram/connect-instagram";
 import { ProfileAudit } from "@/components/generators/instagram/profile-audit";
 import { BioTabNav, type BioTab } from "@/components/generators/bio-tab-nav";
@@ -629,8 +628,6 @@ export default function InstagramBioPage() {
 
       <ConnectInstagram />
       <ProfileAudit />
-
-      <BrandDNAHero />
 
       {/* Main 2-column layout */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
