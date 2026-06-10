@@ -24,6 +24,7 @@ export function ConnectInstagram() {
   const role = useRole();
   const [status, setStatus] = useState<Status | null>(null);
   const [igNotice, setIgNotice] = useState<string | null>(null);
+  const [igDetail, setIgDetail] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/instagram/status")
@@ -31,7 +32,9 @@ export function ConnectInstagram() {
       .then(setStatus)
       .catch(() => setStatus({ connected: false, username: null }));
     if (typeof window !== "undefined") {
-      setIgNotice(new URLSearchParams(window.location.search).get("ig"));
+      const sp = new URLSearchParams(window.location.search);
+      setIgNotice(sp.get("ig"));
+      setIgDetail(sp.get("ig_detail"));
     }
   }, []);
 
@@ -74,6 +77,11 @@ export function ConnectInstagram() {
       </div>
       {igNotice && NOTICE[igNotice] && (
         <p className="mt-2 text-xs text-text-tertiary">{NOTICE[igNotice]}</p>
+      )}
+      {igDetail && (
+        <p className="mt-1 text-xs text-text-tertiary font-mono break-words">
+          Debug: {igDetail}
+        </p>
       )}
     </div>
   );

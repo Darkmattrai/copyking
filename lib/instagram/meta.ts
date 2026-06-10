@@ -99,9 +99,11 @@ interface RawPage {
 }
 
 // Find the user's Page that has a connected Instagram Business/Creator account.
+// Returns the account plus a human-readable debug string of what Facebook
+// returned (surfaced on screen when no account is found).
 export async function resolveInstagram(
   userToken: string,
-): Promise<IgAccount | null> {
+): Promise<{ account: IgAccount | null; debug: string }> {
   const params = new URLSearchParams({
     fields:
       "id,name,access_token,instagram_business_account{id,username},connected_instagram_account{id,username}",
@@ -110,19 +112,23 @@ export async function resolveInstagram(
   const data = await getJson(`${GRAPH}/me/accounts?${params.toString()}`);
   const pages = ((data.data as RawPage[]) ?? []) as RawPage[];
 
-  // Diagnostic: what did Facebook actually return?
-  console.log(
-    "[instagram] /me/accounts:",
+  const debug =
     pages.length === 0
-      ? "NO PAGES returned (permission not granted, or no Page selected during login)"
-      : JSON.stringify(
-          pages.map((p) => ({
-            page: p.name,
-            iba: p.instagram_business_account?.id ?? null,
-            cia: p.connected_instagram_account?.id ?? null,
-          })),
-        ),
-  );
+      ? "Facebook returned 0 Pages — the app wasn't granted access to a Page (re-run login and tick your Page)."
+      : "Pages: " +
+        pages
+          .map(
+            (p) =>
+              `${p.name || p.id} [IG: ${
+                p.instagram_business_account?.id
+                  ? "business"
+                  : p.connected_instagram_account?.id
+                    ? "connected"
+                    : "none"
+              }]`,
+          )
+          .join("; ");
+  console.log("[instagram] " + debug);
 
   for (const page of pages) {
     const igId =
@@ -130,14 +136,17 @@ export async function resolveInstagram(
       page.connected_instagram_account?.id;
     if (igId && page.id && page.access_token) {
       return {
-        igUserId: igId,
-        pageId: page.id,
-        pageName: page.name ?? "",
-        pageToken: page.access_token,
+        account: {
+          igUserId: igId,
+          pageId: page.id,
+          pageName: page.name ?? "",
+          pageToken: page.access_token,
+        },
+        debug,
       };
     }
   }
-  return null;
+  return { account: null, debug };
 }
 
 export interface IgProfile {

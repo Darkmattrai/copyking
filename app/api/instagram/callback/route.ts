@@ -17,8 +17,9 @@ import {
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const back = new URL("/generate/instagram-bio", url.origin);
-  const fail = (reason: string) => {
+  const fail = (reason: string, detail?: string) => {
     back.searchParams.set("ig", reason);
+    if (detail) back.searchParams.set("ig_detail", detail.slice(0, 300));
     const res = NextResponse.redirect(back);
     res.cookies.delete("ig_oauth_state");
     return res;
@@ -51,8 +52,8 @@ export async function GET(req: NextRequest) {
       token: shortTok,
     });
 
-    const acct = await resolveInstagram(longTok);
-    if (!acct) return fail("no-account");
+    const { account: acct, debug } = await resolveInstagram(longTok);
+    if (!acct) return fail("no-account", debug);
 
     const profile = await fetchProfile(acct.igUserId, acct.pageToken);
 
