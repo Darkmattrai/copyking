@@ -17,21 +17,31 @@ export const IG_SCOPES = [
 export function appCredentials() {
   const clientId = process.env.META_APP_ID;
   const clientSecret = process.env.META_APP_SECRET;
-  return { clientId, clientSecret, configured: Boolean(clientId && clientSecret) };
+  // Facebook Login for Business uses a saved login configuration (config_id)
+  // that defines the permissions + asset picker, instead of a raw scope list.
+  const configId = process.env.META_LOGIN_CONFIG_ID;
+  return { clientId, clientSecret, configId, configured: Boolean(clientId && clientSecret) };
 }
 
 export function buildAuthUrl(opts: {
   clientId: string;
   redirectUri: string;
   state: string;
+  configId?: string;
 }): string {
   const params = new URLSearchParams({
     client_id: opts.clientId,
     redirect_uri: opts.redirectUri,
     response_type: "code",
-    scope: IG_SCOPES.join(","),
     state: opts.state,
   });
+  if (opts.configId) {
+    // Facebook Login for Business — the configuration defines permissions + assets.
+    params.set("config_id", opts.configId);
+  } else {
+    // Classic Facebook Login fallback.
+    params.set("scope", IG_SCOPES.join(","));
+  }
   return `${OAUTH_DIALOG}?${params.toString()}`;
 }
 

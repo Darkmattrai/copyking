@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const { clientId, configured } = appCredentials();
+  const { clientId, configId, configured } = appCredentials();
   if (!configured || !clientId) {
     return NextResponse.json(
       { error: "Instagram integration is not configured." },
@@ -26,7 +26,9 @@ export async function GET(req: NextRequest) {
   const redirectUri = `${origin}/api/instagram/callback`;
   const state = randomBytes(16).toString("hex");
 
-  const res = NextResponse.redirect(buildAuthUrl({ clientId, redirectUri, state }));
+  const res = NextResponse.redirect(
+    buildAuthUrl({ clientId, redirectUri, state, configId }),
+  );
   // Short-lived, httpOnly CSRF state cookie — verified in the callback.
   res.cookies.set("ig_oauth_state", state, {
     httpOnly: true,
