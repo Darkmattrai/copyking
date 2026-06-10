@@ -79,6 +79,8 @@ Variation C should pair name + keyword + location if location is set, otherwise 
 
 ## Bio Variations
 
+If the user supplied intake parameters (Identity / title, Who you help, Outcome, Method, Timeframe, DM trigger word, What they get for DMing, Bio link destination), build the bios DIRECTLY from those answers — they are the primary source of truth. Use Brand DNA only to fill gaps the user left blank. Map them like this: Identity → Line 1; Outcome + Method + Timeframe for the audience → Line 2 (the one-liner); "DM me {trigger word}" + what they get → Line 3; the chosen link destination → Line 4. If a DM trigger word was given, every variation MUST include it.
+
 Every bio variation MUST follow this exact 4-line template structure:
 
 **Line 1**: [Identity/Title] [@username]

@@ -25,6 +25,7 @@ import { ProfileAudit } from "@/components/generators/instagram/profile-audit";
 import { BioTabNav, type BioTab } from "@/components/generators/bio-tab-nav";
 import { BioLoadingPhases } from "@/components/generators/bio-loading-phases";
 import { BioPresets } from "@/components/generators/bio-presets";
+import { BioIntakeForm } from "@/components/generators/instagram/bio-intake-form";
 import { BioQuickCopyBar } from "@/components/generators/bio-quick-copy-bar";
 import { BioComparisonView } from "@/components/generators/bio-comparison-view";
 import { BioApplyChecklist } from "@/components/generators/bio-apply-checklist";
@@ -679,44 +680,14 @@ export default function InstagramBioPage() {
                 </div>
               )}
 
-              {/* Empty state hero with visual breakdown */}
-              <div className="ck-card p-8 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#833AB4]/20 via-[#E1306C]/20 to-[#F77737]/20 flex items-center justify-center mx-auto mb-5">
-                  <PillarIcon className="w-8 h-8 text-[#E1306C]" icon="instagram" />
-                </div>
-                <h2 className="text-lg font-bold text-text-primary mb-2">
-                  Generate your complete Instagram profile
-                </h2>
-                <p className="text-sm text-text-tertiary mb-6 max-w-md mx-auto">
-                  One click generates your full profile package — all tailored to your Brand DNA.
-                </p>
-
-                {/* Visual feature breakdown */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 max-w-lg mx-auto">
-                  {[
-                    { icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z", label: "SEO Audit" },
-                    { icon: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125", label: "6 Bios" },
-                    { icon: "M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z", label: "Strategy" },
-                    { icon: "M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63", label: "Bio Score" },
-                  ].map((feat) => (
-                    <div key={feat.label} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-surface-hover/50">
-                      <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d={feat.icon} />
-                      </svg>
-                      <span className="text-[11px] font-medium text-text-secondary">{feat.label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={handleQuickGenerate}
-                  disabled={isLoading || brandIsEmpty}
-                  className="ck-btn-primary px-8 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 transition-all inline-flex items-center gap-2 shadow-lg shadow-accent/20"
-                >
-                  <PillarIcon className="w-4.5 h-4.5" icon="sparkles" />
-                  Quick Generate
-                </button>
-              </div>
+              {/* Build your bio — guided intake (pre-filled from Brand DNA) */}
+              <BioIntakeForm
+                brandDNA={brandDNA}
+                isLoading={isLoading}
+                brandIsEmpty={brandIsEmpty}
+                onSubmit={runGenerate}
+                onQuickGenerate={handleQuickGenerate}
+              />
 
               {/* Industry presets */}
               <div className="ck-card p-5">
