@@ -133,6 +133,32 @@ const FORMULA_LABELS = [
   { label: "Lowercase Aesthetic", formula: "All lowercase, minimal punctuation, 2026 trend" },
 ];
 
+// Hard safety net: a bio must NEVER exceed Instagram's 150-char limit. Trims
+// trailing words from the longest line until it fits (preserves the 4-line / link
+// structure as much as possible). Runs on every parse, so an over-limit bio can
+// never reach the UI, the preview, or the copy button — regardless of the model.
+function trimBioToLimit(text: string, limit = 150): string {
+  let out = text;
+  let guard = 0;
+  while (countChars(out) > limit && guard++ < 300) {
+    const lines = out.split("\n");
+    let idx = 0;
+    for (let i = 1; i < lines.length; i++) {
+      if (countChars(lines[i]) > countChars(lines[idx])) idx = i;
+    }
+    const words = lines[idx].trimEnd().split(/\s+/);
+    if (words.length > 1) {
+      words.pop();
+      lines[idx] = words.join(" ");
+    } else {
+      // single long word — hard-cut a character
+      lines[idx] = lines[idx].slice(0, -1);
+    }
+    out = lines.join("\n");
+  }
+  return out;
+}
+
 function parseBioVariations(raw: string): ParsedBio[] {
   const bios: ParsedBio[] = [];
 
@@ -202,7 +228,7 @@ function parseBioVariations(raw: string): ParsedBio[] {
       bios.push({
         label,
         formula,
-        text: bioLines.join("\n"),
+        text: trimBioToLimit(bioLines.join("\n")),
         explanation,
         bestFor,
       });
