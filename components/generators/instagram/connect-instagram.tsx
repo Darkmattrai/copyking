@@ -8,6 +8,7 @@ import { PillarIcon } from "@/components/brand/pillar-icon";
 interface Status {
   connected: boolean;
   username: string | null;
+  profilePictureUrl?: string | null;
 }
 
 const NOTICE: Record<string, string> = {
@@ -49,7 +50,16 @@ export function ConnectInstagram() {
     <div className="ck-card p-4 mb-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-sm">
-          <PillarIcon className="w-4 h-4 text-accent" icon="instagram" />
+          {status?.connected && status.profilePictureUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={status.profilePictureUrl}
+              alt={status.username ? `@${status.username}` : "Instagram profile"}
+              className="h-7 w-7 rounded-full object-cover"
+            />
+          ) : (
+            <PillarIcon className="w-4 h-4 text-accent" icon="instagram" />
+          )}
           {status?.connected ? (
             <span className="text-text-secondary">
               Connected as{" "}

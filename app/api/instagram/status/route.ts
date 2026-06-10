@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { fetchProfile } from "@/lib/instagram/meta";
 
 // Returns the current user's IG connection STATUS only — never the tokens.
+// The profile picture is fetched live (IG picture URLs are short-lived).
 export async function GET() {
   const supabase = await createClient();
   const {
@@ -12,14 +14,25 @@ export async function GET() {
   const admin = createAdminClient();
   const { data } = await admin
     .from("instagram_connections")
-    .select("ig_username, page_name, connected_at")
+    .select("ig_username, ig_user_id, page_access_token")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  return Response.json({
-    connected: Boolean(data),
-    username: data?.ig_username ?? null,
-  });
+  if (!data) return Response.json({ connected: false });
+
+  let username = data.ig_username ?? null;
+  let profilePictureUrl: string | null = null;
+  try {
+    if (data.ig_user_id && data.page_access_token) {
+      const profile = await fetchProfile(data.ig_user_id, data.page_access_token);
+      profilePictureUrl = profile.profilePictureUrl || null;
+      if (profile.username) username = profile.username;
+    }
+  } catch (err) {
+    console.error("[instagram/status] live profile fetch failed:", err);
+  }
+
+  return Response.json({ connected: true, username, profilePictureUrl });
 }
 
 // Disconnect: remove the stored connection + tokens.
