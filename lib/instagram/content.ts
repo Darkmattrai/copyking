@@ -9,13 +9,15 @@ export const CONTENT_SYSTEM_PROMPT = `You are a world-class Instagram content sc
 ${ANTI_AI_LINGO}`;
 
 const FORMAT_INSTRUCTIONS: Record<string, string> = {
-  highlight: `OUTPUT FORMAT — STORY HIGHLIGHT (5–7 frames):
+  highlight: `OUTPUT FORMAT — STORY HIGHLIGHT (a tap-through highlight, NOT a reel):
+- Write 10–15 STORY FRAMES for the narrative (do NOT count the proof frames in this number). Be descriptive and take your time — build the full story across the frames; never compress it into 5.
 For each frame:
 **Frame N**
-- On-screen text: <≤12 punchy words>
-- Visual: <what to film/show>
-- Sticker/CTA: <poll, question, link, or DM keyword — only where it fits>
-The LAST frame must be a clear CTA (DM keyword or link). Keep every frame skimmable in under 2 seconds.`,
+- On-screen text: <a short, punchy line>
+- Visual: <what to show — DEFAULT TO A PHOTO/IMAGE. Keep the mix MOSTLY IMAGES; only occasionally suggest a short video clip.>
+Do NOT put any call to action in the middle frames.
+After the narrative frames, add 2–4 **SOCIAL PROOF** frames — show the transformation you created and the people you've helped (result screenshots, testimonials, before/after). Use the social proof the user provided.
+The FINAL frame is the ONLY call to action.`,
   reel: `OUTPUT FORMAT — REEL:
 **Hook** (first 3 seconds): on-screen text + what they say out loud — must stop the scroll.
 **Beats** (3–5 numbered): for each, what to SAY, what to SHOW, and the on-screen caption.
@@ -37,9 +39,14 @@ Follow this EXACT 6-beat story arc, in order. The hero is the person (or one of 
 3. RISING ACTION — the failed solutions/attempts they tried. Template: "I tried [failed attempts] to fix it."
 4. CLIMAX — the solution. Template: "Finally, after [time] of no results, I figured out the one thing that actually worked: [solution]."
 5. FALLING ACTION — the success/results from the solution. Template: "When I started doing this, I [results / social proof]."
-6. RESOLUTION — the business/service + CTA. Template: "Because of this I started [business/service] to help people just like me achieve [dream result]." + a clear call to action.
-Make every beat specific and personal — never a resume or a list of credentials.`,
-  "how-i-help": `TOPIC — HOW I CAN HELP. Show exactly who they work with, the process/method, the precise problems they solve, and the results to expect. Concrete, not vague.`,
+6. RESOLUTION — the business/service. Template: "Because of this I started [business/service] to help people just like me achieve [dream result]."
+Make every beat specific and personal — never a resume or a list of credentials. Spread the arc across the 10–15 frames; don't rush.
+FINAL CTA (last frame only) — this is a story, so phrase it as a DM reply, based on "Where to send them":
+- If a freebie: "Reply [KEYWORD] and I'll send you [the freebie / what you'll send]."
+- If a consultation: "Reply [KEYWORD] and I'll get you booked in for a free consultation."
+Use the exact keyword + freebie the user provided.`,
+  "how-i-help": `TOPIC — HOW I CAN HELP (highlight). Same descriptive, image-heavy, 10–15 frame structure with social-proof frames at the end. Cover: who they work with, the process/method, the precise problems they solve, and the results to expect. Concrete, not vague — spread it across the frames.
+FINAL CTA (last frame only): "Comment [KEYWORD] to book a free consultation." Use the exact keyword the user provided.`,
   "about-me": `TOPIC — ABOUT ME (pinned post). Introduce the person fast: who they are, who they help, the transformation they create, and why they're credible. Hook in the first line.`,
   "what-to-expect": `TOPIC — WHAT TO EXPECT WORKING WITH ME (pinned post / reel).
 Present it as these 5 parts, IN ORDER, mapped from the user's answers. The viewer should picture the whole journey clearly and feel reassured:

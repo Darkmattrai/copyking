@@ -3,11 +3,19 @@
 import { useState } from "react";
 
 import type { BrandDNA } from "@/types/brand";
+import { useBrandStore } from "@/lib/brand/store";
 import { MarkdownRenderer } from "@/components/generators/markdown-renderer";
 
 type Seed = (b: BrandDNA) => Record<string, string>;
 
-// My Story — the 6-beat story arc (Intro → Resolution).
+const DESTINATIONS = [
+  "A freebie (Reply keyword → I send it)",
+  "Book a free consultation (Reply keyword → I book you in)",
+];
+
+const SOCIAL_PROOF_KEY = "Social proof — results & people you've helped";
+
+// My Story — the 6-beat story arc (Intro → Resolution) + proof + CTA setup.
 const myStorySeed: Seed = (b) => ({
   "1. Intro — the problem you (or a client) had": b.icp.painPoints[0] || b.story.originStory || "",
   "2. Inflection — the pains that problem caused": b.icp.painPoints.slice(1, 3).join("; ") || "",
@@ -15,6 +23,20 @@ const myStorySeed: Seed = (b) => ({
   "4. Climax — the solution you found": b.positioning.uniqueMechanism || b.offer.grandSlamDescription || "",
   "5. Falling action — the results you saw": b.offer.perceivedLikelihood || b.offer.dreamOutcome || "",
   "6. Resolution — your business + the dream result": b.offer.dreamOutcome || "",
+  [SOCIAL_PROOF_KEY]: b.offer.perceivedLikelihood || "",
+  "Where to send them": DESTINATIONS[0],
+  "DM trigger keyword (e.g. STORY)": "",
+  "The freebie / what you'll send (if freebie)": "",
+});
+
+// How I Can Help — who you help + process + problems + results + proof.
+const helpSeed: Seed = (b) => ({
+  "Who you work with": b.icp.industryLabel || b.icp.demographics.jobTitle || "",
+  "Your process / method": b.positioning.uniqueMechanism || b.offer.deliveryModel || "",
+  "The exact problems you solve": b.icp.painPoints.slice(0, 3).join("; ") || "",
+  "Results to expect": b.offer.dreamOutcome || "",
+  [SOCIAL_PROOF_KEY]: b.offer.perceivedLikelihood || "",
+  "DM trigger keyword (e.g. HELP)": "",
 });
 
 // About Me — lighter intro version.
@@ -25,12 +47,6 @@ const storySeed: Seed = (b) => ({
   "Where you are now (proof)": b.offer.perceivedLikelihood || "",
 });
 
-const offerSeed: Seed = (b) => ({
-  "What they get": b.offer.grandSlamDescription || "",
-  "How you deliver it": b.offer.deliveryModel || "",
-  "The outcome": b.offer.dreamOutcome || "",
-  "What makes it different": b.positioning.uniqueMechanism || "",
-});
 
 // What to Expect — the 5-part client-journey structure.
 const expectSeed: Seed = (b) => ({
@@ -47,6 +63,8 @@ interface GenItem {
   subtitle: string;
   formats: { value: string; label: string }[];
   seed: Seed;
+  selects?: Record<string, string[]>;
+  saveSocialProof?: boolean;
 }
 
 interface GuideItem {
@@ -55,10 +73,7 @@ interface GuideItem {
   bullets: string[];
 }
 
-const HL_FORMATS = [
-  { value: "highlight", label: "Highlight" },
-  { value: "reel", label: "Reel" },
-];
+const HL_FORMATS = [{ value: "highlight", label: "Highlight" }];
 const PIN_FORMATS = [
   { value: "carousel", label: "Carousel" },
   { value: "reel", label: "Reel" },
@@ -68,16 +83,19 @@ const HIGHLIGHTS_GEN: GenItem[] = [
   {
     key: "my-story",
     label: "My Story",
-    subtitle: 'The "Start Here" highlight — the 6-beat story arc (problem → solution → CTA).',
+    subtitle: "The 6-beat story (10–15 frames) → social proof → one end CTA (reply your keyword).",
     formats: HL_FORMATS,
     seed: myStorySeed,
+    selects: { "Where to send them": DESTINATIONS },
+    saveSocialProof: true,
   },
   {
     key: "how-i-help",
     label: "How I Can Help",
-    subtitle: "Who you work with, your process, the problems you solve, the results.",
+    subtitle: "Who you help, process, problems, results (10–15 frames) → social proof → comment-to-book CTA.",
     formats: HL_FORMATS,
-    seed: offerSeed,
+    seed: helpSeed,
+    saveSocialProof: true,
   },
 ];
 
@@ -135,6 +153,7 @@ const PINNED_GUIDE: GuideItem[] = [
 ];
 
 function ContentItem({ item, brandDNA }: { item: GenItem; brandDNA: BrandDNA }) {
+  const updatePillar = useBrandStore((s) => s.updatePillar);
   const [fields, setFields] = useState<Record<string, string>>(() => item.seed(brandDNA));
   const [format, setFormat] = useState(item.formats[0].value);
   const [loading, setLoading] = useState(false);
@@ -147,6 +166,11 @@ function ContentItem({ item, brandDNA }: { item: GenItem; brandDNA: BrandDNA }) 
     setLoading(true);
     setError(null);
     setScript(null);
+    // Persist the social proof back to Brand DNA so it sticks for next time.
+    if (item.saveSocialProof) {
+      const proof = fields[SOCIAL_PROOF_KEY]?.trim();
+      if (proof) updatePillar("offer", { perceivedLikelihood: proof });
+    }
     try {
       const res = await fetch("/api/instagram/content", {
         method: "POST",
@@ -164,6 +188,7 @@ function ContentItem({ item, brandDNA }: { item: GenItem; brandDNA: BrandDNA }) 
   };
 
   const activeLabel = item.formats.find((f) => f.value === format)?.label ?? "";
+  const showFormatToggle = item.formats.length > 1;
 
   return (
     <div className="ck-card p-5 space-y-4">
@@ -173,34 +198,51 @@ function ContentItem({ item, brandDNA }: { item: GenItem; brandDNA: BrandDNA }) 
       </div>
 
       <div className="space-y-3">
-        {Object.entries(fields).map(([k, v]) => (
-          <label key={k} className="block">
-            <span className="text-xs text-text-secondary">{k}</span>
-            <textarea
-              className="ck-input mt-1 resize-y"
-              rows={2}
-              value={v}
-              onChange={(e) => set(k, e.target.value)}
-            />
-          </label>
-        ))}
+        {Object.entries(fields).map(([k, v]) => {
+          const options = item.selects?.[k];
+          return (
+            <label key={k} className="block">
+              <span className="text-xs text-text-secondary">{k}</span>
+              {options ? (
+                <select
+                  className="ck-input mt-1"
+                  value={v}
+                  onChange={(e) => set(k, e.target.value)}
+                >
+                  {options.map((o) => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+              ) : (
+                <textarea
+                  className="ck-input mt-1 resize-y"
+                  rows={2}
+                  value={v}
+                  onChange={(e) => set(k, e.target.value)}
+                />
+              )}
+            </label>
+          );
+        })}
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="inline-flex rounded-lg border border-border p-0.5">
-          {item.formats.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => setFormat(f.value)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                format === f.value ? "bg-accent text-white" : "text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        {showFormatToggle && (
+          <div className="inline-flex rounded-lg border border-border p-0.5">
+            {item.formats.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => setFormat(f.value)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  format === f.value ? "bg-accent text-white" : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
         <button
           type="button"
           onClick={run}
