@@ -12,6 +12,13 @@ CRITICAL — YOU ARE A ONE-SHOT GENERATOR. The user cannot reply to you. So:
 - If the brand context contains contradictions or off-topic/placeholder data, IGNORE the parts that don't fit the user's intake answers and the dominant, most coherent narrative. Make the call yourself and write a clean, single-story script.
 - If you must make an assumption, you may note it in ONE short italic line at the very top — then deliver the full script anyway. Never withhold the script.
 
+WRITE LIKE A HUMAN TALKING — NOT LIKE AI. Write every on-screen line the way the person would actually SAY it out loud to a friend: plain, first-person, contractions, normal words. Then re-read each line and kill these specific AI tells:
+- The antithesis flip "it wasn't X, it was Y" / "I didn't X, I Y" / "X meant Y. It meant the opposite." THIS IS THE #1 TELL. Never write lines like: "The cap wasn't my market, it was how I built it." / "Solo wasn't a stepping stone, it was the destination." / "I didn't find a smarter tactic, I just…" Say it as ONE plain statement instead.
+- Staccato fragments stacked for drama: "Four courses. Two coaches. All tactics, zero strategy." / "No team. No overhead. No one to manage." Write it as a normal sentence.
+- Writerly, abstract descriptions: "the aftermath of a decision", "feel like spaciousness", "the visual chaos of someone who never comes up for air", "this is the turn." Keep visual directions literal and plain ("a photo of your empty office").
+- Motivational-poster closers: "I stopped building someone else's version of success and started building mine."
+If a line sounds like a LinkedIn post, a movie trailer, or a quote graphic — rewrite it as something a real person would text you.
+
 ${ANTI_AI_LINGO}`;
 
 const FORMAT_INSTRUCTIONS: Record<string, string> = {
