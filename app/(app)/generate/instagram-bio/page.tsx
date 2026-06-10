@@ -18,17 +18,15 @@ import {
 } from "@/components/generators/instagram-preview";
 import { BioVariationCard, countChars } from "@/components/generators/bio-variation-card";
 import { MarkdownRenderer } from "@/components/generators/markdown-renderer";
-import { BioScoreCard, type BioScore } from "@/components/generators/bio-score-card";
-import { BioStrategyCard } from "@/components/generators/bio-strategy-card";
+import { type BioScore } from "@/components/generators/bio-score-card";
 import { ConnectInstagram } from "@/components/generators/instagram/connect-instagram";
 import { ProfileAudit } from "@/components/generators/instagram/profile-audit";
+import { BioContentTab } from "@/components/generators/instagram/bio-content-tab";
 import { BioTabNav, type BioTab } from "@/components/generators/bio-tab-nav";
 import { BioLoadingPhases } from "@/components/generators/bio-loading-phases";
-import { BioPresets } from "@/components/generators/bio-presets";
 import { BioIntakeForm } from "@/components/generators/instagram/bio-intake-form";
 import { BioQuickCopyBar } from "@/components/generators/bio-quick-copy-bar";
 import { BioComparisonView } from "@/components/generators/bio-comparison-view";
-import { BioApplyChecklist } from "@/components/generators/bio-apply-checklist";
 
 // ────────────────────────────────────────────────────────────────
 // Types
@@ -526,12 +524,13 @@ export default function InstagramBioPage() {
     runGenerate({});
   }, [runGenerate]);
 
-  const handlePresetGenerate = useCallback(
-    (params: Record<string, string>) => {
-      runGenerate(params);
-    },
-    [runGenerate],
-  );
+  // Restart: clear the output and return to the Build-your-bio intake form.
+  const handleStartOver = useCallback(() => {
+    setSubmitted(false);
+    setRestoredOutput(null);
+    completionRef.current = "";
+    setCompletion("");
+  }, [setCompletion]);
 
   const handleRestore = (entry: GenerationEntry) => {
     setRestoredOutput(entry.output);
@@ -549,14 +548,6 @@ export default function InstagramBioPage() {
   // Preview data
   const previewBio = displayBios[selectedBioIdx]?.text ?? "";
   const previewName = parsed.nameOptions[selectedNameIdx] || "";
-
-  // Completion flags for checklist
-  const hasName = parsed.nameOptions.length > 0;
-  const hasBio = displayBios.length > 0;
-  const hasLinks = !!parsed.multiLinkSection;
-  const hasHighlightsData = !!parsed.highlightsSection;
-  const hasPinnedPosts = parsed.pinnedPosts.length > 0;
-  const hasProfilePhoto = !!parsed.profilePhotoSection;
 
   // Comparison data for the comparison view
   const comparisonBios = useMemo(
@@ -689,11 +680,6 @@ export default function InstagramBioPage() {
                 onQuickGenerate={handleQuickGenerate}
               />
 
-              {/* Industry presets */}
-              <div className="ck-card p-5">
-                <BioPresets onSelect={handlePresetGenerate} disabled={brandIsEmpty} />
-              </div>
-
               {/* History quick-access */}
               {history.length > 0 && (
                 <div className="ck-card p-4">
@@ -776,6 +762,16 @@ export default function InstagramBioPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
                   </svg>
                   Regenerate
+                </button>
+
+                <button
+                  onClick={handleStartOver}
+                  className="ck-btn-secondary px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                  </svg>
+                  Start over
                 </button>
 
                 {displayBios.length >= 2 && (
@@ -872,7 +868,6 @@ export default function InstagramBioPage() {
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 bioCount={displayBios.length}
-                scoreValue={parsed.score.overall}
               />
 
               {/* ── Tab content ────────────────────────────────── */}
@@ -926,233 +921,32 @@ export default function InstagramBioPage() {
                   </motion.div>
                 )}
 
-                {/* ─── SEO & NAME TAB ──────────────────────────── */}
-                {activeTab === "seo" && (
+                {/* ─── HIGHLIGHTS TAB ──────────────────────────── */}
+                {activeTab === "highlights" && (
                   <motion.div
-                    key="seo"
+                    key="highlights"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
                     transition={{ duration: 0.2 }}
-                    className="space-y-4"
                   >
-                    {/* Name field options */}
-                    {parsed.nameOptions.length > 0 && (
-                      <div className="ck-card p-5">
-                        <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
-                          <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                          </svg>
-                          Name Field
-                          <span className="text-[11px] font-normal text-text-tertiary">
-                            (searchable, 30 char max)
-                          </span>
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {parsed.nameOptions.map((name, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setSelectedNameIdx(i)}
-                              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
-                                selectedNameIdx === i
-                                  ? "border-accent bg-accent/10 text-accent"
-                                  : "border-border bg-surface text-text-secondary hover:border-accent/40"
-                              }`}
-                            >
-                              {name}
-                              <span className="ml-1.5 text-[10px] text-text-tertiary">
-                                ({name.length})
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Anti-Patterns */}
-                    {parsed.antiPatternsSection && (
-                      <BioStrategyCard
-                        title="Anti-Patterns to Avoid"
-                        subtitle="Phrases and moves that hurt your search ranking and credibility"
-                        iconPath="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-                        content={parsed.antiPatternsSection}
-                      />
-                    )}
+                    <BioContentTab kind="highlights" brandDNA={brandDNA} />
                   </motion.div>
                 )}
 
-                {/* ─── STRATEGY TAB ────────────────────────────── */}
-                {activeTab === "strategy" && (
+                {/* ─── PINNED POSTS TAB ────────────────────────── */}
+                {activeTab === "pinned" && (
                   <motion.div
-                    key="strategy"
+                    key="pinned"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
                     transition={{ duration: 0.2 }}
-                    className="space-y-4"
                   >
-                    {/* Native Multi-Link Strategy */}
-                    {parsed.multiLinkSection && (
-                      <BioStrategyCard
-                        title="Native Multi-Link Strategy"
-                        subtitle="Instagram now supports 5 native links — each one a slot in your funnel"
-                        iconPath="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.51a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.374"
-                        content={parsed.multiLinkSection}
-                      />
-                    )}
-
-                    {/* Action Buttons */}
-                    {parsed.actionButtonsSection && (
-                      <BioStrategyCard
-                        title="Action Buttons"
-                        iconPath="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
-                        content={parsed.actionButtonsSection}
-                      />
-                    )}
-
-                    {/* Pinned Posts Strategy */}
-                    {parsed.pinnedPosts.length > 0 && (
-                      <div className="ck-card p-5">
-                        <h3 className="text-sm font-semibold text-text-primary mb-1 flex items-center gap-2">
-                          <svg
-                            className="w-4 h-4 text-accent"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M16 12V4l1-1V2H7v1l1 1v5L5 11.5V13h6v8l1 1 1-1v-8h6v-1.5L16 12z"
-                            />
-                          </svg>
-                          Pinned Posts Strategy
-                        </h3>
-                        <p className="text-[11px] text-text-tertiary mb-3">
-                          The first 3 posts on your grid — your top-of-profile funnel
-                        </p>
-                        <div className="space-y-3">
-                          {parsed.pinnedPosts.map((post, i) => (
-                            <div
-                              key={i}
-                              className="rounded-lg border border-border bg-surface p-3"
-                            >
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <span className="text-[10px] uppercase tracking-wide font-bold text-accent">
-                                  Pin {i + 1}
-                                </span>
-                                <span className="text-[10px] uppercase tracking-wide font-semibold text-text-tertiary">
-                                  {post.label}
-                                </span>
-                                {post.format && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-surface-hover text-text-secondary">
-                                    {post.format}
-                                  </span>
-                                )}
-                              </div>
-                              {post.topic && (
-                                <p className="text-sm font-semibold text-text-primary mb-1">
-                                  {post.topic}
-                                </p>
-                              )}
-                              {post.hook && (
-                                <p className="text-sm text-text-secondary italic mb-1">
-                                  &ldquo;{post.hook}&rdquo;
-                                </p>
-                              )}
-                              {post.why && (
-                                <p className="text-[11px] text-text-tertiary leading-snug">
-                                  {post.why}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Highlights Strategy */}
-                    {parsed.highlightsSection && (
-                      <BioStrategyCard
-                        title="Highlights Strategy"
-                        subtitle="Your evergreen content library — order matters (left-to-right priority)"
-                        iconPath="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008zM12 5.25v.75"
-                        content={parsed.highlightsSection}
-                      />
-                    )}
-
-                    {/* Profile Photo Direction */}
-                    {parsed.profilePhotoSection && (
-                      <BioStrategyCard
-                        title="Profile Photo Direction"
-                        iconPath="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"
-                        content={parsed.profilePhotoSection}
-                      />
-                    )}
-
-                    {/* Apply Checklist */}
-                    <BioApplyChecklist
-                      hasName={hasName}
-                      hasBio={hasBio}
-                      hasLinks={hasLinks}
-                      hasHighlights={hasHighlightsData}
-                      hasPinnedPosts={hasPinnedPosts}
-                      hasProfilePhoto={hasProfilePhoto}
-                    />
+                    <BioContentTab kind="pinned" brandDNA={brandDNA} />
                   </motion.div>
                 )}
 
-                {/* ─── SCORE TAB ───────────────────────────────── */}
-                {activeTab === "score" && (
-                  <motion.div
-                    key="score"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
-                    className="space-y-4"
-                  >
-                    {(parsed.score.overall !== null ||
-                      parsed.score.improvements.length > 0) ? (
-                      <BioScoreCard score={parsed.score} />
-                    ) : (
-                      <div className="ck-card p-8 text-center">
-                        <p className="text-sm text-text-tertiary">
-                          Score data wasn&apos;t generated. Try regenerating.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Selected bio summary in score tab for context */}
-                    {displayBios[selectedBioIdx] && (
-                      <div className="ck-card p-4">
-                        <p className="text-[10px] uppercase tracking-wide text-text-tertiary font-semibold mb-2">
-                          Currently scored bio
-                        </p>
-                        <div className="bg-surface-hover rounded-lg p-3">
-                          {displayBios[selectedBioIdx].text.split("\n").map((line, i) => (
-                            <span key={i} className="block text-sm text-text-primary leading-relaxed">
-                              {line || " "}
-                            </span>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-xs font-medium text-text-secondary">
-                            {displayBios[selectedBioIdx].label}
-                          </span>
-                          <span className={`text-[11px] font-mono font-medium px-2 py-0.5 rounded-full ${
-                            countChars(displayBios[selectedBioIdx].text) > 150
-                              ? "bg-red-500/10 text-red-500"
-                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                          }`}>
-                            {countChars(displayBios[selectedBioIdx].text)}/150
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
               </AnimatePresence>
             </motion.div>
           )}
