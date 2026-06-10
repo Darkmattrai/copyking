@@ -33,15 +33,17 @@ After the narrative frames, add 2–4 **SOCIAL PROOF** frames — show the trans
 The FINAL frame is the ONLY call to action.`,
   reel: `OUTPUT FORMAT — REEL:
 **Hook** (first 3 seconds): on-screen text + what they say out loud — must stop the scroll.
-**Beats** (3–5 numbered): for each, what to SAY, what to SHOW, and the on-screen caption.
-**CTA**: the closing line + the action (DM keyword / link / follow).
+**Beats** (numbered): for each, what to SAY, what to SHOW, and the on-screen caption. Build the full structure across the beats — don't rush it.
+Do NOT put a CTA in the middle beats. Then a **SOCIAL PROOF** beat — the transformation you created + people you've helped (use the social proof the user provided).
+**CTA**: the closing line — the ONLY call to action.
 **Length**: suggested seconds (e.g. 30–45s).
 **Audio**: a trending or original-audio suggestion that fits.`,
-  carousel: `OUTPUT FORMAT — CAROUSEL POST (6–9 slides):
+  carousel: `OUTPUT FORMAT — CAROUSEL PINNED POST (8–10 slides):
 **Slide 1**: the hook (the scroll-stopper).
-**Slides 2–N**: one idea per slide — give the exact on-slide text.
-**Final slide**: the CTA.
-**Caption**: the full post caption (hook line → value → CTA).`,
+**Slides 2–N**: one idea per slide — give the exact on-slide text. Be descriptive; build it out fully.
+Do NOT put a CTA in the middle slides. Then add 1–2 **SOCIAL PROOF** slides — the transformation you created + people you've helped (results/testimonials; use the social proof the user provided).
+**Final slide**: the ONLY call to action.
+**Caption**: the full post caption (hook line → value → the same CTA).`,
 };
 
 const ITEM_BRIEFS: Record<string, string> = {
@@ -60,14 +62,27 @@ FINAL CTA (last frame only) — this is a story, so phrase it as a DM reply, bas
 Use the exact keyword + freebie the user provided.`,
   "how-i-help": `TOPIC — HOW I CAN HELP (highlight). Same descriptive, image-heavy, 10–15 frame structure with social-proof frames at the end. Cover: who they work with, the process/method, the precise problems they solve, and the results to expect. Concrete, not vague — spread it across the frames.
 FINAL CTA (last frame only): "Comment [KEYWORD] to book a free consultation." Use the exact keyword the user provided.`,
-  "about-me": `TOPIC — ABOUT ME (pinned post). Introduce the person fast: who they are, who they help, the transformation they create, and why they're credible. Hook in the first line.`,
-  "what-to-expect": `TOPIC — WHAT TO EXPECT WORKING WITH ME (pinned post / reel).
+  "about-me": `TOPIC — ABOUT ME (pinned post) — tell it as MY STORY using this EXACT 6-beat arc, mapped from the user's answers:
+1. INTRO — the hero + the problem.
+2. INFLECTION — the pains that problem caused.
+3. RISING ACTION — the failed solutions they tried.
+4. CLIMAX — the solution they found.
+5. FALLING ACTION — the results from the solution.
+6. RESOLUTION — the business/service they started.
+Specific and personal — never a resume. Build it out fully across the slides/beats.
+FINAL CTA (last slide/beat only) — this is a FEED POST, so phrase it as a COMMENT trigger, based on "Where to send them":
+- If a freebie: "Comment [KEYWORD] and I'll send you [the freebie]."
+- If a consultation: "Comment [KEYWORD] to book a free consultation."
+Use the exact keyword + freebie the user provided.`,
+  "what-to-expect": `TOPIC — WHAT TO EXPECT WORKING WITH ME (pinned post).
 Present it as these 5 parts, IN ORDER, mapped from the user's answers. The viewer should picture the whole journey clearly and feel reassured:
 1. What happens the moment they become a client.
 2. The onboarding steps you take them through.
 3. The process you take them through to get the transformation.
 4. The dream result you help them achieve.
-5. The timeframe you do it in.`,
+5. The timeframe you do it in.
+Then a social-proof slide/beat (results + people you've helped — use what the user provided).
+FINAL CTA (last slide/beat only): "Comment [KEYWORD] to book a free consultation." Use the exact keyword the user provided.`,
 };
 
 function brandSummary(b: BrandDNA): string {

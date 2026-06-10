@@ -9,13 +9,14 @@ import { MarkdownRenderer } from "@/components/generators/markdown-renderer";
 type Seed = (b: BrandDNA) => Record<string, string>;
 
 const DESTINATIONS = [
-  "A freebie (Reply keyword → I send it)",
-  "Book a free consultation (Reply keyword → I book you in)",
+  "A freebie (keyword → I send it)",
+  "Book a free consultation (keyword → I book you in)",
 ];
 
 const SOCIAL_PROOF_KEY = "Social proof — results & people you've helped";
 
 // My Story — the 6-beat story arc (Intro → Resolution) + proof + CTA setup.
+// Reused for the About Me pinned post.
 const myStorySeed: Seed = (b) => ({
   "1. Intro — the problem you (or a client) had": b.icp.painPoints[0] || b.story.originStory || "",
   "2. Inflection — the pains that problem caused": b.icp.painPoints.slice(1, 3).join("; ") || "",
@@ -25,7 +26,7 @@ const myStorySeed: Seed = (b) => ({
   "6. Resolution — your business + the dream result": b.offer.dreamOutcome || "",
   [SOCIAL_PROOF_KEY]: b.offer.perceivedLikelihood || "",
   "Where to send them": DESTINATIONS[0],
-  "DM trigger keyword (e.g. STORY)": "",
+  "Trigger keyword (e.g. STORY)": "",
   "The freebie / what you'll send (if freebie)": "",
 });
 
@@ -39,22 +40,15 @@ const helpSeed: Seed = (b) => ({
   "DM trigger keyword (e.g. HELP)": "",
 });
 
-// About Me — lighter intro version.
-const storySeed: Seed = (b) => ({
-  "Where you started": b.story.originStory || "",
-  "The turning point": b.story.transformationMoment || "",
-  "Your mission / what you fight for": b.story.mission || b.story.villain || "",
-  "Where you are now (proof)": b.offer.perceivedLikelihood || "",
-});
-
-
-// What to Expect — the 5-part client-journey structure.
+// What to Expect — the 5-part client-journey structure + proof + CTA keyword.
 const expectSeed: Seed = (b) => ({
   "1. The moment they become a client": b.offer.deliveryModel || "",
   "2. Your onboarding steps": "",
   "3. The transformation process": b.offer.grandSlamDescription || b.positioning.uniqueMechanism || "",
   "4. The dream result": b.offer.dreamOutcome || "",
   "5. The timeframe": b.offer.timeDelay || "",
+  [SOCIAL_PROOF_KEY]: b.offer.perceivedLikelihood || "",
+  "Comment keyword (e.g. START)": "",
 });
 
 interface GenItem {
@@ -125,17 +119,20 @@ const HIGHLIGHTS_GUIDE: GuideItem[] = [
 const PINNED_GEN: GenItem[] = [
   {
     key: "about-me",
-    label: "About Me",
-    subtitle: "Your intro post — who you are, who you help, the transformation.",
+    label: "About Me (My Story)",
+    subtitle: "The 6-beat story as a pinned post + social proof → comment-to-get CTA.",
     formats: PIN_FORMATS,
-    seed: storySeed,
+    seed: myStorySeed,
+    selects: { "Where to send them": DESTINATIONS },
+    saveSocialProof: true,
   },
   {
     key: "what-to-expect",
     label: "What to Expect Working With Me",
-    subtitle: "The 5-part journey — become a client → onboarding → process → result → timeframe.",
+    subtitle: "The 5-part journey + social proof → comment-to-book-a-consult CTA.",
     formats: PIN_FORMATS,
     seed: expectSeed,
+    saveSocialProof: true,
   },
 ];
 
