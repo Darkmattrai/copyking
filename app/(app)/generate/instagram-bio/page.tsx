@@ -18,7 +18,6 @@ import {
 } from "@/components/generators/instagram-preview";
 import { BioVariationCard, countChars } from "@/components/generators/bio-variation-card";
 import { MarkdownRenderer } from "@/components/generators/markdown-renderer";
-import { BioInputForm } from "@/components/generators/bio-input-form";
 import { BioScoreCard, type BioScore } from "@/components/generators/bio-score-card";
 import { BioStrategyCard } from "@/components/generators/bio-strategy-card";
 import { ConnectInstagram } from "@/components/generators/instagram/connect-instagram";
@@ -438,7 +437,6 @@ export default function InstagramBioPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
-  const [showCustomize, setShowCustomize] = useState(false);
   const [editedBios, setEditedBios] = useState<Record<number, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const completionRef = useRef<string>("");
@@ -510,7 +508,6 @@ export default function InstagramBioPage() {
       setEditedBios({});
       setActiveTab("bios");
       setShowComparison(false);
-      setShowCustomize(false);
       setSubmitted(true);
       completionRef.current = "";
       setCompletion("");
@@ -527,13 +524,6 @@ export default function InstagramBioPage() {
   const handleQuickGenerate = useCallback(() => {
     runGenerate({});
   }, [runGenerate]);
-
-  const handleCustomGenerate = useCallback(
-    (values: Record<string, string>) => {
-      runGenerate(values);
-    },
-    [runGenerate],
-  );
 
   const handlePresetGenerate = useCallback(
     (params: Record<string, string>) => {
@@ -733,15 +723,6 @@ export default function InstagramBioPage() {
                 <BioPresets onSelect={handlePresetGenerate} disabled={brandIsEmpty} />
               </div>
 
-              {/* Customize panel */}
-              {generator?.params && (
-                <BioInputForm
-                  params={generator.params}
-                  onSubmit={handleCustomGenerate}
-                  isLoading={isLoading}
-                />
-              )}
-
               {/* History quick-access */}
               {history.length > 0 && (
                 <div className="ck-card p-4">
@@ -826,16 +807,6 @@ export default function InstagramBioPage() {
                   Regenerate
                 </button>
 
-                <button
-                  onClick={() => setShowCustomize((v) => !v)}
-                  className={`ck-btn-secondary px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 ${showCustomize ? "border-accent/50 bg-accent/5" : ""}`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                  </svg>
-                  Customize
-                </button>
-
                 {displayBios.length >= 2 && (
                   <button
                     onClick={() => setShowComparison((v) => !v)}
@@ -869,24 +840,6 @@ export default function InstagramBioPage() {
                   Preview
                 </button>
               </div>
-
-              {/* ── Customize panel (collapsible) ──────────────── */}
-              <AnimatePresence>
-                {showCustomize && generator?.params && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <BioInputForm
-                      params={generator.params}
-                      onSubmit={handleCustomGenerate}
-                      isLoading={isLoading}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               {/* ── Comparison view ────────────────────────────── */}
               <AnimatePresence>
