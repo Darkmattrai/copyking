@@ -22,7 +22,6 @@ import { type BioScore } from "@/components/generators/bio-score-card";
 import { ConnectInstagram } from "@/components/generators/instagram/connect-instagram";
 import { ProfileAudit } from "@/components/generators/instagram/profile-audit";
 import { BioContentTab } from "@/components/generators/instagram/bio-content-tab";
-import { BioTabNav, type BioTab } from "@/components/generators/bio-tab-nav";
 import { BioLoadingPhases } from "@/components/generators/bio-loading-phases";
 import { BioIntakeForm } from "@/components/generators/instagram/bio-intake-form";
 import { BioQuickCopyBar } from "@/components/generators/bio-quick-copy-bar";
@@ -431,8 +430,10 @@ export default function InstagramBioPage() {
   const [restoredOutput, setRestoredOutput] = useState<string | null>(null);
   const [previewUsername, setPreviewUsername] = useState("yourusername");
 
+  // Pillar hub: which of the 4 sub-tools is open (null = hub landing).
+  const [pillar, setPillar] = useState<"audit" | "bio" | "highlights" | "pinned" | null>(null);
+
   // New UI state
-  const [activeTab, setActiveTab] = useState<BioTab>("bios");
   const [showHistory, setShowHistory] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -505,7 +506,6 @@ export default function InstagramBioPage() {
       setSelectedNameIdx(0);
       setHasAddedToHistory(false);
       setEditedBios({});
-      setActiveTab("bios");
       setShowComparison(false);
       setSubmitted(true);
       completionRef.current = "";
@@ -561,6 +561,17 @@ export default function InstagramBioPage() {
     [displayBios],
   );
 
+  // The 4 sub-tools (pillars) shown on the hub landing.
+  const PILLARS = [
+    { key: "audit" as const, title: "Instagram Account Audit", desc: "Connect a profile and grade it against the criteria." },
+    { key: "bio" as const, title: "Bio Generator", desc: "Craft the 150-character bio from a guided intake." },
+    { key: "highlights" as const, title: "Highlights Generator", desc: "Script My Story, How I Can Help & more." },
+    { key: "pinned" as const, title: "Pinned Posts Generator", desc: "Script About Me, What to Expect & more." },
+  ];
+  const PILLAR_LABEL: Record<string, string> = Object.fromEntries(
+    PILLARS.map((p) => [p.key, p.title]),
+  );
+
   return (
     <div className="p-6 lg:p-8 h-full">
       {/* Back button + Hero */}
@@ -588,7 +599,7 @@ export default function InstagramBioPage() {
               Instagram Bio Generator
             </h1>
             <p className="text-sm text-text-tertiary mt-1 max-w-xl">
-              The full 2026 profile package — SEO audit, 6 bio formulas, 5-link strategy, highlights, pinned posts, profile photo direction, and a bio score.
+              Four tools in one — audit a profile, craft the bio, and script your Highlights &amp; Pinned Posts, all from your Brand DNA.
             </p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
               <span className="inline-flex items-center gap-1.5 text-xs text-text-tertiary">
@@ -608,10 +619,54 @@ export default function InstagramBioPage() {
         </div>
       </motion.div>
 
-      <ConnectInstagram />
-      <ProfileAudit />
+      {/* Breadcrumb (inside a pillar) */}
+      {pillar && (
+        <nav className="flex items-center gap-1.5 text-sm mb-4">
+          <button
+            onClick={() => setPillar(null)}
+            className="text-text-tertiary hover:text-accent transition-colors"
+          >
+            Instagram
+          </button>
+          <span className="text-text-tertiary">/</span>
+          <span className="text-text-primary font-medium">{PILLAR_LABEL[pillar]}</span>
+        </nav>
+      )}
 
-      {/* Main 2-column layout */}
+      {/* Hub landing — pick a pillar */}
+      {pillar === null && (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {PILLARS.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => setPillar(p.key)}
+              className="ck-card p-5 text-left hover:border-accent/50 transition-colors group"
+            >
+              <h3 className="text-base font-semibold text-text-primary group-hover:text-accent transition-colors">
+                {p.title}
+              </h3>
+              <p className="text-sm text-text-tertiary mt-1">{p.desc}</p>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Pillar: Instagram Account Audit */}
+      {pillar === "audit" && (
+        <>
+          <ConnectInstagram />
+          <ProfileAudit />
+        </>
+      )}
+
+      {/* Pillar: Highlights Generator */}
+      {pillar === "highlights" && <BioContentTab kind="highlights" brandDNA={brandDNA} />}
+
+      {/* Pillar: Pinned Posts Generator */}
+      {pillar === "pinned" && <BioContentTab kind="pinned" brandDNA={brandDNA} />}
+
+      {/* Pillar: Bio Generator — 2-column flow */}
+      {pillar === "bio" && (
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
         {/* LEFT COLUMN — Generation + Output */}
         <div className="space-y-5">
@@ -853,91 +908,45 @@ export default function InstagramBioPage() {
                 )}
               </AnimatePresence>
 
-              {/* ── Tab navigation ─────────────────────────────── */}
-              <BioTabNav
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                bioCount={displayBios.length}
-              />
-
-              {/* ── Tab content ────────────────────────────────── */}
-              <AnimatePresence mode="wait">
-                {/* ─── BIOS TAB ────────────────────────────────── */}
-                {activeTab === "bios" && (
-                  <motion.div
-                    key="bios"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
-                    className="space-y-3"
-                  >
-                    {displayBios.length > 0 ? (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-                            <PillarIcon className="w-4 h-4 text-accent" icon="pen" />
-                            Bio Variations
-                            <span className="text-[11px] font-normal text-text-tertiary">
-                              — click to preview, edit inline
-                            </span>
-                          </h3>
-                          {displayBios.length > 0 && (
-                            <span className="text-[10px] font-mono text-text-tertiary">
-                              {countChars(displayBios[selectedBioIdx]?.text ?? "")}/150 chars
-                            </span>
-                          )}
-                        </div>
-                        {displayBios.map((bio, i) => (
-                          <BioVariationCard
-                            key={i}
-                            label={bio.label}
-                            formula={bio.formula}
-                            bioText={bio.text}
-                            explanation={bio.explanation}
-                            bestFor={bio.bestFor}
-                            isSelected={selectedBioIdx === i}
-                            isRecommended={i === 0}
-                            onSelect={() => setSelectedBioIdx(i)}
-                            onBioEdit={(newText) => handleBioEdit(i, newText)}
-                          />
-                        ))}
-                      </>
-                    ) : (
-                      <div className="ck-card p-6">
-                        <MarkdownRenderer content={activeOutput} />
-                      </div>
-                    )}
-                  </motion.div>
+              {/* ── Bio variations ─────────────────────────────── */}
+              <div className="space-y-3">
+                {displayBios.length > 0 ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                        <PillarIcon className="w-4 h-4 text-accent" icon="pen" />
+                        Bio Variations
+                        <span className="text-[11px] font-normal text-text-tertiary">
+                          — click to preview, edit inline
+                        </span>
+                      </h3>
+                      {displayBios.length > 0 && (
+                        <span className="text-[10px] font-mono text-text-tertiary">
+                          {countChars(displayBios[selectedBioIdx]?.text ?? "")}/150 chars
+                        </span>
+                      )}
+                    </div>
+                    {displayBios.map((bio, i) => (
+                      <BioVariationCard
+                        key={i}
+                        label={bio.label}
+                        formula={bio.formula}
+                        bioText={bio.text}
+                        explanation={bio.explanation}
+                        bestFor={bio.bestFor}
+                        isSelected={selectedBioIdx === i}
+                        isRecommended={i === 0}
+                        onSelect={() => setSelectedBioIdx(i)}
+                        onBioEdit={(newText) => handleBioEdit(i, newText)}
+                      />
+                    ))}
+                  </>
+                ) : (
+                  <div className="ck-card p-6">
+                    <MarkdownRenderer content={activeOutput} />
+                  </div>
                 )}
-
-                {/* ─── HIGHLIGHTS TAB ──────────────────────────── */}
-                {activeTab === "highlights" && (
-                  <motion.div
-                    key="highlights"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <BioContentTab kind="highlights" brandDNA={brandDNA} />
-                  </motion.div>
-                )}
-
-                {/* ─── PINNED POSTS TAB ────────────────────────── */}
-                {activeTab === "pinned" && (
-                  <motion.div
-                    key="pinned"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <BioContentTab kind="pinned" brandDNA={brandDNA} />
-                  </motion.div>
-                )}
-
-              </AnimatePresence>
+              </div>
             </motion.div>
           )}
         </div>
@@ -972,12 +981,13 @@ export default function InstagramBioPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════ */}
       {/* History panel (expandable)                              */}
       {/* ═══════════════════════════════════════════════════════ */}
       <AnimatePresence>
-        {showHistory && (
+        {pillar === "bio" && showHistory && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -1048,7 +1058,7 @@ export default function InstagramBioPage() {
       {/* Quick copy bar (fixed bottom, shows when output ready)  */}
       {/* ═══════════════════════════════════════════════════════ */}
       <AnimatePresence>
-        {submitted && !isLoading && activeOutput && (
+        {pillar === "bio" && submitted && !isLoading && activeOutput && (
           <BioQuickCopyBar
             bioText={previewBio}
             nameText={previewName}
