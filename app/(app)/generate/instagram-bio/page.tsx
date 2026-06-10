@@ -26,6 +26,7 @@ import {
 import { BioScoreCard, type BioScore } from "@/components/generators/bio-score-card";
 import { BioStrategyCard } from "@/components/generators/bio-strategy-card";
 import { BrandDNAHero } from "@/components/generators/brand-dna-hero";
+import { ConnectInstagram } from "@/components/generators/instagram/connect-instagram";
 import { BioTabNav, type BioTab } from "@/components/generators/bio-tab-nav";
 import { BioLoadingPhases } from "@/components/generators/bio-loading-phases";
 import { BioPresets } from "@/components/generators/bio-presets";
@@ -672,6 +673,8 @@ export default function InstagramBioPage() {
           </div>
         </div>
       </motion.div>
+
+      <ConnectInstagram />
 
       <BrandDNAHero />
 
