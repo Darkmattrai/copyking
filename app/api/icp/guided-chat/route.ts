@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
 
   const apiMessages = await toAnthropicMessages(messages);
-  const model = process.env.ICP_MODEL ?? "claude-opus-4-5";
+  const model = process.env.ICP_MODEL ?? "claude-sonnet-4-6";
   const encoder = new TextEncoder();
 
   const readable = new ReadableStream({

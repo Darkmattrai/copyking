@@ -1,5 +1,5 @@
 import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod/v4";
 
 import { MESSAGING_GENERATION_PROMPT } from "@/lib/brand/prompts";
@@ -39,7 +39,8 @@ export async function POST(req: Request) {
   const { brandDNA } = await req.json();
 
   const { object } = await generateObject({
-    model: openai("gpt-4o-mini"),
+    model: anthropic("claude-sonnet-4-6"),
+    maxOutputTokens: 4096,
     system: MESSAGING_GENERATION_PROMPT,
     prompt: `Here is the Brand DNA profile:\n\n${JSON.stringify(brandDNA, null, 2)}`,
     schema: MessagingOutputSchema,

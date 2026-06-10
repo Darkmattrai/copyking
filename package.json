@@ -10,6 +10,7 @@
 		"lint": "eslint --fix"
 	},
 	"dependencies": {
+		"@ai-sdk/anthropic": "^3.0.82",
 		"@ai-sdk/openai": "^3.0.52",
 		"@ai-sdk/react": "^3.0.156",
 		"@anthropic-ai/sdk": "^0.98.0",

@@ -1,5 +1,5 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 
 import { INTERVIEW_SYSTEM_PROMPT } from "@/lib/brand/prompts";
 
@@ -11,7 +11,8 @@ export async function POST(req: Request) {
   const modelMessages = await convertToModelMessages(messages);
 
   const result = streamText({
-    model: openai("gpt-4o-mini"),
+    model: anthropic("claude-sonnet-4-6"),
+    maxOutputTokens: 4096,
     system: INTERVIEW_SYSTEM_PROMPT,
     messages: modelMessages,
   });

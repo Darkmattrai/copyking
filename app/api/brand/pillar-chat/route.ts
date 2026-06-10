@@ -1,5 +1,5 @@
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 
 import { PILLAR_SYSTEM_PROMPTS } from "@/lib/brand/prompts";
 import type { PillarKey } from "@/types/brand";
@@ -27,7 +27,8 @@ export async function POST(req: Request) {
   const modelMessages = await convertToModelMessages(messages);
 
   const result = streamText({
-    model: openai("gpt-4o-mini"),
+    model: anthropic("claude-sonnet-4-6"),
+    maxOutputTokens: 4096,
     system: systemPrompt + contextBlock,
     messages: modelMessages,
   });

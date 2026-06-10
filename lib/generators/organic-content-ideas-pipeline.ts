@@ -1,7 +1,8 @@
 import { generateText, streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 
-const MODEL = "gpt-4o-mini";
+const MODEL = "claude-sonnet-4-6";
+const MAX_OUTPUT_TOKENS = 8192;
 
 const SKELETON_INSTRUCTION = `# STAGE OVERRIDE: SKELETON-ONLY MODE
 
@@ -112,7 +113,8 @@ export async function streamOrganicContentIdeas({
   console.log("[organic-content-ideas-pipeline] starting multi-step generation");
   const skeletonStart = Date.now();
   const skeletonResult = await generateText({
-    model: openai(MODEL),
+    model: anthropic(MODEL),
+    maxOutputTokens: MAX_OUTPUT_TOKENS,
     system: `${systemPrompt}\n\n${SKELETON_INSTRUCTION}`,
     prompt: userPrompt,
   });
@@ -126,19 +128,22 @@ export async function streamOrganicContentIdeas({
 
   const orderedStreams = [
     streamText({
-      model: openai(MODEL),
+      model: anthropic(MODEL),
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
       system: stageSystem(OVERVIEW_INSTRUCTION),
       prompt: userPrompt,
     }),
     ...DAY_CHUNKS.map((chunk) =>
       streamText({
-        model: openai(MODEL),
+        model: anthropic(MODEL),
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
         system: stageSystem(chunkInstruction(chunk)),
         prompt: userPrompt,
       }),
     ),
     streamText({
-      model: openai(MODEL),
+      model: anthropic(MODEL),
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
       system: stageSystem(APPENDIX_INSTRUCTION),
       prompt: userPrompt,
     }),

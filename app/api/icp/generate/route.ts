@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const model = process.env.ICP_MODEL ?? "claude-opus-4-5";
+  const model = process.env.ICP_MODEL ?? "claude-sonnet-4-6";
   const userMessage = buildUserMessage(intake);
 
   for (let attempt = 1; attempt <= 2; attempt++) {

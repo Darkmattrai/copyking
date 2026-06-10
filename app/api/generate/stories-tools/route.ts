@@ -1,10 +1,10 @@
 import { streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import type { BrandDNA } from "@/types/brand";
 
 export const maxDuration = 120;
 
-const MODEL = "gpt-4o-mini";
+const MODEL = "claude-sonnet-4-6";
 
 const BRAND_CONTEXT_BLOCK = `
 You will receive the user's complete Brand DNA as context. USE IT for every line you write. Reference their specific niche, ICP, offer, positioning, voice, story, messaging, and content DNA.
@@ -446,7 +446,8 @@ Series overview:
 
   try {
     const result = streamText({
-      model: openai(MODEL),
+      model: anthropic(MODEL),
+      maxOutputTokens: 8192,
       system: systemPrompt + brandContext,
       prompt: userPrompt,
       onError({ error }) {

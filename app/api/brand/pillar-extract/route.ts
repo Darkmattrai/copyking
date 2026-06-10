@@ -1,5 +1,5 @@
 import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod/v4";
 
 import { PILLAR_EXTRACTION_PROMPTS } from "@/lib/brand/prompts";
@@ -133,7 +133,8 @@ export async function POST(req: Request) {
   }
 
   const { object } = await generateObject({
-    model: openai("gpt-4o-mini"),
+    model: anthropic("claude-sonnet-4-6"),
+    maxOutputTokens: 8192,
     system: extractionPrompt,
     prompt: `Here is the conversation transcript:\n\n${transcript}`,
     schema,

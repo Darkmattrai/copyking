@@ -1,5 +1,5 @@
 import { streamText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 
 import { getGenerator } from "@/lib/generators/registry";
 import { GENERATOR_PROMPTS } from "@/lib/generators/prompts";
@@ -10,11 +10,11 @@ import type { BrandDNA } from "@/types/brand";
 
 export const maxDuration = 120;
 
-const DEFAULT_MODEL = "gpt-4o-mini";
+// All copy generation runs on Claude Sonnet 4.6. (GPT-4o is reserved for the
+// Instagram profile audit only — a separate /api/instagram/audit route.)
+const DEFAULT_MODEL = "claude-sonnet-4-6";
 
-const MODEL_OVERRIDES: Record<string, string> = {
-  "instagram-bio": "gpt-4o",
-};
+const MODEL_OVERRIDES: Record<string, string> = {};
 
 function buildBrandContext(brandDNA: BrandDNA): string {
   const sections: string[] = [];
@@ -251,7 +251,8 @@ export async function POST(req: Request) {
 
   try {
     const result = streamText({
-      model: openai(modelId),
+      model: anthropic(modelId),
+      maxOutputTokens: 8192,
       system: systemPrompt + brandContext,
       prompt: userPrompt,
       onError({ error }) {
