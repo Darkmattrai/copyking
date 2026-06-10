@@ -53,6 +53,12 @@ Extra highlights are a plus. If highlights weren't provided, set status "not-pro
 ## PROFILE IMAGE CRITERIA
 A clear shot of the person's face — smiling, or in an authoritative setup (giving a speech/presentation). If no image was provided to assess, set "not-provided".
 
+## PROFILE SCREENSHOT (when attached)
+If a profile screenshot is attached, READ IT to assess the PINNED POSTS (the top row of the grid) and the HIGHLIGHTS (the covers + labels under the bio) against their criteria — do NOT mark them "not-provided" when a screenshot is present. You can see highlight covers/labels and pinned-post thumbnails, but not the content inside each highlight; judge what's visible and note what still needs verifying.
+
+## GRADING
+Give an overall grade: a score from 0–100 and a letter (A = 90+, B = 80–89, C = 70–79, D = 60–69, F = under 60). Weight the BIO most heavily — its 5-second clarity, the outcome/method/timeframe one-liner, the "DM me {WORD}" trigger, and the 4-line structure are roughly HALF the grade. Then weigh the link destination, highlights, pinned posts, and profile image. Be honest and strict: a profile missing the DM trigger AND the one-liner should not score above ~70. Briefly justify the grade in one or two sentences.
+
 Be specific and practical in every comment. Reference the actual text you were given.`;
 
 const Finding = z.object({
@@ -61,6 +67,11 @@ const Finding = z.object({
 });
 
 export const IgAuditSchema = z.object({
+  grade: z.object({
+    score: z.number().describe("Overall profile score, 0–100."),
+    letter: z.enum(["A", "B", "C", "D", "F"]).describe("Letter grade for the score."),
+    rationale: z.string().describe("1–2 sentences justifying the grade."),
+  }),
   summary: z.string().describe("1–2 sentence overall read of the profile."),
   bio: z.object({
     fiveSecondClarity: Finding,
@@ -93,6 +104,8 @@ export interface AuditInput {
   profileImageNote?: string;
   // When set, the image is sent to the model (vision) to assess the profile photo.
   profileImageUrl?: string;
+  // A profile screenshot (data URL) — read via vision for pinned posts + highlights.
+  screenshotDataUrl?: string;
 }
 
 export function buildAuditUserPrompt(input: AuditInput): string {
@@ -103,11 +116,14 @@ export function buildAuditUserPrompt(input: AuditInput): string {
   lines.push(`Bio link: ${input.link || "(none)"}`);
   if (input.businessModel)
     lines.push(`Business model / how they deliver value: ${input.businessModel}`);
+  const screenshotNote = input.screenshotDataUrl
+    ? " (a profile screenshot is attached — read pinned posts + highlights from it)"
+    : "";
   lines.push(
-    `Pinned posts: ${input.pinnedPosts?.trim() || "(not provided — mark not-provided)"}`,
+    `Pinned posts: ${input.pinnedPosts?.trim() || `(none pasted${screenshotNote || " — mark not-provided"})`}`,
   );
   lines.push(
-    `Highlights: ${input.highlights?.trim() || "(not provided — mark not-provided)"}`,
+    `Highlights: ${input.highlights?.trim() || `(none pasted${screenshotNote || " — mark not-provided"})`}`,
   );
   if (input.profileImageUrl) {
     lines.push(

@@ -33,23 +33,24 @@ export async function POST(req: Request) {
 
   try {
     const text = buildAuditUserPrompt(body);
-    // When a profile image URL is supplied (from the connected account), send it
-    // as a vision input so gpt-4o can assess the actual photo.
+    // Vision inputs: the profile photo (from the connected account) and an
+    // optional profile screenshot (for pinned posts + highlights).
+    const content: Array<
+      | { type: "text"; text: string }
+      | { type: "image"; image: URL | string }
+    > = [{ type: "text", text }];
+    if (body.profileImageUrl) {
+      content.push({ type: "image", image: new URL(body.profileImageUrl) });
+    }
+    if (body.screenshotDataUrl) {
+      content.push({ type: "image", image: body.screenshotDataUrl });
+    }
+
     const { object } = await generateObject({
       model: openai("gpt-4o"),
       system: IG_AUDIT_SYSTEM_PROMPT,
       schema: IgAuditSchema,
-      messages: [
-        {
-          role: "user",
-          content: body.profileImageUrl
-            ? [
-                { type: "text", text },
-                { type: "image", image: new URL(body.profileImageUrl) },
-              ]
-            : [{ type: "text", text }],
-        },
-      ],
+      messages: [{ role: "user", content }],
     });
     return Response.json({ audit: object });
   } catch (err) {
