@@ -1,6 +1,7 @@
 import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import type { BrandDNA } from "@/types/brand";
+import { ANTI_AI_LINGO } from "@/lib/generators/prompts";
 
 export const maxDuration = 120;
 
@@ -448,7 +449,7 @@ Series overview:
     const result = streamText({
       model: anthropic(MODEL),
       maxOutputTokens: 8192,
-      system: systemPrompt + brandContext,
+      system: systemPrompt + brandContext + "\n\n" + ANTI_AI_LINGO,
       prompt: userPrompt,
       onError({ error }) {
         const e = error as { name?: string; message?: string };

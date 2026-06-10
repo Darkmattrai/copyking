@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { anthropic } from "@/lib/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { buildEnhancePrompt, type EnhanceContext } from "@/lib/offer/enhance-prompt";
+import { ANTI_AI_LINGO } from "@/lib/generators/prompts";
 import { logUsage } from "@/lib/usage/log";
 
 export async function POST(req: NextRequest) {
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
     const message = await anthropic.messages.create({
       model,
       max_tokens: 1024,
+      system: ANTI_AI_LINGO,
       messages: [{ role: "user", content: prompt }],
     });
     await logUsage({

@@ -3,6 +3,7 @@ import { anthropic } from "@/lib/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { IntakeSchema, GeneratedICPSchema } from "@/lib/icp/schema";
 import { SYSTEM_PROMPT, buildUserMessage } from "@/lib/icp/prompt";
+import { ANTI_AI_LINGO } from "@/lib/generators/prompts";
 import { logUsage } from "@/lib/usage/log";
 
 export async function POST(req: NextRequest) {
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
       const message = await anthropic.messages.create({
         model,
         max_tokens: 4096,
-        system: SYSTEM_PROMPT,
+        system: SYSTEM_PROMPT + "\n\n" + ANTI_AI_LINGO,
         messages: [{ role: "user", content: userMessage }],
       });
       await logUsage({

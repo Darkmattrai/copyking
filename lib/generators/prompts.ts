@@ -12,17 +12,21 @@ You will receive the user's complete Brand DNA as context. USE IT for every sing
 CRITICAL: Never use placeholder text like [YOUR PRODUCT] or [AUDIENCE]. Everything must be filled in with their actual brand data. Write as if you ARE their in-house copywriter who knows the brand inside out.
 `;
 
-const QUALITY_INSTRUCTION = `
-Write at the level of a world-class direct response copywriter charging $10,000+ per project. Every word must earn its place. No filler, no fluff, no generic marketing speak. Be specific, vivid, and persuasive. Use concrete numbers, sensory language, and emotional triggers that resonate with the specific ICP.
-
-BANNED PHRASINGS — STRICT (these are AI tells; using ANY of them is a failure):
+// Shared anti-"AI lingo" rule — reused across every copy surface (generators,
+// stories sub-tools, offer enhance, ICP). Keep it in one place.
+export const ANTI_AI_LINGO = `BANNED PHRASINGS — STRICT (these are AI tells; using ANY of them is a failure):
 - The contrast/antithesis cliché: "It's not X, it's Y", "This isn't X — it's Y", "Not just X, but Y", "X isn't just Y, it's Z". NEVER use this construction in any form.
 - The negation triad: "No X. No Y. Just Z." (and any "No ___, no ___, just ___" rhythm).
 - The one-word question-answer: "The result? ___.", "The catch? ___.", "Sound familiar?"
 - Hype/AI filler verbs and words: unlock, unleash, supercharge, elevate, revolutionize, "game-changer", "level up", harness, "dive in/into", navigate (figurative), leverage (as filler), seamless, robust, cutting-edge, "tapestry", "in today's fast-paced world", "imagine a world where", "say goodbye to", "the secret to", "here's the thing", "but here's the kicker", "at the end of the day", "when it comes to", "that's where ___ comes in".
 - Manufactured em-dash drama and staccato fragments used only for rhythm.
 
-Write like a real human direct-response copywriter — plain, concrete, confident. If a sentence sounds like AI wrote it, rewrite it.
+Write like a real human direct-response copywriter — plain, concrete, confident. If a sentence sounds like AI wrote it, rewrite it.`;
+
+const QUALITY_INSTRUCTION = `
+Write at the level of a world-class direct response copywriter charging $10,000+ per project. Every word must earn its place. No filler, no fluff, no generic marketing speak. Be specific, vivid, and persuasive. Use concrete numbers, sensory language, and emotional triggers that resonate with the specific ICP.
+
+${ANTI_AI_LINGO}
 `;
 
 export const GENERATOR_PROMPTS: Record<string, string> = {
