@@ -7,6 +7,17 @@ import { MarkdownRenderer } from "@/components/generators/markdown-renderer";
 
 type Seed = (b: BrandDNA) => Record<string, string>;
 
+// My Story — the 6-beat story arc (Intro → Resolution).
+const myStorySeed: Seed = (b) => ({
+  "1. Intro — the problem you (or a client) had": b.icp.painPoints[0] || b.story.originStory || "",
+  "2. Inflection — the pains that problem caused": b.icp.painPoints.slice(1, 3).join("; ") || "",
+  "3. Rising action — failed solutions you tried": b.icp.failedSolutions.join("; ") || "",
+  "4. Climax — the solution you found": b.positioning.uniqueMechanism || b.offer.grandSlamDescription || "",
+  "5. Falling action — the results you saw": b.offer.perceivedLikelihood || b.offer.dreamOutcome || "",
+  "6. Resolution — your business + the dream result": b.offer.dreamOutcome || "",
+});
+
+// About Me — lighter intro version.
 const storySeed: Seed = (b) => ({
   "Where you started": b.story.originStory || "",
   "The turning point": b.story.transformationMoment || "",
@@ -19,6 +30,15 @@ const offerSeed: Seed = (b) => ({
   "How you deliver it": b.offer.deliveryModel || "",
   "The outcome": b.offer.dreamOutcome || "",
   "What makes it different": b.positioning.uniqueMechanism || "",
+});
+
+// What to Expect — the 5-part client-journey structure.
+const expectSeed: Seed = (b) => ({
+  "1. The moment they become a client": b.offer.deliveryModel || "",
+  "2. Your onboarding steps": "",
+  "3. The transformation process": b.offer.grandSlamDescription || b.positioning.uniqueMechanism || "",
+  "4. The dream result": b.offer.dreamOutcome || "",
+  "5. The timeframe": b.offer.timeDelay || "",
 });
 
 interface GenItem {
@@ -48,9 +68,9 @@ const HIGHLIGHTS_GEN: GenItem[] = [
   {
     key: "my-story",
     label: "My Story",
-    subtitle: 'The "Start Here" highlight — origin → turning point → mission → now.',
+    subtitle: 'The "Start Here" highlight — the 6-beat story arc (problem → solution → CTA).',
     formats: HL_FORMATS,
-    seed: storySeed,
+    seed: myStorySeed,
   },
   {
     key: "how-i-help",
@@ -95,9 +115,9 @@ const PINNED_GEN: GenItem[] = [
   {
     key: "what-to-expect",
     label: "What to Expect Working With Me",
-    subtitle: "The client journey — process, deliverables, outcome, what's different.",
+    subtitle: "The 5-part journey — become a client → onboarding → process → result → timeframe.",
     formats: PIN_FORMATS,
-    seed: offerSeed,
+    seed: expectSeed,
   },
 ];
 

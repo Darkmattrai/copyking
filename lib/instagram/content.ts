@@ -30,10 +30,24 @@ The LAST frame must be a clear CTA (DM keyword or link). Keep every frame skimma
 };
 
 const ITEM_BRIEFS: Record<string, string> = {
-  "my-story": `TOPIC — MY STORY (the "Start Here" highlight). Take a stranger from "who is this?" to "I trust this person." Arc: where they started → the turning point → the mission they're on now → where they are today (proof). Make it personal and specific, not a resume.`,
+  "my-story": `TOPIC — MY STORY (the "Start Here" highlight / origin reel).
+Follow this EXACT 6-beat story arc, in order. The hero is the person (or one of their clients). Map the user's answers to each beat and keep the emotional build:
+1. INTRO — establish the hero + the problem. Template: "X days/years ago I was experiencing [problem] (and/or saw others experience it)."
+2. INFLECTION POINT — the pain points/symptoms from that problem. Template: "Because of this I was [pains/symptoms]."
+3. RISING ACTION — the failed solutions/attempts they tried. Template: "I tried [failed attempts] to fix it."
+4. CLIMAX — the solution. Template: "Finally, after [time] of no results, I figured out the one thing that actually worked: [solution]."
+5. FALLING ACTION — the success/results from the solution. Template: "When I started doing this, I [results / social proof]."
+6. RESOLUTION — the business/service + CTA. Template: "Because of this I started [business/service] to help people just like me achieve [dream result]." + a clear call to action.
+Make every beat specific and personal — never a resume or a list of credentials.`,
   "how-i-help": `TOPIC — HOW I CAN HELP. Show exactly who they work with, the process/method, the precise problems they solve, and the results to expect. Concrete, not vague.`,
   "about-me": `TOPIC — ABOUT ME (pinned post). Introduce the person fast: who they are, who they help, the transformation they create, and why they're credible. Hook in the first line.`,
-  "what-to-expect": `TOPIC — WHAT TO EXPECT WORKING WITH ME (pinned post). Walk through the client journey: the process/steps, what gets delivered, the outcome, and what makes the experience different.`,
+  "what-to-expect": `TOPIC — WHAT TO EXPECT WORKING WITH ME (pinned post / reel).
+Present it as these 5 parts, IN ORDER, mapped from the user's answers. The viewer should picture the whole journey clearly and feel reassured:
+1. What happens the moment they become a client.
+2. The onboarding steps you take them through.
+3. The process you take them through to get the transformation.
+4. The dream result you help them achieve.
+5. The timeframe you do it in.`,
 };
 
 function brandSummary(b: BrandDNA): string {
