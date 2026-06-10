@@ -163,12 +163,9 @@ export function ProfileAudit() {
         <input className="ck-input" placeholder="Bio link (URL)" value={form.link} onChange={(e) => set("link", e.target.value)} />
         <input className="ck-input" placeholder="How they deliver value (e.g. high-ticket only, calls)" value={form.businessModel} onChange={(e) => set("businessModel", e.target.value)} />
       </div>
-      <textarea className="ck-input resize-y" rows={2} placeholder="Pinned posts (optional — or use a screenshot below)" value={form.pinnedPosts} onChange={(e) => set("pinnedPosts", e.target.value)} />
-      <textarea className="ck-input resize-y" rows={2} placeholder="Highlights (optional — or use a screenshot below)" value={form.highlights} onChange={(e) => set("highlights", e.target.value)} />
-
       <div className="rounded-lg border border-dashed border-border p-3 space-y-2">
         <label className="text-xs font-medium text-text-secondary">
-          Profile screenshot — for pinned posts &amp; highlights (the API can&apos;t read these)
+          Profile screenshot — pinned posts &amp; highlights are audited from this (the API can&apos;t read them)
         </label>
         <input
           type="file"
