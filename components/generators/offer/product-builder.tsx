@@ -380,6 +380,9 @@ export function ProductBuilder() {
   // preview, exports, Brand DNA, and the guarantee prefill.)
   const isFree = tierOf(P.price)?.key === "free";
 
+  // "No Guarantee" hides every guarantee field but the type selector.
+  const noGuarantee = P.guaranteeType === "No Guarantee";
+
   const set = <K extends keyof Product>(key: K, value: Product[K]) =>
     setProductField(key, value);
 
@@ -988,61 +991,53 @@ export function ProductBuilder() {
                 value={P.guaranteeType}
                 onChange={(v) => set("guaranteeType", v)}
               />
-              <OfferField
-                {...fieldProps("guaranteeResult")}
-                label="The specific result you guarantee"
-                type="textarea"
-                required
-                hint="Tie it to an outcome — not 'satisfaction guaranteed'."
-                eg="10 pre-qualified roofing jobs in 60 days or we work for free until you get them."
-                value={P.guaranteeResult}
-                onChange={(v) => set("guaranteeResult", v)}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <OfferField
-                  {...fieldProps("guaranteeWindow")}
-                  label="Timeframe / window"
-                  hint="How long they have to hit the result."
-                  eg="60 days"
-                  value={P.guaranteeWindow}
-                  onChange={(v) => set("guaranteeWindow", v)}
-                />
-                <OfferField
-                  {...fieldProps("guaranteeProofReq")}
-                  label="What the client must prove"
-                  hint="For conditional guarantees."
-                  eg="Show you ran every campaign and answered leads within 10 minutes."
-                  value={P.guaranteeProofReq}
-                  onChange={(v) => set("guaranteeProofReq", v)}
-                />
-              </div>
-              <OfferField
-                {...fieldProps("pgCompetitors")}
-                label="Competitor scan + your strength"
-                type="textarea"
-                hint="What guarantees do competitors offer? Then: what are you genuinely best at?"
-                eg="Competitors offer vague '30-day money back'. We guarantee speed: jobs in 60 days."
-                value={P.pgCompetitors}
-                onChange={(v) => set("pgCompetitors", v)}
-              />
-              <OfferField
-                {...fieldProps("pgPayback")}
-                label="Your payback / plan B"
-                type="textarea"
-                hint="What happens when a client isn't satisfied?"
-                eg="If under 10 jobs in 60 days, we work free until they hit it AND refund that month."
-                value={P.pgPayback}
-                onChange={(v) => set("pgPayback", v)}
-              />
-              <OfferField
-                {...fieldProps("pgWhere")}
-                label="Where you'll put it (front & center)"
-                type="textarea"
-                hint="Website, ads, calls, bios — everywhere."
-                eg="Headline on the landing page, first line of every ad, the call script intro."
-                value={P.pgWhere}
-                onChange={(v) => set("pgWhere", v)}
-              />
+              {!noGuarantee && (
+                <>
+                  <OfferField
+                    {...fieldProps("guaranteeResult")}
+                    label="The specific result you guarantee"
+                    type="textarea"
+                    required
+                    hint="Tie it to an outcome — not 'satisfaction guaranteed'."
+                    eg="10 pre-qualified roofing jobs in 60 days or we work for free until you get them."
+                    value={P.guaranteeResult}
+                    onChange={(v) => set("guaranteeResult", v)}
+                  />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <OfferField
+                      {...fieldProps("guaranteeWindow")}
+                      label="Timeframe / window"
+                      hint="How long they have to hit the result."
+                      eg="60 days"
+                      value={P.guaranteeWindow}
+                      onChange={(v) => set("guaranteeWindow", v)}
+                    />
+                    {/* "What the client must prove" — only for paid offers. */}
+                    {!isFree && (
+                      <OfferField
+                        {...fieldProps("guaranteeProofReq")}
+                        label="What the client must prove"
+                        hint="For conditional guarantees."
+                        eg="Show you ran every campaign and answered leads within 10 minutes."
+                        value={P.guaranteeProofReq}
+                        onChange={(v) => set("guaranteeProofReq", v)}
+                      />
+                    )}
+                  </div>
+                  {/* "Your payback / plan B" — only for paid offers. */}
+                  {!isFree && (
+                    <OfferField
+                      {...fieldProps("pgPayback")}
+                      label="Your payback / plan B"
+                      type="textarea"
+                      hint="What happens when a client isn't satisfied?"
+                      eg="If under 10 jobs in 60 days, we work free until they hit it AND refund that month."
+                      value={P.pgPayback}
+                      onChange={(v) => set("pgPayback", v)}
+                    />
+                  )}
+                </>
+              )}
             </>
           )}
 

@@ -277,7 +277,7 @@ export function OfferPreview({
                         )}
                       </div>
                     )}
-                    {p.guaranteeResult && (
+                    {p.guaranteeType !== "No Guarantee" && p.guaranteeResult && (
                       <p className="text-xs text-text-tertiary mt-1">
                         ✅ {p.guaranteeResult}
                       </p>

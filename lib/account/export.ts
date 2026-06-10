@@ -95,7 +95,7 @@ function offerLadderHtml(offer?: Offer | null): string {
             ${p.trim ? `<div class="prod-promise"><em>Promise:</em> ${esc(p.trim)}</div>` : ""}
             ${stack ? `<ul class="stack">${stack}</ul>` : ""}
             ${sv > 0 || p.realPrice ? `<div class="prod-foot">${sv > 0 ? `${esc(money(sv))} value` : ""}${p.realPrice ? ` &rarr; <strong>${esc(money(p.realPrice))}</strong>` : ""}</div>` : ""}
-            ${p.guaranteeResult ? `<div class="prod-guar">✅ ${esc(p.guaranteeResult)}</div>` : ""}
+            ${p.guaranteeType !== "No Guarantee" && p.guaranteeResult ? `<div class="prod-guar">✅ ${esc(p.guaranteeResult)}</div>` : ""}
           </div>`;
         })
         .join("");

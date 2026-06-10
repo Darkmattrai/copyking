@@ -169,9 +169,7 @@ export function buildBrandDnaAnswerGroups(
             pText("guaranteeResult", "The specific result you guarantee"),
             pText("guaranteeWindow", "Timeframe / window", "text"),
             pText("guaranteeProofReq", "What the client must prove"),
-            pText("pgCompetitors", "Competitor scan + your strength"),
             pText("pgPayback", "Your payback / plan B"),
-            pText("pgWhere", "Where you'll put the guarantee"),
           ],
         });
 

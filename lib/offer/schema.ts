@@ -383,6 +383,7 @@ export function assembleName(nm: NameModel): string {
 }
 
 export const GUARANTEE_TYPES = [
+  "No Guarantee",
   "Unconditional",
   "Conditional",
   "Anti-guarantee",
