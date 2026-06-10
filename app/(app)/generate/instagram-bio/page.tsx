@@ -19,10 +19,6 @@ import {
 import { BioVariationCard, countChars } from "@/components/generators/bio-variation-card";
 import { MarkdownRenderer } from "@/components/generators/markdown-renderer";
 import { BioInputForm } from "@/components/generators/bio-input-form";
-import {
-  BioSeoAuditCard,
-  type SeoAudit,
-} from "@/components/generators/bio-seo-audit-card";
 import { BioScoreCard, type BioScore } from "@/components/generators/bio-score-card";
 import { BioStrategyCard } from "@/components/generators/bio-strategy-card";
 import { BrandDNAHero } from "@/components/generators/brand-dna-hero";
@@ -56,7 +52,6 @@ interface ParsedPinnedPost {
 }
 
 interface ParsedOutput {
-  seoAudit: SeoAudit;
   nameOptions: string[];
   bios: ParsedBio[];
   multiLinkSection: string;
@@ -113,47 +108,6 @@ function cleanBioLine(line: string): string {
     .replace(/^\*+|\*+$/g, "")
     .trim();
   return cleaned;
-}
-
-function parseSeoAudit(section: string): SeoAudit {
-  if (!section) {
-    return {
-      intro: "",
-      primaryKeyword: "",
-      secondaryKeywords: [],
-      category: "",
-      usernameAudit: "",
-      semanticNotes: "",
-    };
-  }
-
-  const firstBold = section.search(/\*\*[A-Z]/);
-  const intro = firstBold === -1 ? "" : section.slice(0, firstBold).trim();
-
-  const primaryRaw = extractLabeledValue(section, "Primary keyword");
-  const primaryKeyword = primaryRaw.split(/\s+[—–-]\s+/)[0].trim();
-
-  const secondaryRaw = extractLabeledValue(section, "Secondary keywords");
-  const secondaryClean = secondaryRaw
-    .replace(/^\([^)]*\)\s*[:\-]?\s*/, "")
-    .replace(/^\s*[:\-]\s*/, "");
-  const secondaryKeywords = secondaryClean
-    .split(/[,;]/)
-    .map((k) => k.trim().replace(/^[*_`]+|[*_`]+$/g, ""))
-    .filter((k) => k.length > 0 && k.length < 60);
-
-  const category = extractLabeledValue(section, "Recommended Instagram category");
-  const usernameAudit = extractLabeledValue(section, "Username audit");
-  const semanticNotes = extractLabeledValue(section, "Semantic match notes");
-
-  return {
-    intro,
-    primaryKeyword,
-    secondaryKeywords,
-    category,
-    usernameAudit,
-    semanticNotes,
-  };
 }
 
 function parseNameOptions(section: string): string[] {
@@ -361,7 +315,6 @@ function parseScore(section: string): BioScore {
 }
 
 function parseOutput(raw: string): ParsedOutput {
-  const seoSection = extractH2Section(raw, "Profile SEO Audit");
   const nameSection = extractH2Section(raw, "Name Field Options");
   const multiLinkSection = extractH2Section(raw, "Native Multi-Link Strategy");
   const actionButtonsSection = extractH2Section(raw, "Action Buttons");
@@ -372,7 +325,6 @@ function parseOutput(raw: string): ParsedOutput {
   const antiPatternsSection = extractH2Section(raw, "Anti-Patterns Caught");
 
   return {
-    seoAudit: parseSeoAudit(seoSection),
     nameOptions: parseNameOptions(nameSection),
     bios: parseBioVariations(raw),
     multiLinkSection,
@@ -981,7 +933,7 @@ export default function InstagramBioPage() {
                           bioText={previewBio}
                           username={previewUsername}
                           onUsernameChange={setPreviewUsername}
-                          category={parsed.seoAudit.category}
+                          category=""
                           links={previewLinks}
                           actionButtons={previewActionButtons}
                           highlights={previewHighlights}
@@ -1063,13 +1015,6 @@ export default function InstagramBioPage() {
                     transition={{ duration: 0.2 }}
                     className="space-y-4"
                   >
-                    {/* SEO Audit */}
-                    {(parsed.seoAudit.primaryKeyword ||
-                      parsed.seoAudit.secondaryKeywords.length > 0 ||
-                      parsed.seoAudit.intro) && (
-                      <BioSeoAuditCard audit={parsed.seoAudit} />
-                    )}
-
                     {/* Name field options */}
                     {parsed.nameOptions.length > 0 && (
                       <div className="ck-card p-5">
@@ -1308,7 +1253,7 @@ export default function InstagramBioPage() {
               bioText={previewBio}
               username={previewUsername}
               onUsernameChange={setPreviewUsername}
-              category={parsed.seoAudit.category}
+              category=""
               links={previewLinks}
               actionButtons={previewActionButtons}
               highlights={previewHighlights}

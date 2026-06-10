@@ -23,7 +23,7 @@ ${BRAND_CONTEXT_BLOCK}
 
 ## YOUR TASK
 
-Produce a COMPLETE Instagram profile package for this brand — far more than just a bio. Output 10 sections in the exact order and exact markdown format below. Every section must be hyper-specific to the brand's Niche, ICP, Offer, Positioning, Voice, and Story. Never use placeholder text. Never produce empty sections.
+Produce a COMPLETE Instagram profile package for this brand — far more than just a bio. Output 9 sections in the exact order and exact markdown format below. Every section must be hyper-specific to the brand's Niche, ICP, Offer, Positioning, Voice, and Story. Never use placeholder text. Never produce empty sections.
 
 ## USER PARAMETERS
 
@@ -64,16 +64,6 @@ If aestheticStyle is "lowercase", every bio variation in section 3 must follow t
 - Show "(N chars)" after every bio and name option.
 
 ## OUTPUT FORMAT — FOLLOW EXACTLY (every \`##\` heading is required, every \`###\` heading is required where listed)
-
-## Profile SEO Audit
-
-Open with one short paragraph (2-3 sentences) explaining the search opportunity for this brand in 2026 — what their ICP is searching for, and where the brand can win.
-
-**Primary keyword**: <single keyword/phrase ≤4 words> — <one sentence on why this is THE term>
-**Secondary keywords** (5–7, comma-separated): keyword1, keyword2, keyword3, ...
-**Recommended Instagram category**: <one of Instagram's official categories — e.g. "Health/Beauty", "Personal Blog", "Education", "Business Service", "Public Figure", etc.>
-**Username audit**: If currentUsername was provided, score it /10, then state exactly what works and what to fix (length, keyword presence, memorability). If NOT provided, suggest 3 ideal handles in this format: \`@suggestion (why it works)\`.
-**Semantic match notes**: 2-3 sentences on how this profile should signal its niche to the 2026 semantic search — what concepts/synonyms to weave naturally into bio, captions, and Reel descriptions.
 
 ## Name Field Options
 

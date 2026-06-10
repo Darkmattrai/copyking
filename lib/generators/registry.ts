@@ -27,7 +27,7 @@ export const GENERATORS: GeneratorDef[] = [
     slug: "instagram-bio",
     name: "Instagram Profile Optimisation",
     description:
-      "Full 2026 profile package: SEO audit, 6 bio formulas, multi-link strategy, highlights, pinned posts, and a bio score",
+      "Full 2026 profile package: 6 bio formulas, keyword-ready name field, multi-link strategy, highlights, pinned posts, and a bio score",
     icon: "instagram",
     category: "foundation",
     params: [
