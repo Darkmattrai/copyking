@@ -18,6 +18,7 @@ import {
   assembleName,
   stageValue,
   money,
+  tierOf,
   type Product,
   type FeatureBenefit,
   type ProblemSolution,
@@ -374,6 +375,11 @@ export function ProductBuilder() {
 
   const step = STEPS[current >= STEPS.length ? 0 : current];
 
+  // A free/lead-magnet product doesn't need the outrageous "magic-wand" promise
+  // exercise — just the plain promise. (The promise itself stays; it feeds the
+  // preview, exports, Brand DNA, and the guarantee prefill.)
+  const isFree = tierOf(P.price)?.key === "free";
+
   const set = <K extends keyof Product>(key: K, value: Product[K]) =>
     setProductField(key, value);
 
@@ -464,7 +470,7 @@ export function ProductBuilder() {
                   : "border-transparent text-text-secondary hover:text-text-primary"
               }`}
             >
-              {s.crumb}
+              {s.id === "magic" && isFree ? "Promise" : s.crumb}
             </button>
           ))}
         </nav>
@@ -477,8 +483,14 @@ export function ProductBuilder() {
             {P.name || "Untitled product"}
             {P.price ? ` · ${P.price}` : ""} — step {current + 1} of {STEPS.length}
           </p>
-          <h2 className="text-xl font-bold text-text-primary">{step.title}</h2>
-          <p className="text-sm text-text-secondary mt-1.5">{step.lead}</p>
+          <h2 className="text-xl font-bold text-text-primary">
+            {step.id === "magic" && isFree ? "Promise" : step.title}
+          </h2>
+          <p className="text-sm text-text-secondary mt-1.5">
+            {step.id === "magic" && isFree
+              ? "The one realistic, specific promise this free offer makes."
+              : step.lead}
+          </p>
           {step.quote && (
             <p className="mt-3 pl-3 border-l-2 border-accent/40 text-sm italic text-text-tertiary">
               {step.quote}
@@ -586,22 +598,34 @@ export function ProductBuilder() {
 
           {step.id === "magic" && (
             <>
-              <OfferField
-                {...fieldProps("magic")}
-                label="🪄 Magic-wand promise — go outrageous (no rules)"
-                type="textarea"
-                required
-                hint="If there were no limits — the best result in the shortest time."
-                eg="I'll fill your calendar with 30 booked roofing jobs in 30 days or I pay YOU $10,000."
-                value={P.magic}
-                onChange={(v) => set("magic", v)}
-              />
+              {/* The outrageous "magic-wand" exercise is skipped for free offers —
+                  a freebie just needs its plain promise. */}
+              {!isFree && (
+                <OfferField
+                  {...fieldProps("magic")}
+                  label="🪄 Magic-wand promise — go outrageous (no rules)"
+                  type="textarea"
+                  required
+                  hint="If there were no limits — the best result in the shortest time."
+                  eg="I'll fill your calendar with 30 booked roofing jobs in 30 days or I pay YOU $10,000."
+                  value={P.magic}
+                  onChange={(v) => set("magic", v)}
+                />
+              )}
               <OfferField
                 {...fieldProps("trim")}
-                label="✂️ Trimmed promise — realistic, deliverable, lawsuit-proof"
+                label={
+                  isFree
+                    ? "The promise — what they get from this free offer"
+                    : "✂️ Trimmed promise — realistic, deliverable, lawsuit-proof"
+                }
                 type="textarea"
                 required
-                hint="Keep it irresistible but make sure you can deliver it."
+                hint={
+                  isFree
+                    ? "The quick win this freebie delivers — keep it specific."
+                    : "Keep it irresistible but make sure you can deliver it."
+                }
                 eg="10 pre-qualified roofing jobs in 60 days, or we work for free until you get them."
                 value={P.trim}
                 onChange={(v) => set("trim", v)}
