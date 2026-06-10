@@ -91,6 +91,8 @@ export interface AuditInput {
   pinnedPosts?: string;
   businessModel?: string;
   profileImageNote?: string;
+  // When set, the image is sent to the model (vision) to assess the profile photo.
+  profileImageUrl?: string;
 }
 
 export function buildAuditUserPrompt(input: AuditInput): string {
@@ -107,8 +109,14 @@ export function buildAuditUserPrompt(input: AuditInput): string {
   lines.push(
     `Highlights: ${input.highlights?.trim() || "(not provided — mark not-provided)"}`,
   );
-  lines.push(
-    `Profile image: ${input.profileImageNote?.trim() || "(not provided — mark not-provided)"}`,
-  );
+  if (input.profileImageUrl) {
+    lines.push(
+      `Profile image: ATTACHED below — assess the actual photo against the criteria (clear face, smiling or authoritative).`,
+    );
+  } else {
+    lines.push(
+      `Profile image: ${input.profileImageNote?.trim() || "(not provided — mark not-provided)"}`,
+    );
+  }
   return lines.join("\n");
 }

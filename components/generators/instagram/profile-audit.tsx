@@ -47,14 +47,42 @@ const EMPTY = {
 export function ProfileAudit() {
   const role = useRole();
   const [form, setForm] = useState({ ...EMPTY });
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [audit, setAudit] = useState<IgAudit | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (role !== "admin") return null;
 
   const set = (k: keyof typeof EMPTY, v: string) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  // Pull the live connected profile into the form (bio/name/link + photo).
+  const loadConnected = async () => {
+    setLoadingProfile(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/instagram/profile");
+      const data = await res.json();
+      if (!res.ok || !data.connected || !data.profile) {
+        throw new Error(data?.error || "No connected Instagram profile found.");
+      }
+      const p = data.profile;
+      setForm((f) => ({
+        ...f,
+        name: p.name || "",
+        username: p.username || "",
+        bio: p.biography || "",
+        link: p.website || "",
+      }));
+      setImgUrl(p.profilePictureUrl || null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't load profile.");
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const run = async () => {
     setLoading(true);
@@ -64,7 +92,7 @@ export function ProfileAudit() {
       const res = await fetch("/api/instagram/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, profileImageUrl: imgUrl ?? undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Audit failed");
@@ -78,15 +106,33 @@ export function ProfileAudit() {
 
   return (
     <div className="ck-card p-5 mb-4 space-y-4">
-      <div>
-        <h3 className="text-sm font-semibold text-text-primary">
-          Profile audit
-        </h3>
-        <p className="text-xs text-text-tertiary">
-          Paste the profile (or it auto-fills once a client connects) and audit it
-          against the criteria.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-text-primary">
+            Profile audit
+          </h3>
+          <p className="text-xs text-text-tertiary">
+            Pull your connected profile (or paste any profile) and audit it against
+            the criteria.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={loadConnected}
+          disabled={loadingProfile}
+          className="ck-btn-secondary !py-1.5 !px-3 text-xs whitespace-nowrap disabled:opacity-50"
+        >
+          {loadingProfile ? "Loading…" : "Load connected profile"}
+        </button>
       </div>
+
+      {imgUrl && (
+        <div className="flex items-center gap-2 text-xs text-text-tertiary">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imgUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+          Profile photo loaded — it&apos;ll be assessed in the audit.
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="ck-input" placeholder="Name field" value={form.name} onChange={(e) => set("name", e.target.value)} />
