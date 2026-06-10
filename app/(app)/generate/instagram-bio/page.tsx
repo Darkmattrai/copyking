@@ -417,7 +417,8 @@ export default function InstagramBioPage() {
   const setBrandDNA = useBrandStore((s) => s.setBrandDNA);
   const setInterviewCompleted = useBrandStore((s) => s.setInterviewCompleted);
   const interviewCompleted = useBrandStore((s) => s.interviewCompleted);
-  const { addEntry, getEntriesForSlug } = useHistoryStore();
+  const addEntry = useHistoryStore((s) => s.addEntry);
+  const allEntries = useHistoryStore((s) => s.entries);
   const generator = getGenerator("instagram-bio");
 
   const brandIsEmpty =
@@ -429,6 +430,37 @@ export default function InstagramBioPage() {
   const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
   const [restoredOutput, setRestoredOutput] = useState<string | null>(null);
   const [previewUsername, setPreviewUsername] = useState("yourusername");
+
+  // Live Instagram profile (when connected) — drives the preview's identity + counts.
+  const [igProfile, setIgProfile] = useState<{
+    connected: boolean;
+    username?: string;
+    name?: string;
+    profilePictureUrl?: string | null;
+    posts?: string;
+    followers?: string;
+    following?: string;
+  }>({ connected: false });
+
+  useEffect(() => {
+    fetch("/api/instagram/profile")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.connected && d.profile) {
+          setIgProfile({
+            connected: true,
+            username: d.profile.username,
+            name: d.profile.name,
+            profilePictureUrl: d.profile.profilePictureUrl,
+            posts: d.profile.mediaCount != null ? String(d.profile.mediaCount) : undefined,
+            followers: d.profile.followersCount != null ? String(d.profile.followersCount) : undefined,
+            following: d.profile.followsCount != null ? String(d.profile.followsCount) : undefined,
+          });
+          if (d.profile.username) setPreviewUsername(d.profile.username);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Pillar hub: which of the 4 sub-tools is open (null = hub landing).
   const [pillar, setPillar] = useState<"audit" | "bio" | "highlights" | "pinned" | null>(null);
@@ -465,10 +497,6 @@ export default function InstagramBioPage() {
     () => extractPreviewLinks(parsed.multiLinkSection),
     [parsed.multiLinkSection],
   );
-  const previewActionButtons = useMemo(
-    () => extractActionButtonChips(parsed.actionButtonsSection),
-    [parsed.actionButtonsSection],
-  );
   const previewHighlights = useMemo(
     () => extractPreviewHighlights(parsed.highlightsSection),
     [parsed.highlightsSection],
@@ -478,25 +506,17 @@ export default function InstagramBioPage() {
     [parsed.pinnedPosts],
   );
 
-  // History auto-save
-  const prevCompletionRef = useRef(completion);
+  // History auto-save — fires once when a generation finishes.
   useEffect(() => {
-    if (
-      !isLoading &&
-      completion &&
-      completion !== prevCompletionRef.current &&
-      !hasAddedToHistory
-    ) {
+    if (!isLoading && completion && !hasAddedToHistory) {
       addEntry({ slug: "instagram-bio", output: completion });
       setHasAddedToHistory(true);
     }
-    prevCompletionRef.current = completion;
   }, [isLoading, completion, addEntry, hasAddedToHistory]);
 
   const history = useMemo(
-    () => getEntriesForSlug("instagram-bio"),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getEntriesForSlug, activeOutput, showHistory],
+    () => allEntries.filter((e) => e.slug === "instagram-bio"),
+    [allEntries],
   );
 
   const runGenerate = useCallback(
@@ -547,7 +567,9 @@ export default function InstagramBioPage() {
 
   // Preview data
   const previewBio = displayBios[selectedBioIdx]?.text ?? "";
-  const previewName = parsed.nameOptions[selectedNameIdx] || "";
+  const previewName = igProfile.connected
+    ? igProfile.name || (igProfile.username ? `@${igProfile.username}` : "Your Name")
+    : "Your Name | Your Expertise";
 
   // Comparison data for the comparison view
   const comparisonBios = useMemo(
@@ -897,9 +919,12 @@ export default function InstagramBioPage() {
                           onUsernameChange={setPreviewUsername}
                           category=""
                           links={previewLinks}
-                          actionButtons={previewActionButtons}
                           highlights={previewHighlights}
                           pinnedPosts={previewPinned}
+                          profileImageUrl={igProfile.profilePictureUrl}
+                          posts={igProfile.posts}
+                          followers={igProfile.followers}
+                          following={igProfile.following}
                           compact
                         />
                       </div>
@@ -969,9 +994,12 @@ export default function InstagramBioPage() {
               onUsernameChange={setPreviewUsername}
               category=""
               links={previewLinks}
-              actionButtons={previewActionButtons}
               highlights={previewHighlights}
               pinnedPosts={previewPinned}
+              profileImageUrl={igProfile.profilePictureUrl}
+              posts={igProfile.posts}
+              followers={igProfile.followers}
+              following={igProfile.following}
             />
             {previewBio && (
               <p className="text-[11px] text-text-tertiary text-center">

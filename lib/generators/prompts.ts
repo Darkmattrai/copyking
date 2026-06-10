@@ -36,7 +36,7 @@ ${BRAND_CONTEXT_BLOCK}
 
 ## YOUR TASK
 
-Produce a COMPLETE Instagram profile package for this brand — far more than just a bio. Output 9 sections in the exact order and exact markdown format below. Every section must be hyper-specific to the brand's Niche, ICP, Offer, Positioning, Voice, and Story. Never use placeholder text. Never produce empty sections.
+Produce a COMPLETE Instagram profile package for this brand — far more than just a bio. Output 8 sections in the exact order and exact markdown format below. Every section must be hyper-specific to the brand's Niche, ICP, Offer, Positioning, Voice, and Story. Never use placeholder text. Never produce empty sections.
 
 ## USER PARAMETERS
 
@@ -73,22 +73,10 @@ If aestheticStyle is "lowercase", every bio variation in section 3 must follow t
 - Count every character: spaces, punctuation, symbols.
 - Emojis = 2 characters each (most), 4+ for complex (skin-tone modifiers, ZWJ joins).
 - Line breaks do NOT count.
-- Bios MUST stay ≤150. Name fields MUST stay ≤30. If you're close, trim ruthlessly — clarity beats cleverness.
-- Show "(N chars)" after every bio and name option.
+- ABSOLUTE HARD LIMIT: every bio MUST be ≤150 characters. Before you output each bio, COUNT its characters (spaces + punctuation count; emojis count as 2). If it is over 150, REWRITE it shorter until it fits. Outputting a bio over 150 characters is a HARD FAILURE — aim for ~140 to leave margin.
+- Show "(N chars)" after every bio.
 
 ## OUTPUT FORMAT — FOLLOW EXACTLY (every \`##\` heading is required, every \`###\` heading is required where listed)
-
-## Name Field Options
-
-Exactly 3 options. Each ≤30 chars. Format strictly:
-
-1. <text> — (N chars) — Search strength: X/10 — <why this works in one short clause>
-2. <text> — (N chars) — Search strength: X/10 — <why this works in one short clause>
-3. <text> — (N chars) — Search strength: X/10 — <why this works in one short clause>
-
-Variation A should pair the brand/real name with the primary keyword.
-Variation B should lead with niche + specialty (most aggressive search play).
-Variation C should pair name + keyword + location if location is set, otherwise name + keyword + audience descriptor.
 
 ## Bio Variations
 

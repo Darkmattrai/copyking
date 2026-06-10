@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface PreviewLink {
   title: string;
@@ -28,6 +28,25 @@ interface InstagramPreviewProps {
   highlights?: PreviewHighlight[];
   pinnedPosts?: PreviewPinnedPost[];
   compact?: boolean;
+  // Live-profile data (when Instagram is connected). When absent, the preview
+  // uses placeholders + random-looking counts.
+  profileImageUrl?: string | null;
+  posts?: string;
+  followers?: string;
+  following?: string;
+}
+
+// Default highlight covers shown when no real highlights are supplied.
+const DEFAULT_HIGHLIGHTS: PreviewHighlight[] = [
+  { name: "Start Here", letter: "S", color: "#A855F7" },
+  { name: "How I Help", letter: "H", color: "#3B82F6" },
+  { name: "Results", letter: "R", color: "#10B981" },
+  { name: "Free Stuff", letter: "F", color: "#F59E0B" },
+];
+
+function fmtCount(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+  return String(n);
 }
 
 const ROLE_TONES: Record<string, string> = {
@@ -49,29 +68,41 @@ export function InstagramPreview({
   onUsernameChange,
   category,
   links = [],
-  actionButtons = [],
   highlights = [],
   pinnedPosts = [],
   compact = false,
+  profileImageUrl,
+  posts,
+  followers,
+  following,
 }: InstagramPreviewProps) {
   const [isDark, setIsDark] = useState(false);
-  const [bioExpanded, setBioExpanded] = useState(false);
-  const [stats, setStats] = useState({ posts: "128", followers: "4.2K", following: "892" });
+  const [stats, setStats] = useState({ posts: "—", followers: "—", following: "—" });
   const [editingStat, setEditingStat] = useState<string | null>(null);
+
+  // Counts: live data when connected, otherwise random-looking (client only, to
+  // avoid a hydration mismatch from Math.random during SSR).
+  useEffect(() => {
+    if (posts || followers || following) {
+      setStats({ posts: posts ?? "0", followers: followers ?? "0", following: following ?? "0" });
+    } else {
+      setStats({
+        posts: fmtCount(40 + Math.floor(Math.random() * 220)),
+        followers: fmtCount(900 + Math.floor(Math.random() * 9000)),
+        following: fmtCount(120 + Math.floor(Math.random() * 700)),
+      });
+    }
+  }, [posts, followers, following]);
 
   const bioLines = bioText
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean);
 
-  const visibleLinks = links.slice(0, 5);
-  const visibleHighlights = highlights.slice(0, 7);
+  // Show only ONE link in the mockup.
+  const visibleLinks = links.slice(0, 1);
+  const visibleHighlights = (highlights.length > 0 ? highlights : DEFAULT_HIGHLIGHTS).slice(0, 7);
   const visiblePinned = pinnedPosts.slice(0, 3);
-
-  // Truncation: show max 3 lines, then "...more"
-  const maxVisibleLines = 3;
-  const shouldTruncate = bioLines.length > maxVisibleLines && !bioExpanded;
-  const displayedBioLines = shouldTruncate ? bioLines.slice(0, maxVisibleLines) : bioLines;
 
   // Dark mode color overrides
   const bg = isDark ? "bg-black" : "bg-background";
@@ -175,9 +206,14 @@ export function InstagramPreview({
         <div className="px-4 pt-4 pb-3">
           {/* Avatar + stats row */}
           <div className="flex items-center gap-5 mb-3">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center shrink-0">
-              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-            </div>
+            {profileImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profileImageUrl} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center shrink-0">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+              </div>
+            )}
             <div className="flex-1 flex justify-around text-center">
               <StatCell label="Posts" statKey="posts" />
               <StatCell label="Followers" statKey="followers" />
@@ -197,36 +233,12 @@ export function InstagramPreview({
             </p>
           )}
 
-          {/* Bio text with truncation */}
+          {/* Bio text — full bio, no truncation */}
           <div className={`text-[13px] ${textSecondary} leading-snug mb-2 min-h-[3rem]`}>
-            {displayedBioLines.length > 0 ? (
-              <>
-                {displayedBioLines.map((line, i) => (
-                  <span key={i} className="block">
-                    {i === displayedBioLines.length - 1 && shouldTruncate ? (
-                      <>
-                        {line.length > 30 ? `${line.slice(0, 30)}...` : line}
-                        <button
-                          onClick={() => setBioExpanded(true)}
-                          className={`ml-1 ${textTertiary} font-medium`}
-                        >
-                          more
-                        </button>
-                      </>
-                    ) : (
-                      line
-                    )}
-                  </span>
-                ))}
-                {bioExpanded && bioLines.length > maxVisibleLines && (
-                  <button
-                    onClick={() => setBioExpanded(false)}
-                    className={`text-[11px] ${textTertiary} font-medium mt-0.5`}
-                  >
-                    Show less
-                  </button>
-                )}
-              </>
+            {bioLines.length > 0 ? (
+              bioLines.map((line, i) => (
+                <span key={i} className="block">{line}</span>
+              ))
             ) : (
               <span className={`${textTertiary} italic`}>Your bio will appear here...</span>
             )}
@@ -244,26 +256,7 @@ export function InstagramPreview({
                     {visibleLinks[0].title}
                   </span>
                 </div>
-                {visibleLinks.length > 1 && (
-                  <span className={`text-[10px] ${textTertiary} shrink-0 ml-1.5`}>
-                    +{visibleLinks.length - 1}
-                  </span>
-                )}
               </button>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          {actionButtons.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {actionButtons.slice(0, 3).map((btn, i) => (
-                <span
-                  key={i}
-                  className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/30"
-                >
-                  {btn}
-                </span>
-              ))}
             </div>
           )}
 
