@@ -45,31 +45,6 @@ const GRADE_RING: Record<string, string> = {
   F: "text-red-500",
 };
 
-function ScoreRing({ score, letter }: { score: number; letter: string }) {
-  const r = 34;
-  const circ = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(100, score));
-  const dash = (pct / 100) * circ;
-  return (
-    <svg width="88" height="88" viewBox="0 0 84 84" className="shrink-0">
-      <circle cx="42" cy="42" r={r} fill="none" strokeWidth="7" className="stroke-border" />
-      <circle
-        cx="42"
-        cy="42"
-        r={r}
-        fill="none"
-        strokeWidth="7"
-        strokeLinecap="round"
-        strokeDasharray={`${dash} ${circ}`}
-        transform="rotate(-90 42 42)"
-        className={`${GRADE_RING[letter] ?? "text-text-tertiary"} stroke-current transition-all`}
-      />
-      <text x="42" y="40" textAnchor="middle" className="fill-text-primary font-bold" fontSize="22">{letter}</text>
-      <text x="42" y="56" textAnchor="middle" className="fill-text-tertiary" fontSize="11">{score}/100</text>
-    </svg>
-  );
-}
-
 const EMPTY = {
   name: "",
   username: "",
@@ -238,38 +213,85 @@ export function ProfileAudit() {
         });
         return (
           <div className="space-y-5 border-t border-border pt-5">
-            {/* Grade hero */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 rounded-xl border border-border bg-surface-hover/40 p-4">
-              <ScoreRing score={audit.grade.score} letter={audit.grade.letter} />
-              <div className="min-w-0 text-center sm:text-left">
-                <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-1">Overall grade</div>
-                <p className="text-sm text-text-secondary">{audit.grade.rationale}</p>
-                <div className="mt-3 flex flex-wrap justify-center sm:justify-start gap-2">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">✓ {counts.good} good</span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30">! {counts["needs-work"]} needs work</span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-red-500/15 text-red-500 border-red-500/30">✕ {counts.missing} missing</span>
+            {/* ── Report header ── */}
+            <div className="rounded-2xl overflow-hidden border border-border shadow-sm">
+              <div className="bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737] p-5">
+                <div className="flex items-center gap-4">
+                  {imgUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imgUrl} alt="" className="h-14 w-14 rounded-full object-cover ring-2 ring-white/70 shrink-0" />
+                  ) : (
+                    <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center text-white text-xl font-bold shrink-0">
+                      {(form.username || form.name || "?").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0 text-white">
+                    <div className="font-bold text-lg leading-tight truncate">
+                      {form.username ? `@${form.username.replace(/^@/, "")}` : form.name || "Profile"}
+                    </div>
+                    {form.name && form.username && (
+                      <div className="text-white/80 text-sm truncate">{form.name}</div>
+                    )}
+                    <div className="text-white/70 text-[11px] uppercase tracking-wider mt-0.5">Instagram Profile Report</div>
+                  </div>
+                  <div className="ml-auto shrink-0 h-[68px] w-[68px] rounded-2xl bg-white shadow-lg flex flex-col items-center justify-center">
+                    <span className={`text-2xl font-extrabold leading-none ${GRADE_RING[audit.grade.letter] ?? "text-text-tertiary"}`}>
+                      {audit.grade.letter}
+                    </span>
+                    <span className="text-[10px] text-gray-500 font-semibold mt-0.5">{audit.grade.score}/100</span>
+                  </div>
+                </div>
+              </div>
+              {/* Stat row */}
+              <div className="grid grid-cols-3 divide-x divide-border bg-surface">
+                <div className="p-3 text-center">
+                  <div className="text-2xl font-bold text-emerald-500">{counts.good}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-text-tertiary">Good</div>
+                </div>
+                <div className="p-3 text-center">
+                  <div className="text-2xl font-bold text-amber-500">{counts["needs-work"]}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-text-tertiary">Needs work</div>
+                </div>
+                <div className="p-3 text-center">
+                  <div className="text-2xl font-bold text-red-500">{counts.missing}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-text-tertiary">Missing</div>
                 </div>
               </div>
             </div>
 
-            <p className="text-sm text-text-secondary italic">{audit.summary}</p>
+            {/* Verdict */}
+            <div className="rounded-xl border border-border bg-surface-hover/40 p-4">
+              <p className="text-sm text-text-secondary">
+                <span className="font-semibold text-text-primary">Verdict — </span>
+                {audit.grade.rationale}
+              </p>
+              <p className="text-sm text-text-secondary italic mt-1.5">{audit.summary}</p>
+            </div>
 
-            {/* Bio */}
-            <div className="space-y-2.5">
-              <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Bio</div>
+            {/* Bio section */}
+            <section className="space-y-2.5">
+              <div className="flex items-center gap-2">
+                <span className="h-4 w-1 rounded-full bg-accent" />
+                <h4 className="text-sm font-bold text-text-primary">Bio</h4>
+              </div>
               <FindingRow label="5-second clarity" finding={audit.bio.fiveSecondClarity} />
               <FindingRow label="4-line structure" finding={audit.bio.structure} />
               <FindingRow label="Outcome + method + timeframe one-liner" finding={audit.bio.oneLiner} />
               <FindingRow label='"DM me {word}" trigger' finding={audit.bio.dmTrigger} />
-              <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
-                <div className="text-[10px] uppercase tracking-wide font-bold text-accent mb-1">Suggested bio</div>
-                <p className="text-sm text-text-primary whitespace-pre-wrap">{audit.bio.rewrite}</p>
+              <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
+                <div className="text-[10px] uppercase tracking-wide font-bold text-accent mb-2">✨ Suggested bio</div>
+                <div className="rounded-lg bg-background border border-border p-3 text-sm font-medium text-text-primary whitespace-pre-wrap leading-relaxed">
+                  {audit.bio.rewrite}
+                </div>
               </div>
-            </div>
+            </section>
 
-            {/* Link · Pinned · Highlights · Photo */}
-            <div className="space-y-2.5">
-              <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Link · Pinned · Highlights · Photo</div>
+            {/* Profile setup section */}
+            <section className="space-y-2.5">
+              <div className="flex items-center gap-2">
+                <span className="h-4 w-1 rounded-full bg-accent" />
+                <h4 className="text-sm font-bold text-text-primary">Link · Pinned · Highlights · Photo</h4>
+              </div>
               <FindingRow label="Bio link" finding={audit.link.finding} />
               <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-tertiary">
                 <span className="font-medium text-text-secondary">Detected:</span> {audit.link.detectedDestination}
@@ -279,17 +301,17 @@ export function ProfileAudit() {
               <FindingRow label="Pinned posts" finding={audit.pinnedPosts} />
               <FindingRow label="Highlights" finding={audit.highlights} />
               <FindingRow label="Profile image" finding={audit.profileImage} />
-            </div>
+            </section>
 
-            {/* Top fixes */}
+            {/* Priority fixes */}
             {audit.topFixes.length > 0 && (
-              <div className="rounded-xl border border-border bg-surface-hover/40 p-4 space-y-2">
-                <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Top fixes</div>
-                <ol className="space-y-2">
+              <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-accent">Priority fixes</div>
+                <ol className="space-y-2.5">
                   {audit.topFixes.map((f, i) => (
-                    <li key={i} className="flex gap-2.5 text-sm text-text-secondary">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-white text-[11px] font-bold">{i + 1}</span>
-                      <span>{f}</span>
+                    <li key={i} className="flex gap-2.5 text-sm text-text-primary">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-white text-xs font-bold">{i + 1}</span>
+                      <span className="pt-0.5">{f}</span>
                     </li>
                   ))}
                 </ol>
