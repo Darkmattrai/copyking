@@ -59,6 +59,8 @@ interface GenItem {
   seed: Seed;
   selects?: Record<string, string[]>;
   saveSocialProof?: boolean;
+  // Outputs a menu of formula options (no single format).
+  multiFormula?: boolean;
 }
 
 interface GuideItem {
@@ -85,11 +87,12 @@ const HIGHLIGHTS_GEN: GenItem[] = [
   },
   {
     key: "how-i-help",
-    label: "How I Can Help",
-    subtitle: "Who you help, process, problems, results (10–15 frames) → social proof → comment-to-book CTA.",
+    label: "How I Can Help (Work With Me)",
+    subtitle: "6 ready-to-film formulas (POV / Before-After / Myths / etc.) — comment-keyword CTAs.",
     formats: HL_FORMATS,
     seed: helpSeed,
     saveSocialProof: true,
+    multiFormula: true,
   },
 ];
 
@@ -129,10 +132,11 @@ const PINNED_GEN: GenItem[] = [
   {
     key: "what-to-expect",
     label: "What to Expect Working With Me",
-    subtitle: "The 5-part journey + social proof → comment-to-book-a-consult CTA.",
+    subtitle: "6 ready-to-film formulas (POV / Before-After / Myths / etc.) — comment-keyword CTAs.",
     formats: PIN_FORMATS,
     seed: expectSeed,
     saveSocialProof: true,
+    multiFormula: true,
   },
 ];
 
@@ -185,7 +189,7 @@ function ContentItem({ item, brandDNA }: { item: GenItem; brandDNA: BrandDNA }) 
   };
 
   const activeLabel = item.formats.find((f) => f.value === format)?.label ?? "";
-  const showFormatToggle = item.formats.length > 1;
+  const showFormatToggle = item.formats.length > 1 && !item.multiFormula;
 
   return (
     <div className="ck-card p-5 space-y-4">
@@ -246,7 +250,7 @@ function ContentItem({ item, brandDNA }: { item: GenItem; brandDNA: BrandDNA }) 
           disabled={loading}
           className="ck-btn-primary !py-1.5 !px-4 text-sm disabled:opacity-50"
         >
-          {loading ? "Generating…" : `Generate ${activeLabel}`}
+          {loading ? "Generating…" : item.multiFormula ? "Generate scripts" : `Generate ${activeLabel}`}
         </button>
         {error && <span className="text-sm text-danger">{error}</span>}
       </div>

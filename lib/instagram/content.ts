@@ -104,6 +104,40 @@ function brandSummary(b: BrandDNA): string {
   return lines.join("\n");
 }
 
+// "Work with me" items output a MENU of formula options instead of one script.
+const MULTI_FORMULA_ITEMS = new Set(["how-i-help", "what-to-expect"]);
+
+const WORK_WITH_ME_FORMULAS = `Generate SIX distinct script options for "what it's like to work with me / hire me". All six MUST be grounded in the SAME real context — the user's actual process, offer, audience, and the brand context above. The person will pick their favourite to film. Put the user's keyword in EVERY call to action. Keep every line human and conversational (per the rules above) — no AI lingo, no quote-graphic energy.
+
+### Formula 1 — POV: You Hire Me As Your [SERVICE]
+Hook: "What happens when you hire me as your [their service]?"
+Then walk the process as numbered steps, adapted to THEIR real process (classic shape: Onboarding → Research → Build the deliverables → A simple client action → Production / polish → Delivery & results). Say what actually happens at each step in plain words.
+CTA: "Interested? Comment [KEYWORD] for more info."
+Then give the caption: "POV: you hire me as your [service] 😎 — Are you a [audience] who wants to [outcome]? Comment [KEYWORD] for more info ✅"
+
+### Formula 2 — Before vs After
+Hook: "Before hiring me vs. after."
+4–5 BEFORE (a real pain) → AFTER (the result) pairs.
+CTA: "Comment [KEYWORD] if you're ready for the after."
+
+### Formula 3 — Things people get wrong about hiring a [SERVICE]
+3–4 Myth → Truth (what you actually do) pairs.
+CTA: "Comment [KEYWORD] to see how it actually works."
+
+### Formula 4 — What you think it looks like vs. reality
+4–5 "What you think" → "Reality" pairs.
+CTA: "Comment [KEYWORD] for the real experience."
+
+### Formula 5 — Here's what happened when [client type] hired me
+Their problem before → what you did (reference your real process) → the result they got.
+CTA: "Comment [KEYWORD] if you want the same."
+
+### Formula 6 — Why most [audience] fail at [topic]
+3 mistakes → "here's what I do instead" for each.
+CTA: "Comment [KEYWORD] so I can fix this for you."
+
+Fill [SERVICE], [audience], [outcome], [topic] and the keyword from the user's answers + brand context. If the user gave specific onboarding / process steps, USE them in Formulas 1 and 5.`;
+
 export function buildContentPrompt(opts: {
   item: string;
   format: string;
@@ -116,6 +150,15 @@ export function buildContentPrompt(opts: {
       .filter(([, v]) => v && v.trim())
       .map(([k, v]) => `- ${k}: ${v}`)
       .join("\n") || "(none provided — rely on Brand Context)";
+
+  if (MULTI_FORMULA_ITEMS.has(item)) {
+    return [
+      brandSummary(brandDNA),
+      WORK_WITH_ME_FORMULAS,
+      `THE PERSON'S SPECIFICS (use these for the process steps, audience, outcome, and keyword; fill gaps with Brand Context):\n${answers}`,
+      `Write in clean markdown with the six \`###\` formula headings above. Specific to THIS person — no placeholders left unfilled, no generic filler.`,
+    ].join("\n\n");
+  }
 
   return [
     brandSummary(brandDNA),
