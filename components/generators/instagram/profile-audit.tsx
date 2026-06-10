@@ -8,35 +8,67 @@ import type { IgAudit } from "@/lib/instagram/audit";
 type Status = "good" | "needs-work" | "missing" | "not-provided";
 type Finding = { status: Status; comment: string };
 
-const STATUS_STYLE: Record<Status, { dot: string; label: string }> = {
-  good: { dot: "bg-emerald-400", label: "Good" },
-  "needs-work": { dot: "bg-amber-400", label: "Needs work" },
-  missing: { dot: "bg-red-400", label: "Missing" },
-  "not-provided": { dot: "bg-text-tertiary", label: "Not provided" },
+const STATUS_STYLE: Record<Status, { label: string; chip: string; icon: string }> = {
+  good: { label: "Good", chip: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30", icon: "✓" },
+  "needs-work": { label: "Needs work", chip: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30", icon: "!" },
+  missing: { label: "Missing", chip: "bg-red-500/15 text-red-500 border-red-500/30", icon: "✕" },
+  "not-provided": { label: "Not provided", chip: "bg-surface-hover text-text-tertiary border-border", icon: "–" },
 };
 
-function FindingRow({ label, finding }: { label: string; finding: Finding }) {
-  const s = STATUS_STYLE[finding.status] ?? STATUS_STYLE["not-provided"];
+function StatusChip({ status }: { status: Status }) {
+  const s = STATUS_STYLE[status] ?? STATUS_STYLE["not-provided"];
   return (
-    <div className="flex gap-2.5">
-      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
-      <div className="min-w-0">
-        <div className="text-sm font-medium text-text-primary">
-          {label} <span className="text-text-tertiary font-normal">· {s.label}</span>
-        </div>
-        <p className="text-sm text-text-secondary leading-snug">{finding.comment}</p>
+    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${s.chip}`}>
+      <span aria-hidden>{s.icon}</span>
+      {s.label}
+    </span>
+  );
+}
+
+function FindingRow({ label, finding }: { label: string; finding: Finding }) {
+  return (
+    <div className="rounded-lg border border-border bg-surface p-3">
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <span className="text-sm font-medium text-text-primary">{label}</span>
+        <StatusChip status={finding.status} />
       </div>
+      <p className="text-sm text-text-secondary leading-snug">{finding.comment}</p>
     </div>
   );
 }
 
-const GRADE_COLOR: Record<string, string> = {
-  A: "bg-emerald-500",
-  B: "bg-lime-500",
-  C: "bg-amber-500",
-  D: "bg-orange-500",
-  F: "bg-red-500",
+const GRADE_RING: Record<string, string> = {
+  A: "text-emerald-500",
+  B: "text-lime-500",
+  C: "text-amber-500",
+  D: "text-orange-500",
+  F: "text-red-500",
 };
+
+function ScoreRing({ score, letter }: { score: number; letter: string }) {
+  const r = 34;
+  const circ = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(100, score));
+  const dash = (pct / 100) * circ;
+  return (
+    <svg width="88" height="88" viewBox="0 0 84 84" className="shrink-0">
+      <circle cx="42" cy="42" r={r} fill="none" strokeWidth="7" className="stroke-border" />
+      <circle
+        cx="42"
+        cy="42"
+        r={r}
+        fill="none"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeDasharray={`${dash} ${circ}`}
+        transform="rotate(-90 42 42)"
+        className={`${GRADE_RING[letter] ?? "text-text-tertiary"} stroke-current transition-all`}
+      />
+      <text x="42" y="40" textAnchor="middle" className="fill-text-primary font-bold" fontSize="22">{letter}</text>
+      <text x="42" y="56" textAnchor="middle" className="fill-text-tertiary" fontSize="11">{score}/100</text>
+    </svg>
+  );
+}
 
 const EMPTY = {
   name: "",
@@ -192,61 +224,83 @@ export function ProfileAudit() {
         {error && <span className="text-sm text-danger">{error}</span>}
       </div>
 
-      {audit && (
-        <div className="space-y-5 border-t border-border pt-4">
-          <div className="flex items-center gap-4">
-            <div
-              className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl text-white ${
-                GRADE_COLOR[audit.grade.letter] ?? "bg-text-tertiary"
-              }`}
-            >
-              <span className="text-2xl font-bold leading-none">{audit.grade.letter}</span>
-              <span className="text-[10px] opacity-90">{audit.grade.score}/100</span>
+      {audit && (() => {
+        const findings: Finding[] = [
+          audit.bio.fiveSecondClarity,
+          audit.bio.structure,
+          audit.bio.oneLiner,
+          audit.bio.dmTrigger,
+          audit.link.finding,
+          audit.pinnedPosts,
+          audit.highlights,
+          audit.profileImage,
+        ];
+        const counts = { good: 0, "needs-work": 0, missing: 0 } as Record<string, number>;
+        findings.forEach((f) => {
+          if (f.status in counts) counts[f.status]++;
+        });
+        return (
+          <div className="space-y-5 border-t border-border pt-5">
+            {/* Grade hero */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 rounded-xl border border-border bg-surface-hover/40 p-4">
+              <ScoreRing score={audit.grade.score} letter={audit.grade.letter} />
+              <div className="min-w-0 text-center sm:text-left">
+                <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-1">Overall grade</div>
+                <p className="text-sm text-text-secondary">{audit.grade.rationale}</p>
+                <div className="mt-3 flex flex-wrap justify-center sm:justify-start gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">✓ {counts.good} good</span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30">! {counts["needs-work"]} needs work</span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-red-500/15 text-red-500 border-red-500/30">✕ {counts.missing} missing</span>
+                </div>
+              </div>
             </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Grade</div>
-              <p className="text-sm text-text-secondary">{audit.grade.rationale}</p>
+
+            <p className="text-sm text-text-secondary italic">{audit.summary}</p>
+
+            {/* Bio */}
+            <div className="space-y-2.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Bio</div>
+              <FindingRow label="5-second clarity" finding={audit.bio.fiveSecondClarity} />
+              <FindingRow label="4-line structure" finding={audit.bio.structure} />
+              <FindingRow label="Outcome + method + timeframe one-liner" finding={audit.bio.oneLiner} />
+              <FindingRow label='"DM me {word}" trigger' finding={audit.bio.dmTrigger} />
+              <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
+                <div className="text-[10px] uppercase tracking-wide font-bold text-accent mb-1">Suggested bio</div>
+                <p className="text-sm text-text-primary whitespace-pre-wrap">{audit.bio.rewrite}</p>
+              </div>
             </div>
+
+            {/* Link · Pinned · Highlights · Photo */}
+            <div className="space-y-2.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Link · Pinned · Highlights · Photo</div>
+              <FindingRow label="Bio link" finding={audit.link.finding} />
+              <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-tertiary">
+                <span className="font-medium text-text-secondary">Detected:</span> {audit.link.detectedDestination}
+                <span className="mx-1">·</span>
+                <span className="font-medium text-text-secondary">Recommended:</span> {audit.link.recommendation}
+              </div>
+              <FindingRow label="Pinned posts" finding={audit.pinnedPosts} />
+              <FindingRow label="Highlights" finding={audit.highlights} />
+              <FindingRow label="Profile image" finding={audit.profileImage} />
+            </div>
+
+            {/* Top fixes */}
+            {audit.topFixes.length > 0 && (
+              <div className="rounded-xl border border-border bg-surface-hover/40 p-4 space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Top fixes</div>
+                <ol className="space-y-2">
+                  {audit.topFixes.map((f, i) => (
+                    <li key={i} className="flex gap-2.5 text-sm text-text-secondary">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-white text-[11px] font-bold">{i + 1}</span>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
-
-          <p className="text-sm text-text-secondary italic">{audit.summary}</p>
-
-          <div className="space-y-3">
-            <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Bio</div>
-            <FindingRow label="5-second clarity" finding={audit.bio.fiveSecondClarity} />
-            <FindingRow label="4-line structure" finding={audit.bio.structure} />
-            <FindingRow label="Outcome + method + timeframe one-liner" finding={audit.bio.oneLiner} />
-            <FindingRow label='"DM me {word}" trigger' finding={audit.bio.dmTrigger} />
-            <div className="rounded-lg bg-surface-hover p-3">
-              <div className="text-[10px] uppercase tracking-wide text-accent mb-1">Suggested bio</div>
-              <p className="text-sm text-text-primary whitespace-pre-wrap">{audit.bio.rewrite}</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Link · Pinned · Highlights · Photo</div>
-            <FindingRow label="Bio link" finding={audit.link.finding} />
-            <p className="text-xs text-text-tertiary pl-5">Detected: {audit.link.detectedDestination} — Recommended: {audit.link.recommendation}</p>
-            <FindingRow label="Pinned posts" finding={audit.pinnedPosts} />
-            <FindingRow label="Highlights" finding={audit.highlights} />
-            <FindingRow label="Profile image" finding={audit.profileImage} />
-          </div>
-
-          {audit.topFixes.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Top fixes</div>
-              <ul className="space-y-1">
-                {audit.topFixes.map((f, i) => (
-                  <li key={i} className="text-sm text-text-secondary flex gap-2">
-                    <span className="text-accent shrink-0">→</span>
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
