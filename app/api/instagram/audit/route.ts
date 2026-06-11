@@ -33,17 +33,13 @@ export async function POST(req: Request) {
 
   try {
     const text = buildAuditUserPrompt(body);
-    // Vision inputs: the profile photo (from the connected account) and an
-    // optional profile screenshot (for pinned posts + highlights).
+    // Vision input: the connected profile photo (to assess the profile image).
     const content: Array<
       | { type: "text"; text: string }
       | { type: "image"; image: URL | string }
     > = [{ type: "text", text }];
     if (body.profileImageUrl) {
       content.push({ type: "image", image: new URL(body.profileImageUrl) });
-    }
-    if (body.screenshotDataUrl) {
-      content.push({ type: "image", image: body.screenshotDataUrl });
     }
 
     const { object } = await generateObject({

@@ -10,7 +10,7 @@ Use this status for each element:
 - "good" — meets the criteria
 - "needs-work" — present but weak or partial; explain exactly what to change
 - "missing" — not present at all
-- "not-provided" — you weren't given the data to judge this (e.g. no highlights/pinned info, no profile image)
+- "not-provided" — you weren't given the data to judge this (e.g. no profile image)
 
 ## BIO CRITERIA
 The bio should follow this 4-line variation (or something clearly similar):
@@ -37,27 +37,11 @@ The bio link should send people to ONE of these (in order of preference):
 5. A low-ticket offer (least preferred)
 Detect what the link points to if possible (e.g. youtube.com → nurture video, calendly/cal.com → consultation, a Linktree → mixed). Recommend the best destination for THIS business.
 
-## PINNED POSTS CRITERIA (3 posts)
-1. About me (reel, carousel, or image with a long caption)
-2. What to expect when you work with me
-3. Social-proof carousel OR a CTA for their lead magnet
-If pinned-post info wasn't provided, set status "not-provided" and say what to capture.
-
-## HIGHLIGHTS CRITERIA (4 essential)
-1. My Story — labelled "Start Here"/"New Here": how they got started, their transformation, how to work with them, case studies (summarised)
-2. How I Can Help — who they work with, their process, the exact problems they solve, the results to expect
-3. Testimonials/Results — screenshots, videos, played WhatsApp voice notes, case studies — proof
-4. Free Stuff — a guide, YouTube videos, free mini-course, free community, or webinar invite
-Extra highlights are a plus. If highlights weren't provided, set status "not-provided" and say what to capture.
-
 ## PROFILE IMAGE CRITERIA
 A clear shot of the person's face — smiling, or in an authoritative setup (giving a speech/presentation). If no image was provided to assess, set "not-provided".
 
-## PROFILE SCREENSHOT (when attached)
-If a profile screenshot is attached, READ IT to assess the PINNED POSTS (the top row of the grid) and the HIGHLIGHTS (the covers + labels under the bio) against their criteria — do NOT mark them "not-provided" when a screenshot is present. You can see highlight covers/labels and pinned-post thumbnails, but not the content inside each highlight; judge what's visible and note what still needs verifying.
-
 ## GRADING
-Give an overall grade: a score from 0–100 and a letter (A = 90+, B = 80–89, C = 70–79, D = 60–69, F = under 60). Weight the BIO most heavily — its 5-second clarity, the outcome/method/timeframe one-liner, the "DM me {WORD}" trigger, and the 4-line structure are roughly HALF the grade. Then weigh the link destination, highlights, pinned posts, and profile image. Be honest and strict: a profile missing the DM trigger AND the one-liner should not score above ~70. Briefly justify the grade in one or two sentences.
+Give an overall grade: a score from 0–100 and a letter (A = 90+, B = 80–89, C = 70–79, D = 60–69, F = under 60). Weight the BIO most heavily — its 5-second clarity, the outcome/method/timeframe one-liner, the "DM me {WORD}" trigger, and the 4-line structure are the bulk of the grade. Then weigh the link destination and the profile image. Do NOT consider pinned posts or highlights. Be honest and strict: a profile missing the DM trigger AND the one-liner should not score above ~70. Briefly justify the grade in one or two sentences.
 
 Be specific and practical in every comment. Reference the actual text you were given.`;
 
@@ -85,8 +69,6 @@ export const IgAuditSchema = z.object({
     detectedDestination: z.string().describe("What the link appears to point to, or 'unknown'."),
     recommendation: z.string().describe("The best destination per the rubric, for this business."),
   }),
-  pinnedPosts: Finding,
-  highlights: Finding,
   profileImage: Finding,
   topFixes: z.array(z.string()).describe("Prioritised, specific action items."),
 });
@@ -98,14 +80,10 @@ export interface AuditInput {
   name?: string;
   bio: string;
   link?: string;
-  highlights?: string;
-  pinnedPosts?: string;
   businessModel?: string;
   profileImageNote?: string;
   // When set, the image is sent to the model (vision) to assess the profile photo.
   profileImageUrl?: string;
-  // A profile screenshot (data URL) — read via vision for pinned posts + highlights.
-  screenshotDataUrl?: string;
 }
 
 export function buildAuditUserPrompt(input: AuditInput): string {
@@ -116,15 +94,6 @@ export function buildAuditUserPrompt(input: AuditInput): string {
   lines.push(`Bio link: ${input.link || "(none)"}`);
   if (input.businessModel)
     lines.push(`Business model / how they deliver value: ${input.businessModel}`);
-  const screenshotNote = input.screenshotDataUrl
-    ? " (a profile screenshot is attached — read pinned posts + highlights from it)"
-    : "";
-  lines.push(
-    `Pinned posts: ${input.pinnedPosts?.trim() || `(none pasted${screenshotNote || " — mark not-provided"})`}`,
-  );
-  lines.push(
-    `Highlights: ${input.highlights?.trim() || `(none pasted${screenshotNote || " — mark not-provided"})`}`,
-  );
   if (input.profileImageUrl) {
     lines.push(
       `Profile image: ATTACHED below — assess the actual photo against the criteria (clear face, smiling or authoritative).`,

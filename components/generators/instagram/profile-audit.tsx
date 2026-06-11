@@ -50,18 +50,14 @@ const EMPTY = {
   bio: "",
   link: "",
   businessModel: "",
-  pinnedPosts: "",
-  highlights: "",
   profileImageNote: "",
 };
 
-// Audits an Instagram profile against the agency rubric. Paste the fields for
-// now; once a client connects their account this will auto-fill from the live
-// profile. Admin-gated until the Meta integration opens to clients.
+// Audits an Instagram profile against the agency rubric — bio, link, and the
+// profile photo. Pulls from the connected profile, or paste the fields.
 export function ProfileAudit() {
   const [form, setForm] = useState({ ...EMPTY });
   const [imgUrl, setImgUrl] = useState<string | null>(null);
-  const [shot, setShot] = useState<string | null>(null);
   const [audit, setAudit] = useState<IgAudit | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -69,13 +65,6 @@ export function ProfileAudit() {
 
   const set = (k: keyof typeof EMPTY, v: string) =>
     setForm((f) => ({ ...f, [k]: v }));
-
-  const onScreenshot = (file: File | undefined) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setShot(typeof reader.result === "string" ? reader.result : null);
-    reader.readAsDataURL(file);
-  };
 
   // Pull the live connected profile into the form (bio/name/link + photo).
   const loadConnected = async () => {
@@ -114,7 +103,6 @@ export function ProfileAudit() {
         body: JSON.stringify({
           ...form,
           profileImageUrl: imgUrl ?? undefined,
-          screenshotDataUrl: shot ?? undefined,
         }),
       });
       const data = await res.json();
@@ -163,27 +151,6 @@ export function ProfileAudit() {
       </div>
       <textarea className="ck-input resize-y" rows={4} placeholder="Bio text (required)" value={form.bio} onChange={(e) => set("bio", e.target.value)} />
       <input className="ck-input" placeholder="Bio link (URL)" value={form.link} onChange={(e) => set("link", e.target.value)} />
-      <div className="rounded-lg border border-dashed border-border p-3 space-y-2">
-        <label className="text-xs font-medium text-text-secondary">
-          Profile screenshot — pinned posts &amp; highlights are audited from this (the API can&apos;t read them)
-        </label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => onScreenshot(e.target.files?.[0])}
-          className="block w-full text-xs text-text-tertiary file:mr-3 file:rounded-md file:border-0 file:bg-surface-hover file:px-3 file:py-1.5 file:text-text-secondary"
-        />
-        {shot && (
-          <div className="flex items-center gap-2 text-xs text-text-tertiary">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={shot} alt="" className="h-12 rounded border border-border object-cover" />
-            Screenshot attached — pinned posts &amp; highlights will be read from it.
-          </div>
-        )}
-        <p className="text-[11px] text-text-tertiary">
-          Tip: capture the highlights row and the top of your grid in one shot.
-        </p>
-      </div>
 
       <div className="flex items-center gap-3">
         <button type="button" onClick={run} disabled={loading || !form.bio.trim()} className="ck-btn-primary disabled:opacity-50">
@@ -199,8 +166,6 @@ export function ProfileAudit() {
           audit.bio.oneLiner,
           audit.bio.dmTrigger,
           audit.link.finding,
-          audit.pinnedPosts,
-          audit.highlights,
           audit.profileImage,
         ];
         const counts = { good: 0, "needs-work": 0, missing: 0 } as Record<string, number>;
@@ -286,7 +251,7 @@ export function ProfileAudit() {
             <section className="space-y-2.5">
               <div className="flex items-center gap-2">
                 <span className="h-4 w-1 rounded-full bg-accent" />
-                <h4 className="text-sm font-bold text-text-primary">Link · Pinned · Highlights · Photo</h4>
+                <h4 className="text-sm font-bold text-text-primary">Link &amp; Profile Photo</h4>
               </div>
               <FindingRow label="Bio link" finding={audit.link.finding} />
               <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-tertiary">
@@ -294,8 +259,6 @@ export function ProfileAudit() {
                 <span className="mx-1">·</span>
                 <span className="font-medium text-text-secondary">Recommended:</span> {audit.link.recommendation}
               </div>
-              <FindingRow label="Pinned posts" finding={audit.pinnedPosts} />
-              <FindingRow label="Highlights" finding={audit.highlights} />
               <FindingRow label="Profile image" finding={audit.profileImage} />
             </section>
 
