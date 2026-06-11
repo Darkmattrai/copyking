@@ -7,7 +7,7 @@
 // "image" → sent to Claude as a vision block.
 // "pdf"   → sent as a native PDF document block.
 // "document" → Word/Excel/CSV/plain text; the server extracts its text.
-export type AttachmentKind = "image" | "pdf" | "document";
+export type AttachmentKind = "image" | "pdf" | "document" | "audio";
 
 export type ChatAttachment = {
   id: string;
@@ -25,7 +25,7 @@ export type ChatAttachment = {
 // What the file picker advertises. Video is intentionally excluded — Claude
 // can't read it — and is rejected with a friendly message if force-selected.
 export const ATTACHMENT_ACCEPT =
-  "image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md";
+  "image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.md,audio/*,.mp3,.m4a,.wav,.ogg,.aac";
 
 // Hard cap on the ORIGINAL file size. Big enough for real docs, small enough
 // that re-sending attachments on every chat turn stays reasonable.
@@ -34,8 +34,9 @@ export const MAX_ATTACHMENTS = 6;
 
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|heic|heif)$/i;
 const PDF_EXT = /\.pdf$/i;
-const DOC_EXT = /\.(docx?|xlsx?|csv|txt|md|tsv|rtf)$/i;
-const VIDEO_EXT = /\.(mp4|mov|m4v|avi|mkv|webm|wmv|flv|mpeg|mpg)$/i;
+const DOC_EXT = /\.(docx?|pptx?|xlsx?|csv|txt|md|tsv|rtf)$/i;
+const AUDIO_EXT = /\.(mp3|m4a|wav|ogg|oga|aac|mpga|flac)$/i;
+const VIDEO_EXT = /\.(mp4|mov|m4v|avi|mkv|wmv|flv|mpeg|mpg)$/i;
 
 export class AttachmentError extends Error {}
 
@@ -55,6 +56,7 @@ function classify(file: File): AttachmentKind {
   }
   if (mime.startsWith("image/") || IMAGE_EXT.test(name)) return "image";
   if (mime === "application/pdf" || PDF_EXT.test(name)) return "pdf";
+  if (mime.startsWith("audio/") || AUDIO_EXT.test(name)) return "audio";
   if (DOC_EXT.test(name) || mime.startsWith("text/")) return "document";
   // Unknown binary types fall through to "document"; the server will try text
   // extraction and skip gracefully if it can't read them.
