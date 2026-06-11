@@ -30,7 +30,6 @@ import {
 } from "@/lib/offer/schema";
 import { newPillar } from "@/lib/offer/seed";
 import type { EnhanceContext } from "@/lib/offer/enhance-prompt";
-import type { OfferDraft } from "@/lib/offer/draft";
 import { OfferField, useEnhance } from "./offer-field";
 import { ListTable } from "./list-table";
 import { ResultMap } from "./result-map";
@@ -316,9 +315,6 @@ export function ProductBuilder() {
   const { enhance, enhancingKey } = useEnhance();
 
   const icp = useBrandStore((s) => s.brandDNA.icp);
-  const brandDNA = useBrandStore((s) => s.brandDNA);
-  const [drafting, setDrafting] = useState(false);
-  const [draftError, setDraftError] = useState<string | null>(null);
 
   const ladder = offer.ladders[curLadder];
   const P: Product | undefined =
@@ -345,46 +341,6 @@ export function ProductBuilder() {
     [P?.who, P?.dream, P?.name, offer.offerName, linkedSegments],
   );
 
-  // Draft the whole offer with AI — fills empty fields from Brand DNA (+ what's
-  // already filled), so the user edits instead of starting from a blank box.
-  const draftWithAI = async () => {
-    if (!P) return;
-    setDrafting(true);
-    setDraftError(null);
-    try {
-      const res = await fetch("/api/offer/draft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brandDNA, product: P }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.draft) throw new Error(data?.error || "Draft failed");
-      const d = data.draft as OfferDraft;
-      const empty = (s?: string) => !s || !s.trim();
-      const patch: Partial<Product> = {};
-      if (empty(P.who)) patch.who = d.who;
-      if (empty(P.where)) patch.where = d.where;
-      if (empty(P.dream)) patch.dream = d.dream;
-      if (empty(P.emotion)) patch.emotion = d.emotion;
-      if (empty(P.bait)) patch.bait = d.bait;
-      if (empty(P.magic)) patch.magic = d.magic;
-      if (empty(P.rationale)) patch.rationale = d.rationale;
-      if (empty(P.guaranteeResult)) patch.guaranteeResult = d.guaranteeResult;
-      if (empty(P.guaranteeWindow)) patch.guaranteeWindow = d.guaranteeWindow;
-      if (empty(P.scarcityDetail)) patch.scarcityDetail = d.scarcityDetail;
-      if (empty(P.priceProof)) patch.priceProof = d.priceProof;
-      if (empty(P.anchorCompare)) patch.anchorCompare = d.anchorCompare;
-      if (!P.features.length) patch.features = d.features;
-      if (!P.problems.length) patch.problems = d.problems;
-      if (!P.objections.length) patch.objections = d.objections;
-      if (!P.resultMap.ultimate && !P.resultMap.cores.length) patch.resultMap = d.resultMap;
-      patchProduct(patch);
-    } catch (e) {
-      setDraftError(e instanceof Error ? e.message : "Draft failed");
-    } finally {
-      setDrafting(false);
-    }
-  };
 
   // The guarantee's "result" is almost always the trimmed promise restated.
   // Prefill it from `trim` the first time the lead reaches the guarantee step
@@ -499,27 +455,13 @@ export function ProductBuilder() {
     <div className="space-y-5">
       {/* TAB BAR — step navigation, grouped, horizontal */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setCurProduct(null)}
-            className="text-sm font-medium text-accent hover:text-accent-hover transition-colors"
-          >
-            ← Back to ladder
-          </button>
-          <div className="flex items-center gap-2">
-            {draftError && <span className="text-xs text-danger">{draftError}</span>}
-            <button
-              type="button"
-              onClick={draftWithAI}
-              disabled={drafting}
-              className="ck-btn-secondary !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5 disabled:opacity-50"
-              title="Fill empty fields from your Brand DNA"
-            >
-              {drafting ? "Drafting…" : "✨ Draft with AI"}
-            </button>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => setCurProduct(null)}
+          className="text-sm font-medium text-accent hover:text-accent-hover transition-colors"
+        >
+          ← Back to ladder
+        </button>
         <nav className="flex flex-wrap items-end gap-x-6 gap-y-1 border-b border-border overflow-x-auto">
           {STEPS.map((s, idx) => (
             <button
