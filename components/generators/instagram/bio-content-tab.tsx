@@ -74,7 +74,6 @@ const PIN_FORMATS = [
   { value: "carousel", label: "Carousel" },
   { value: "reel", label: "Reel" },
 ];
-const FORMULA_FORMAT = [{ value: "formulas", label: "Formulas" }];
 const WTE_FORMATS = [
   { value: "formulas", label: "6 Formulas" },
   { value: "carousel", label: "Carousel" },
@@ -92,12 +91,11 @@ const HIGHLIGHTS_GEN: GenItem[] = [
   },
   {
     key: "how-i-help",
-    label: "How I Can Help (Work With Me)",
-    subtitle: "6 ready-to-film formulas (POV / Before-After / Myths / etc.) — comment-keyword CTAs.",
-    formats: FORMULA_FORMAT,
+    label: "How I Can Help",
+    subtitle: "Who you help, process, problems, results — a 10–15 frame highlight + social proof → comment-to-book CTA.",
+    formats: HL_FORMATS,
     seed: helpSeed,
     saveSocialProof: true,
-    multiFormula: true,
   },
 ];
 
