@@ -11,12 +11,12 @@ import {
 
 export const maxDuration = 120;
 
-// Audits an Instagram profile against the agency's criteria. Accepts pasted
-// fields now; the same shape is fed automatically from the connected profile
-// once the Meta app is live. Admin-gated until the integration opens to clients.
+// Audits an Instagram profile against the agency's criteria. Available to any
+// logged-in user (admins + clients); accepts pasted fields or the connected
+// profile + an optional screenshot.
 export async function POST(req: Request) {
   const role = await getUserRole();
-  if (role !== "admin") {
+  if (!role) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

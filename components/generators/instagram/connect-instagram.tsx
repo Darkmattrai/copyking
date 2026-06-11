@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import { useRole } from "@/lib/auth/use-role";
 import { PillarIcon } from "@/components/brand/pillar-icon";
 
 interface Status {
@@ -19,10 +18,9 @@ const NOTICE: Record<string, string> = {
   error: "Couldn't connect Instagram — please try again.",
 };
 
-// "Connect Instagram" control. Gated to admins for now — clients can't connect
-// until the Meta app passes review (only testers work in dev mode).
+// "Connect Instagram" control. Available to all logged-in users. Connecting
+// only succeeds once the Meta app is live/approved (dev mode = testers only).
 export function ConnectInstagram() {
-  const role = useRole();
   const [status, setStatus] = useState<Status | null>(null);
   const [igNotice, setIgNotice] = useState<string | null>(null);
   const [igDetail, setIgDetail] = useState<string | null>(null);
@@ -38,8 +36,6 @@ export function ConnectInstagram() {
       setIgDetail(sp.get("ig_detail"));
     }
   }, []);
-
-  if (role !== "admin") return null;
 
   const disconnect = async () => {
     await fetch("/api/instagram/status", { method: "DELETE" });

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { useRole } from "@/lib/auth/use-role";
 import type { IgAudit } from "@/lib/instagram/audit";
 
 type Status = "good" | "needs-work" | "missing" | "not-provided";
@@ -60,7 +59,6 @@ const EMPTY = {
 // now; once a client connects their account this will auto-fill from the live
 // profile. Admin-gated until the Meta integration opens to clients.
 export function ProfileAudit() {
-  const role = useRole();
   const [form, setForm] = useState({ ...EMPTY });
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [shot, setShot] = useState<string | null>(null);
@@ -68,8 +66,6 @@ export function ProfileAudit() {
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (role !== "admin") return null;
 
   const set = (k: keyof typeof EMPTY, v: string) =>
     setForm((f) => ({ ...f, [k]: v }));

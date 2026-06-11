@@ -49,9 +49,9 @@ export function clientCanAccessApi(pathname: string): boolean {
   // sub-route has no gate of its own, so it must stay blocked (no prefix match).
   if (pathname === "/api/generate") return true;
 
-  // Clients need the ICP Map + Offer endpoints, the Instagram bio/content tools,
-  // and shared infra (generations, brand profile sync, auth). Instagram connect/
-  // callback/audit stay admin-only and are intentionally excluded.
+  // Clients need the ICP Map + Offer endpoints, the full Instagram toolset
+  // (connect, callback, status, profile, content, audit), and shared infra
+  // (generations, brand profile sync, auth).
   const allowedPrefixes = [
     "/api/me",
     "/api/icp/",
@@ -59,9 +59,7 @@ export function clientCanAccessApi(pathname: string): boolean {
     "/api/generations",
     "/api/brand/profile",
     "/api/auth",
-    "/api/instagram/content",
-    "/api/instagram/status",
-    "/api/instagram/profile",
+    "/api/instagram/",
   ];
   return allowedPrefixes.some((p) => pathname.startsWith(p));
 }

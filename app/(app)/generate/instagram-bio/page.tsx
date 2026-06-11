@@ -6,7 +6,6 @@ import { useCompletion } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useBrandStore } from "@/lib/brand/store";
-import { useRole } from "@/lib/auth/use-role";
 import { createMockBrandDNA } from "@/lib/brand/utils";
 import { useHistoryStore, type GenerationEntry } from "@/lib/generators/history-store";
 import { getGenerator } from "@/lib/generators/registry";
@@ -446,7 +445,6 @@ export default function InstagramBioPage() {
   const interviewCompleted = useBrandStore((s) => s.interviewCompleted);
   const addEntry = useHistoryStore((s) => s.addEntry);
   const allEntries = useHistoryStore((s) => s.entries);
-  const role = useRole();
   const generator = getGenerator("instagram-bio");
 
   const brandIsEmpty =
@@ -492,12 +490,6 @@ export default function InstagramBioPage() {
 
   // Pillar hub: which of the 4 sub-tools is open (null = hub landing).
   const [pillar, setPillar] = useState<"audit" | "bio" | "highlights" | "pinned" | null>(null);
-
-  // Guard: the Account Audit pillar is admin-only. If a non-admin lands on it
-  // (e.g. clicked the card during the role-loading window), bounce to the hub.
-  useEffect(() => {
-    if (pillar === "audit" && role && role !== "admin") setPillar(null);
-  }, [pillar, role]);
 
   // New UI state
   const [showHistory, setShowHistory] = useState(false);
@@ -617,17 +609,13 @@ export default function InstagramBioPage() {
     [displayBios],
   );
 
-  // The sub-tools (pillars) shown on the hub landing. The Account Audit (live
-  // Instagram connection) is admin-only for now; clients get the 3 generators.
+  // The 4 sub-tools (pillars) shown on the hub landing — available to everyone.
   const PILLARS = [
     { key: "audit" as const, title: "Instagram Account Audit", desc: "Connect a profile and grade it against the criteria." },
     { key: "bio" as const, title: "Bio Generator", desc: "Craft the 150-character bio from a guided intake." },
     { key: "highlights" as const, title: "Highlights Generator", desc: "Script My Story, How I Can Help & more." },
     { key: "pinned" as const, title: "Pinned Posts Generator", desc: "Script About Me, What to Expect & more." },
-    // Audit is admin-only — show it only to confirmed admins (so clients never
-    // see it, not even during the async role-loading window). A guard effect
-    // bounces anyone who lands on the audit pillar without being an admin.
-  ].filter((p) => p.key !== "audit" || role === "admin");
+  ];
   const PILLAR_LABEL: Record<string, string> = Object.fromEntries(
     PILLARS.map((p) => [p.key, p.title]),
   );
