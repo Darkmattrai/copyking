@@ -60,6 +60,7 @@ export function clientCanAccessApi(pathname: string): boolean {
     "/api/brand/profile",
     "/api/auth",
     "/api/instagram/",
+    "/api/transcribe",
   ];
   return allowedPrefixes.some((p) => pathname.startsWith(p));
 }

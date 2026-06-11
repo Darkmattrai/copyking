@@ -76,6 +76,22 @@ export const UPDATE_TOOL: Anthropic.Tool = {
   },
 };
 
+// Lets the assistant read a public web page (the user's site, a landing page, a
+// competitor, an article). Executed server-side; the page text comes back as the
+// tool result for the assistant to use.
+export const READ_URL_TOOL: Anthropic.Tool = {
+  name: "read_url",
+  description:
+    "Fetch and read the text of a public web page. Use it whenever the user shares a URL or asks you to look at a link (their website, a sales page, a competitor, an article). Mine it for offer details.",
+  input_schema: {
+    type: "object",
+    properties: {
+      url: { type: "string", description: "The full http(s) URL to read." },
+    },
+    required: ["url"],
+  },
+};
+
 // The fields the tool can write — used client-side to apply the patch safely.
 export const UPDATE_FIELDS = Object.keys(
   (UPDATE_TOOL.input_schema as { properties: Record<string, unknown> }).properties,
@@ -108,7 +124,7 @@ export function buildAssistantSystem(brandContext: string, product: Product | nu
 
 Your job: help them build a Grand Slam Offer for THIS product and FILL IT IN for them as you go using the update_offer tool. Don't just tell them what to write — actually write it via the tool. Pull everything you can from their Brand DNA so you ask as few questions as possible. When you have enough to fill a field or section, call update_offer immediately, then say in one short line what you filled and what's next.
 
-Keep your chat replies short and human — the substance goes into the tool calls. If the user uploads files (transcripts, decks, sheets, notes), mine them for the offer details.
+Keep your chat replies short and human — the substance goes into the tool calls. If the user uploads files (transcripts, decks, sheets, notes), mine them for the offer details. If they share a URL or ask you to look at a link, use the read_url tool to read the page.
 
 ${brandContext ? `THEIR BRAND DNA:\n${brandContext}\n` : "No Brand DNA on file — gather the essentials by asking.\n"}
 CURRENT PRODUCT (fill EMPTY fields; keep filled ones unless they ask you to change them):

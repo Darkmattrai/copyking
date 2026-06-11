@@ -33,10 +33,59 @@ export function OfferAssistantDrawer({
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [streamingText, setStreamingText] = useState("");
   const [filledNow, setFilledNow] = useState<string[]>([]);
+  const [notes, setNotes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const toggleRecording = async () => {
+    if (recording) {
+      recorderRef.current?.stop();
+      return;
+    }
+    setError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => {
+        if (e.data.size) chunksRef.current.push(e.data);
+      };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setRecording(false);
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
+        if (!blob.size) return;
+        setTranscribing(true);
+        try {
+          const ext = (mr.mimeType || "").includes("mp4") ? "mp4" : "webm";
+          const fd = new FormData();
+          fd.append("audio", blob, `voice.${ext}`);
+          const res = await fetch("/api/transcribe", { method: "POST", body: fd });
+          const data = await res.json();
+          if (res.ok && data.text) {
+            setInput((prev) => (prev ? prev + " " : "") + data.text);
+          } else {
+            setError(data?.error || "Transcription failed");
+          }
+        } catch {
+          setError("Transcription failed");
+        } finally {
+          setTranscribing(false);
+        }
+      };
+      recorderRef.current = mr;
+      mr.start();
+      setRecording(true);
+    } catch {
+      setError("Couldn't access the microphone.");
+    }
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,6 +118,7 @@ export function OfferAssistantDrawer({
       setStreamingText("");
       setError("");
       setFilledNow([]);
+      setNotes([]);
       const turnFilled: string[] = [];
       try {
         const res = await fetch("/api/offer/assistant", {
@@ -116,6 +166,7 @@ export function OfferAssistantDrawer({
                 turnFilled.push(...applyTool(evt.input));
                 setFilledNow([...turnFilled]);
               }
+              if (evt.note) setNotes((n) => [...n, String(evt.note)]);
             } catch (err) {
               if ((err as Error).message !== "Unexpected end of JSON input") throw err;
             }
@@ -206,6 +257,9 @@ export function OfferAssistantDrawer({
               ) : null}
             </div>
           )}
+          {notes.map((n, i) => (
+            <div key={`note-${i}`} className="text-[11px] text-text-tertiary">🔗 {n}</div>
+          ))}
           {isLoading && !streamingText && <div className="text-xs text-text-tertiary">Thinking…</div>}
           {error && <div className="text-sm text-danger">{error}</div>}
           <div ref={bottomRef} />
@@ -217,7 +271,9 @@ export function OfferAssistantDrawer({
             <textarea
               className="ck-input resize-none flex-1"
               rows={2}
-              placeholder="Message the assistant…"
+              placeholder={
+                recording ? "Recording… tap the mic to stop" : transcribing ? "Transcribing…" : "Message the assistant…"
+              }
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -227,6 +283,19 @@ export function OfferAssistantDrawer({
                 }
               }}
             />
+            <button
+              type="button"
+              onClick={toggleRecording}
+              disabled={transcribing}
+              title={recording ? "Stop recording" : "Record a voice note"}
+              className={`!px-3 !py-2 rounded-lg border text-sm shrink-0 transition-colors ${
+                recording
+                  ? "border-red-500 bg-red-500/10 text-red-500 animate-pulse"
+                  : "border-border text-text-secondary hover:text-text-primary"
+              } disabled:opacity-50`}
+            >
+              {transcribing ? "…" : recording ? "■" : "🎤"}
+            </button>
             <button
               onClick={send}
               disabled={isLoading}

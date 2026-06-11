@@ -7,7 +7,8 @@ import {
   toAnthropicMessages,
   type ChatClientMessage,
 } from "@/lib/chat/attachments-server";
-import { buildAssistantSystem, UPDATE_TOOL } from "@/lib/offer/assistant";
+import { buildAssistantSystem, UPDATE_TOOL, READ_URL_TOOL } from "@/lib/offer/assistant";
+import { fetchUrlText } from "@/lib/chat/fetch-url";
 import { logUsage } from "@/lib/usage/log";
 import type { Product } from "@/lib/offer/schema";
 
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
             max_tokens: 4096,
             system,
             messages: convo,
-            tools: [UPDATE_TOOL],
+            tools: [UPDATE_TOOL, READ_URL_TOOL],
           });
 
           for await (const event of stream) {
@@ -88,12 +89,24 @@ export async function POST(req: NextRequest) {
           if (final.stop_reason === "tool_use" && toolUses.length) {
             const toolResults: Anthropic.ToolResultBlockParam[] = [];
             for (const tu of toolUses) {
-              send({ tool: tu.name, input: tu.input });
-              toolResults.push({
-                type: "tool_result",
-                tool_use_id: tu.id,
-                content: "Applied to the builder.",
-              });
+              if (tu.name === "read_url") {
+                const url = (tu.input as { url?: string })?.url || "";
+                send({ note: `Reading ${url}` });
+                const content = await fetchUrlText(url);
+                toolResults.push({
+                  type: "tool_result",
+                  tool_use_id: tu.id,
+                  content: `Content of ${url}:\n\n${content}`,
+                });
+              } else {
+                // update_offer — applied client-side
+                send({ tool: tu.name, input: tu.input });
+                toolResults.push({
+                  type: "tool_result",
+                  tool_use_id: tu.id,
+                  content: "Applied to the builder.",
+                });
+              }
             }
             convo = [
               ...convo,
