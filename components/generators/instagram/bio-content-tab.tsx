@@ -74,6 +74,11 @@ const PIN_FORMATS = [
   { value: "carousel", label: "Carousel" },
   { value: "reel", label: "Reel" },
 ];
+const FORMULA_FORMAT = [{ value: "formulas", label: "Formulas" }];
+const WTE_FORMATS = [
+  { value: "formulas", label: "6 Formulas" },
+  { value: "carousel", label: "Carousel" },
+];
 
 const HIGHLIGHTS_GEN: GenItem[] = [
   {
@@ -89,7 +94,7 @@ const HIGHLIGHTS_GEN: GenItem[] = [
     key: "how-i-help",
     label: "How I Can Help (Work With Me)",
     subtitle: "6 ready-to-film formulas (POV / Before-After / Myths / etc.) — comment-keyword CTAs.",
-    formats: HL_FORMATS,
+    formats: FORMULA_FORMAT,
     seed: helpSeed,
     saveSocialProof: true,
     multiFormula: true,
@@ -132,11 +137,10 @@ const PINNED_GEN: GenItem[] = [
   {
     key: "what-to-expect",
     label: "What to Expect Working With Me",
-    subtitle: "6 ready-to-film formulas (POV / Before-After / Myths / etc.) — comment-keyword CTAs.",
-    formats: PIN_FORMATS,
+    subtitle: "6 ready-to-film formulas, or a full carousel — comment-keyword CTAs.",
+    formats: WTE_FORMATS,
     seed: expectSeed,
     saveSocialProof: true,
-    multiFormula: true,
   },
 ];
 

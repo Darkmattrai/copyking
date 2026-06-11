@@ -104,9 +104,7 @@ function brandSummary(b: BrandDNA): string {
   return lines.join("\n");
 }
 
-// "Work with me" items output a MENU of formula options instead of one script.
-const MULTI_FORMULA_ITEMS = new Set(["how-i-help", "what-to-expect"]);
-
+// The "formulas" format outputs a MENU of formula options instead of one script.
 const WORK_WITH_ME_FORMULAS = `Generate SIX distinct script options for "what it's like to work with me / hire me". All six MUST be grounded in the SAME real context — the user's actual process, offer, audience, and the brand context above. The person will pick their favourite to film. Put the user's keyword in EVERY call to action. Keep every line human and conversational (per the rules above) — no AI lingo, no quote-graphic energy.
 
 ### Formula 1 — POV: You Hire Me As Your [SERVICE]
@@ -151,7 +149,7 @@ export function buildContentPrompt(opts: {
       .map(([k, v]) => `- ${k}: ${v}`)
       .join("\n") || "(none provided — rely on Brand Context)";
 
-  if (MULTI_FORMULA_ITEMS.has(item)) {
+  if (format === "formulas") {
     return [
       brandSummary(brandDNA),
       WORK_WITH_ME_FORMULAS,
