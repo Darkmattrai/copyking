@@ -19,6 +19,7 @@ const KIND_ICON: Record<ChatAttachment["kind"], string> = {
   image: "🖼️",
   pdf: "📄",
   document: "📎",
+  audio: "🎧",
 };
 
 export function ChatAttachmentBar({
