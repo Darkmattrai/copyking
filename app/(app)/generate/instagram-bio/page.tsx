@@ -493,6 +493,12 @@ export default function InstagramBioPage() {
   // Pillar hub: which of the 4 sub-tools is open (null = hub landing).
   const [pillar, setPillar] = useState<"audit" | "bio" | "highlights" | "pinned" | null>(null);
 
+  // Guard: the Account Audit pillar is admin-only. If a non-admin lands on it
+  // (e.g. clicked the card during the role-loading window), bounce to the hub.
+  useEffect(() => {
+    if (pillar === "audit" && role && role !== "admin") setPillar(null);
+  }, [pillar, role]);
+
   // New UI state
   const [showHistory, setShowHistory] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
@@ -618,9 +624,10 @@ export default function InstagramBioPage() {
     { key: "bio" as const, title: "Bio Generator", desc: "Craft the 150-character bio from a guided intake." },
     { key: "highlights" as const, title: "Highlights Generator", desc: "Script My Story, How I Can Help & more." },
     { key: "pinned" as const, title: "Pinned Posts Generator", desc: "Script About Me, What to Expect & more." },
-    // Audit is admin-only; hide it only for confirmed clients (role loads async,
-    // so don't hide it while role is still null or it'd vanish for admins too).
-  ].filter((p) => p.key !== "audit" || role !== "client");
+    // Audit is admin-only — show it only to confirmed admins (so clients never
+    // see it, not even during the async role-loading window). A guard effect
+    // bounces anyone who lands on the audit pillar without being an admin.
+  ].filter((p) => p.key !== "audit" || role === "admin");
   const PILLAR_LABEL: Record<string, string> = Object.fromEntries(
     PILLARS.map((p) => [p.key, p.title]),
   );
