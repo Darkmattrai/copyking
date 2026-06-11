@@ -109,7 +109,7 @@ const WORK_WITH_ME_FORMULAS = `Generate SIX distinct script options for "what it
 
 ### Formula 1 — POV: You Hire Me As Your [SERVICE]
 Hook: "What happens when you hire me as your [their service]?"
-Then walk the process as numbered steps, adapted to THEIR real process (classic shape: Onboarding → Research → Build the deliverables → A simple client action → Production / polish → Delivery & results). Say what actually happens at each step in plain words.
+Then walk through the actual journey of working with them, as numbered steps BUILT FROM THEIR REAL PROCESS (the intake answers + brand context) — NOT a generic agency template. The number of steps can vary (4–7), and the steps must match how THIS person actually delivers their service. For example: a fitness coach → Assessment → Custom plan → Coaching & check-ins → Form/progress reviews → Results; an agency → Onboarding → Research → Build → Film → Edit → Post; a consultant → Discovery → Audit → Strategy → Implementation → Review. Use the shape that genuinely fits this person. Say what actually happens at each step in plain words.
 CTA: "Interested? Comment [KEYWORD] for more info."
 Then give the caption: "POV: you hire me as your [service] 😎 — Are you a [audience] who wants to [outcome]? Comment [KEYWORD] for more info ✅"
 
