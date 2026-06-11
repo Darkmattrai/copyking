@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { IntakeSchema, type Intake } from "@/lib/icp/schema";
 import type { ChatAttachment } from "@/lib/chat/attachments";
 import { ChatAttachmentBar } from "@/components/generators/chat-attachment-bar";
+import { MicButton } from "@/components/generators/mic-button";
 
 type Message = {
   role: "user" | "assistant";
@@ -167,6 +168,7 @@ export function IcpGuidedChat({
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [streamingText, setStreamingText] = useState("");
+  const [notes, setNotes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -189,6 +191,7 @@ export function IcpGuidedChat({
       setIsLoading(true);
       setStreamingText("");
       setError("");
+      setNotes([]);
 
       try {
         const res = await fetch("/api/icp/guided-chat", {
@@ -222,12 +225,13 @@ export function IcpGuidedChat({
             const payload = line.slice(6).trim();
             if (payload === "[DONE]") break;
             try {
-              const { text, error: e } = JSON.parse(payload);
-              if (e) throw new Error(e);
-              if (text) {
-                accumulated += text;
+              const evt = JSON.parse(payload);
+              if (evt.error) throw new Error(evt.error);
+              if (evt.text) {
+                accumulated += evt.text;
                 setStreamingText(accumulated);
               }
+              if (evt.note) setNotes((n) => [...n, String(evt.note)]);
             } catch (err) {
               if (
                 (err as Error).message !== "Unexpected end of JSON input"
@@ -305,6 +309,9 @@ export function IcpGuidedChat({
             <span className="w-2 h-2 rounded-full bg-text-tertiary animate-bounce [animation-delay:300ms]" />
           </div>
         )}
+        {notes.map((n, i) => (
+          <div key={`note-${i}`} className="text-[11px] text-text-tertiary mb-2">🔗 {n}</div>
+        ))}
         {error && (
           <div className="p-3 rounded-lg border border-danger/30 bg-danger/[0.06] text-sm text-danger">
             {error}
@@ -334,6 +341,11 @@ export function IcpGuidedChat({
             disabled={isLoading}
             className="ck-input flex-1 resize-none !rounded-xl !py-3"
             style={{ maxHeight: "120px" }}
+          />
+          <MicButton
+            onText={(t) => setInput((p) => (p ? p + " " : "") + t)}
+            onError={setError}
+            disabled={isLoading}
           />
           <button
             type="button"

@@ -1,3 +1,20 @@
+import type Anthropic from "@anthropic-ai/sdk";
+
+// Shared read_url tool — lets any chat assistant read a public web page the user
+// shares. Executed server-side; the page text comes back as the tool result.
+export const READ_URL_TOOL: Anthropic.Tool = {
+  name: "read_url",
+  description:
+    "Fetch and read the text of a public web page. Use it whenever the user shares a URL or asks you to look at a link (their website, a sales page, a competitor, an article).",
+  input_schema: {
+    type: "object",
+    properties: {
+      url: { type: "string", description: "The full http(s) URL to read." },
+    },
+    required: ["url"],
+  },
+};
+
 // Fetch a public web page and return its readable text. Used by the assistant's
 // read_url tool. The URL comes from the chat user (a deliberate action), but we
 // still guard against fetching internal/private addresses (basic SSRF defense).

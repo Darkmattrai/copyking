@@ -76,22 +76,6 @@ export const UPDATE_TOOL: Anthropic.Tool = {
   },
 };
 
-// Lets the assistant read a public web page (the user's site, a landing page, a
-// competitor, an article). Executed server-side; the page text comes back as the
-// tool result for the assistant to use.
-export const READ_URL_TOOL: Anthropic.Tool = {
-  name: "read_url",
-  description:
-    "Fetch and read the text of a public web page. Use it whenever the user shares a URL or asks you to look at a link (their website, a sales page, a competitor, an article). Mine it for offer details.",
-  input_schema: {
-    type: "object",
-    properties: {
-      url: { type: "string", description: "The full http(s) URL to read." },
-    },
-    required: ["url"],
-  },
-};
-
 // The fields the tool can write — used client-side to apply the patch safely.
 export const UPDATE_FIELDS = Object.keys(
   (UPDATE_TOOL.input_schema as { properties: Record<string, unknown> }).properties,

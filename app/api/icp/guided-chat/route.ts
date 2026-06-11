@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
+import type Anthropic from "@anthropic-ai/sdk";
 import { anthropic } from "@/lib/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { INTERVIEW_SYSTEM_PROMPT } from "@/lib/icp/interview-prompt";
+import { fetchUrlText, READ_URL_TOOL } from "@/lib/chat/fetch-url";
 import {
   toAnthropicMessages,
   type ChatClientMessage,
@@ -39,39 +41,66 @@ export async function POST(req: NextRequest) {
 
   const readable = new ReadableStream({
     async start(controller) {
+      const send = (obj: unknown) =>
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
       try {
-        const stream = anthropic.messages.stream({
-          model,
-          max_tokens: 4096,
-          system: INTERVIEW_SYSTEM_PROMPT,
-          messages: apiMessages,
-        });
+        let convo: Anthropic.MessageParam[] = apiMessages;
+        for (let depth = 0; depth < 5; depth++) {
+          const stream = anthropic.messages.stream({
+            model,
+            max_tokens: 4096,
+            system: INTERVIEW_SYSTEM_PROMPT,
+            messages: convo,
+            tools: [READ_URL_TOOL],
+          });
 
-        for await (const event of stream) {
-          if (
-            event.type === "content_block_delta" &&
-            event.delta.type === "text_delta"
-          ) {
-            const chunk = `data: ${JSON.stringify({ text: event.delta.text })}\n\n`;
-            controller.enqueue(encoder.encode(chunk));
+          for await (const event of stream) {
+            if (
+              event.type === "content_block_delta" &&
+              event.delta.type === "text_delta"
+            ) {
+              send({ text: event.delta.text });
+            }
           }
-        }
 
-        const finalMessage = await stream.finalMessage();
-        await logUsage({
-          userId: user.id,
-          feature: "icp-chat",
-          model,
-          usage: finalMessage.usage,
-        });
+          const finalMessage = await stream.finalMessage();
+          await logUsage({
+            userId: user.id,
+            feature: "icp-chat",
+            model,
+            usage: finalMessage.usage,
+          });
+
+          const toolUses = finalMessage.content.filter(
+            (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
+          );
+          if (finalMessage.stop_reason === "tool_use" && toolUses.length) {
+            const toolResults: Anthropic.ToolResultBlockParam[] = [];
+            for (const tu of toolUses) {
+              const url = (tu.input as { url?: string })?.url || "";
+              send({ note: `Reading ${url}` });
+              const content = await fetchUrlText(url);
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: tu.id,
+                content: `Content of ${url}:\n\n${content}`,
+              });
+            }
+            convo = [
+              ...convo,
+              { role: "assistant", content: finalMessage.content },
+              { role: "user", content: toolResults },
+            ];
+            continue;
+          }
+          break;
+        }
 
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Stream error";
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`)
-        );
+        send({ error: msg });
         controller.close();
       }
     },

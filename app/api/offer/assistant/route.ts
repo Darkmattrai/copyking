@@ -7,8 +7,8 @@ import {
   toAnthropicMessages,
   type ChatClientMessage,
 } from "@/lib/chat/attachments-server";
-import { buildAssistantSystem, UPDATE_TOOL, READ_URL_TOOL } from "@/lib/offer/assistant";
-import { fetchUrlText } from "@/lib/chat/fetch-url";
+import { buildAssistantSystem, UPDATE_TOOL } from "@/lib/offer/assistant";
+import { fetchUrlText, READ_URL_TOOL } from "@/lib/chat/fetch-url";
 import { logUsage } from "@/lib/usage/log";
 import type { Product } from "@/lib/offer/schema";
 
