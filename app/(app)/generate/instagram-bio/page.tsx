@@ -618,7 +618,9 @@ export default function InstagramBioPage() {
     { key: "bio" as const, title: "Bio Generator", desc: "Craft the 150-character bio from a guided intake." },
     { key: "highlights" as const, title: "Highlights Generator", desc: "Script My Story, How I Can Help & more." },
     { key: "pinned" as const, title: "Pinned Posts Generator", desc: "Script About Me, What to Expect & more." },
-  ].filter((p) => p.key !== "audit" || role === "admin");
+    // Audit is admin-only; hide it only for confirmed clients (role loads async,
+    // so don't hide it while role is still null or it'd vanish for admins too).
+  ].filter((p) => p.key !== "audit" || role !== "client");
   const PILLAR_LABEL: Record<string, string> = Object.fromEntries(
     PILLARS.map((p) => [p.key, p.title]),
   );
