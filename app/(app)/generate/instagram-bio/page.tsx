@@ -6,6 +6,7 @@ import { useCompletion } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useBrandStore } from "@/lib/brand/store";
+import { useRole } from "@/lib/auth/use-role";
 import { createMockBrandDNA } from "@/lib/brand/utils";
 import { useHistoryStore, type GenerationEntry } from "@/lib/generators/history-store";
 import { getGenerator } from "@/lib/generators/registry";
@@ -445,6 +446,7 @@ export default function InstagramBioPage() {
   const interviewCompleted = useBrandStore((s) => s.interviewCompleted);
   const addEntry = useHistoryStore((s) => s.addEntry);
   const allEntries = useHistoryStore((s) => s.entries);
+  const role = useRole();
   const generator = getGenerator("instagram-bio");
 
   const brandIsEmpty =
@@ -609,13 +611,14 @@ export default function InstagramBioPage() {
     [displayBios],
   );
 
-  // The 4 sub-tools (pillars) shown on the hub landing.
+  // The sub-tools (pillars) shown on the hub landing. The Account Audit (live
+  // Instagram connection) is admin-only for now; clients get the 3 generators.
   const PILLARS = [
     { key: "audit" as const, title: "Instagram Account Audit", desc: "Connect a profile and grade it against the criteria." },
     { key: "bio" as const, title: "Bio Generator", desc: "Craft the 150-character bio from a guided intake." },
     { key: "highlights" as const, title: "Highlights Generator", desc: "Script My Story, How I Can Help & more." },
     { key: "pinned" as const, title: "Pinned Posts Generator", desc: "Script About Me, What to Expect & more." },
-  ];
+  ].filter((p) => p.key !== "audit" || role === "admin");
   const PILLAR_LABEL: Record<string, string> = Object.fromEntries(
     PILLARS.map((p) => [p.key, p.title]),
   );

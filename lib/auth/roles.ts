@@ -6,7 +6,11 @@
 export type UserRole = "admin" | "client";
 
 // Generator slugs a client account is allowed to open.
-export const CLIENT_GENERATOR_SLUGS = ["icp-map", "irresistible-offer"] as const;
+export const CLIENT_GENERATOR_SLUGS = [
+  "icp-map",
+  "irresistible-offer",
+  "instagram-bio",
+] as const;
 
 // Exact paths a client may visit. Anything under /generate/<slug> is also
 // allowed only if <slug> is in CLIENT_GENERATOR_SLUGS (checked separately).
@@ -40,8 +44,14 @@ export function clientCanAccess(pathname: string): boolean {
 
 // True if a client may call this API route.
 export function clientCanAccessApi(pathname: string): boolean {
-  // Clients need the ICP Map + Offer endpoints and shared infra (generations,
-  // brand profile sync, auth). The generic /api/generate is admin-only.
+  // The generic generate route is allowed as an EXACT path only — it slug-gates
+  // clients to CLIENT_GENERATOR_SLUGS internally. The /api/generate/stories-tools
+  // sub-route has no gate of its own, so it must stay blocked (no prefix match).
+  if (pathname === "/api/generate") return true;
+
+  // Clients need the ICP Map + Offer endpoints, the Instagram bio/content tools,
+  // and shared infra (generations, brand profile sync, auth). Instagram connect/
+  // callback/audit stay admin-only and are intentionally excluded.
   const allowedPrefixes = [
     "/api/me",
     "/api/icp/",
@@ -49,6 +59,9 @@ export function clientCanAccessApi(pathname: string): boolean {
     "/api/generations",
     "/api/brand/profile",
     "/api/auth",
+    "/api/instagram/content",
+    "/api/instagram/status",
+    "/api/instagram/profile",
   ];
   return allowedPrefixes.some((p) => pathname.startsWith(p));
 }

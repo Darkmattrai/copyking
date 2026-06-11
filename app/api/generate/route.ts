@@ -6,6 +6,7 @@ import { GENERATOR_PROMPTS } from "@/lib/generators/prompts";
 import { streamOrganicContentIdeas } from "@/lib/generators/organic-content-ideas-pipeline";
 import { buildDeepContext } from "@/lib/generators/deep-context";
 import { getUserRole } from "@/lib/auth/get-role";
+import { CLIENT_GENERATOR_SLUGS } from "@/lib/auth/roles";
 import type { BrandDNA } from "@/types/brand";
 
 export const maxDuration = 120;
@@ -178,11 +179,6 @@ export async function POST(req: Request) {
 
   // Generic generators are admin-only; clients are limited to ICP Map + Offer.
   const role = await getUserRole();
-  if (role !== "admin") {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403,
-    });
-  }
 
   let body: {
     slug: string;
@@ -199,6 +195,14 @@ export async function POST(req: Request) {
   }
 
   const { slug, params, brandDNA } = body;
+
+  // Access control: admins may generate anything; clients only their allowed slugs.
+  if (
+    role !== "admin" &&
+    !(CLIENT_GENERATOR_SLUGS as readonly string[]).includes(slug)
+  ) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+  }
 
   const generator = getGenerator(slug);
   if (!generator) {
