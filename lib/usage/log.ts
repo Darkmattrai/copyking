@@ -13,7 +13,8 @@ export type UsageFeature =
   | "icp-generate"
   | "icp-chat"
   | "offer-enhance"
-  | "offer-chat";
+  | "offer-chat"
+  | "offer-assistant";
 
 // Records one Anthropic call's token usage. Best-effort: any failure is logged
 // and swallowed so usage tracking never breaks a user-facing response.

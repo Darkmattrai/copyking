@@ -33,6 +33,8 @@ import type { EnhanceContext } from "@/lib/offer/enhance-prompt";
 import { OfferField, useEnhance } from "./offer-field";
 import { ListTable } from "./list-table";
 import { ResultMap } from "./result-map";
+import { OfferAssistantDrawer } from "./offer-assistant-drawer";
+import { buildOfferBrandContext } from "@/lib/offer/brand-context";
 
 interface StepDef {
   id: string;
@@ -315,6 +317,9 @@ export function ProductBuilder() {
   const { enhance, enhancingKey } = useEnhance();
 
   const icp = useBrandStore((s) => s.brandDNA.icp);
+  const brandDNA = useBrandStore((s) => s.brandDNA);
+  const brandContext = useMemo(() => buildOfferBrandContext(brandDNA), [brandDNA]);
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   const ladder = offer.ladders[curLadder];
   const P: Product | undefined =
@@ -1206,6 +1211,21 @@ export function ProductBuilder() {
           )}
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setAssistantOpen(true)}
+        className="fixed bottom-6 right-6 z-40 ck-btn-primary rounded-full shadow-lg px-5 py-3 text-sm font-semibold inline-flex items-center gap-2"
+      >
+        ✨ Assistant
+      </button>
+      <OfferAssistantDrawer
+        open={assistantOpen}
+        onClose={() => setAssistantOpen(false)}
+        product={P ?? null}
+        brandContext={brandContext}
+        onApply={patchProduct}
+      />
     </div>
   );
 }
